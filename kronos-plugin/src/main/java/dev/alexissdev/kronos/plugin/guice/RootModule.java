@@ -40,6 +40,7 @@ public class RootModule extends AbstractModule {
         bind(org.bukkit.plugin.Plugin.class).toInstance(plugin);
         bind(MessagesConfig.class).toInstance(messagesConfig);
         bind(EventBus.class).in(Singleton.class);
+        bind(dev.alexissdev.kronos.plugin.chat.ChatManager.class).in(Singleton.class);
         bind(PlayerDataListener.class).in(Singleton.class);
         bind(PvpListener.class).in(Singleton.class);
         bind(TimerListener.class).in(Singleton.class);

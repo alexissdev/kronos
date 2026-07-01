@@ -151,6 +151,16 @@ economy:
   amount-positive: "&cLa cantidad debe ser positiva."
   error: "&c{error}"
 
+chat:
+  global-format: "&7[&6{faction}&7] &f{player}&7: &7{message}"
+  global-no-faction: "&f{player}&7: &7{message}"
+  faction-format: "&2[Facción] &a{player}&7: &a{message}"
+  ally-format: "&e[Aliados] &6{faction} &e{player}&7: &e{message}"
+  mode-global: "&aChat cambiado a: &fGlobal"
+  mode-faction: "&aChat cambiado a: &2Facción"
+  mode-ally: "&aChat cambiado a: &eAliados"
+  no-faction: "&cNo estás en ninguna facción."
+
 hcf:
   reloading: "&eRecargando configuración... (WIP)"
   player-not-found: "&cJugador no encontrado."

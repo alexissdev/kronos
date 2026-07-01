@@ -10,6 +10,7 @@ import dev.alexissdev.kronos.classes.listener.ClassListener;
 import dev.alexissdev.kronos.economy.command.MoneyCommand;
 import dev.alexissdev.kronos.koth.command.KothCommand;
 import dev.alexissdev.kronos.koth.listener.KothWandListener;
+import dev.alexissdev.kronos.plugin.chat.ChatListener;
 import dev.alexissdev.kronos.plugin.listener.KothListener;
 import dev.alexissdev.kronos.plugin.command.FactionCommand;
 import dev.alexissdev.kronos.plugin.command.HCFCommand;
@@ -78,6 +79,7 @@ public class PluginEnableHandler {
 
     private void registerListeners() {
         org.bukkit.plugin.PluginManager pm = Bukkit.getPluginManager();
+        pm.registerEvents(injector.getInstance(ChatListener.class), plugin);
         pm.registerEvents(injector.getInstance(PlayerDataListener.class), plugin);
         pm.registerEvents(injector.getInstance(PvpListener.class), plugin);
         pm.registerEvents(injector.getInstance(ClaimListener.class), plugin);

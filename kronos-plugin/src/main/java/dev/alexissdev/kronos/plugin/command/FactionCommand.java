@@ -2,6 +2,8 @@ package dev.alexissdev.kronos.plugin.command;
 
 import dev.alexissdev.kronos.common.command.BaseCommand;
 import dev.alexissdev.kronos.common.config.MessagesConfig;
+import dev.alexissdev.kronos.plugin.chat.ChatManager;
+import dev.alexissdev.kronos.plugin.chat.ChatMode;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -29,15 +31,17 @@ public class FactionCommand extends BaseCommand {
     private final ClaimService claimService;
     private final Plugin plugin;
     private final MessagesConfig messages;
+    private final ChatManager chatManager;
 
     @Inject
     public FactionCommand(FactionService factionService, ClaimService claimService,
-                          Plugin plugin, MessagesConfig messages) {
+                          Plugin plugin, MessagesConfig messages, ChatManager chatManager) {
         super(null);
         this.factionService = factionService;
         this.claimService = claimService;
         this.plugin = plugin;
         this.messages = messages;
+        this.chatManager = chatManager;
     }
 
     @Override
@@ -179,7 +183,12 @@ public class FactionCommand extends BaseCommand {
     }
 
     private void handleChat(Player player) {
-        player.sendMessage(messages.get("faction.cmd.chat-toggled"));
+        ChatMode next = chatManager.cycleMode(player.getUniqueId());
+        switch (next) {
+            case FACTION: player.sendMessage(messages.get("chat.mode-faction")); break;
+            case ALLY:    player.sendMessage(messages.get("chat.mode-ally"));    break;
+            default:      player.sendMessage(messages.get("chat.mode-global"));
+        }
     }
 
     private void handleTop(Player player) {
