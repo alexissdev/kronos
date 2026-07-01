@@ -34,15 +34,17 @@ public class KothListener implements Listener {
     private final EventBus eventBus;
     private final MessagesConfig messages;
 
-    // In-memory cache — updated via domain events, no DB hit on every move
+    // All registered KOTHs — used for zone enter/leave messages regardless of active state
+    private final ConcurrentHashMap<String, KothZone> allKothCache    = new ConcurrentHashMap<>();
+    // Only active KOTHs — used for capture logic
     private final ConcurrentHashMap<String, KothZone> activeKothCache = new ConcurrentHashMap<>();
 
     // Per-player outer zone tracking (for enter/leave messages)
     private final ConcurrentHashMap<UUID, String> playerOuterZone = new ConcurrentHashMap<>();
 
-    // Per-player capture state: kothName → capture start timestamp
-    private final ConcurrentHashMap<UUID, String>  capturingKoth  = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<UUID, Long>    captureStart   = new ConcurrentHashMap<>();
+    // Per-player capture state
+    private final ConcurrentHashMap<UUID, String> capturingKoth = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, Long>   captureStart  = new ConcurrentHashMap<>();
 
     @Inject
     public KothListener(KothService kothService, Plugin plugin, EventBus eventBus, MessagesConfig messages) {
@@ -52,18 +54,23 @@ public class KothListener implements Listener {
         this.messages    = messages;
         this.eventBus.register(this);
 
-        // Pre-populate cache with any already-active KOTHs
-        kothService.getActiveKoths().thenAccept(zones ->
-                zones.forEach(z -> activeKothCache.put(z.getName(), z)));
+        kothService.getAllKoths().thenAccept(zones -> {
+            for (KothZone z : zones) {
+                allKothCache.put(z.getName(), z);
+                if (z.isActive()) activeKothCache.put(z.getName(), z);
+            }
+        });
 
         startCaptureTask();
     }
 
-    // ── Domain events → update cache ──────────────────────────────────────
+    // ── Domain events → update caches ─────────────────────────────────────
 
     @Subscribe
     public void onKothStarted(KothStartedDomainEvent event) {
-        activeKothCache.put(event.getZone().getName(), event.getZone());
+        KothZone zone = event.getZone();
+        allKothCache.put(zone.getName(), zone);
+        activeKothCache.put(zone.getName(), zone);
 
         Bukkit.getScheduler().runTask(plugin, () -> {
             KothStartEvent bukkitEvent = new KothStartEvent(event.getKothName());
@@ -77,7 +84,7 @@ public class KothListener implements Listener {
     @Subscribe
     public void onKothCaptured(KothCapturedDomainEvent event) {
         activeKothCache.remove(event.getKothName());
-        evictPlayersFromKoth(event.getKothName());
+        evictCapturingPlayers(event.getKothName());
 
         Bukkit.getScheduler().runTask(plugin, () -> {
             KothCaptureEvent bukkitEvent = new KothCaptureEvent(event.getKothName(), event.getCaptorUuid());
@@ -92,7 +99,7 @@ public class KothListener implements Listener {
     @Subscribe
     public void onKothEnded(KothEndedDomainEvent event) {
         activeKothCache.remove(event.getKothName());
-        evictPlayersFromKoth(event.getKothName());
+        evictCapturingPlayers(event.getKothName());
     }
 
     // ── Player movement ───────────────────────────────────────────────────
@@ -100,7 +107,7 @@ public class KothListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerMove(PlayerMoveEvent event) {
         if (!hasCrossedBlock(event)) return;
-        if (activeKothCache.isEmpty()) return;
+        if (allKothCache.isEmpty()) return;
 
         Player player = event.getPlayer();
         UUID   uuid   = player.getUniqueId();
@@ -108,9 +115,9 @@ public class KothListener implements Listener {
         double x      = event.getTo().getX();
         double z      = event.getTo().getZ();
 
-        // -- Outer zone: enter/leave messages --
+        // -- Outer zone: enter/leave messages (all KOTHs, active or not) --
         KothZone newOuter = null;
-        for (KothZone kz : activeKothCache.values()) {
+        for (KothZone kz : allKothCache.values()) {
             if (kz.containsLocation(world, x, z)) { newOuter = kz; break; }
         }
         String prevOuterName = playerOuterZone.get(uuid);
@@ -126,7 +133,7 @@ public class KothListener implements Listener {
             }
         }
 
-        // -- Capture zone: start/stop capture timer --
+        // -- Capture zone: only active KOTHs --
         KothZone captureZone = null;
         for (KothZone kz : activeKothCache.values()) {
             if (kz.isInCaptureZone(world, x, z)) { captureZone = kz; break; }
@@ -183,10 +190,9 @@ public class KothListener implements Listener {
 
     // ── Helpers ───────────────────────────────────────────────────────────
 
-    private void evictPlayersFromKoth(String kothName) {
+    private void evictCapturingPlayers(String kothName) {
         capturingKoth.entrySet().removeIf(e -> kothName.equals(e.getValue()));
-        captureStart.entrySet().removeIf(e -> capturingKoth.get(e.getKey()) == null);
-        playerOuterZone.entrySet().removeIf(e -> kothName.equals(e.getValue()));
+        captureStart.entrySet().removeIf(e -> !capturingKoth.containsKey(e.getKey()));
     }
 
     private boolean hasCrossedBlock(PlayerMoveEvent event) {
