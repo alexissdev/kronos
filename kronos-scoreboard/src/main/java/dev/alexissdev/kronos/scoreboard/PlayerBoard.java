@@ -39,29 +39,42 @@ final class PlayerBoard {
         player.setScoreboard(scoreboard);
     }
 
-    /**
-     * Renders the scoreboard. {@code lines.get(0)} is the topmost entry.
-     * Lines beyond MAX_LINES are silently ignored.
-     */
     void render(List<String> lines) {
         int count = Math.min(lines.size(), MAX_LINES);
 
         for (int i = 0; i < count; i++) {
-            String text = clip(lines.get(i));
-            if (!text.equals(teams[i].getPrefix())) {
-                teams[i].setPrefix(text);
-            }
+            setLine(i, lines.get(i));
             objective.getScore(PALETTE[i]).setScore(count - i);
         }
 
         for (int i = count; i < renderedCount; i++) {
             scoreboard.resetScores(PALETTE[i]);
+            applyLine(teams[i], "", "");
         }
 
         renderedCount = count;
     }
 
-    private static String clip(String s) {
-        return s.length() > 64 ? s.substring(0, 64) : s;
+    // Splits text into prefix (≤16) + suffix (≤16) with color carry-over.
+    // Supports up to 32 visible characters per line on all Spigot versions.
+    private static void setLine(Team team, String text) {
+        if (text.length() <= 16) {
+            applyLine(team, text, "");
+            return;
+        }
+        String prefix = text.substring(0, 16);
+        String carry  = ChatColor.getLastColors(prefix);
+        String rest   = carry + text.substring(16);
+        String suffix = rest.length() > 16 ? rest.substring(0, 16) : rest;
+        applyLine(team, prefix, suffix);
+    }
+
+    private void setLine(int i, String text) {
+        setLine(teams[i], text);
+    }
+
+    private static void applyLine(Team team, String prefix, String suffix) {
+        if (!prefix.equals(team.getPrefix())) team.setPrefix(prefix);
+        if (!suffix.equals(team.getSuffix())) team.setSuffix(suffix);
     }
 }
