@@ -27,7 +27,8 @@ final class PlayerBoard {
 
     PlayerBoard(Player player, String title) {
         scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
-        objective = scoreboard.registerNewObjective("hcf", "dummy", title);
+        objective = scoreboard.registerNewObjective("hcf", "dummy");
+        objective.setDisplayName(title);
         objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
         for (int i = 0; i < MAX_LINES; i++) {
