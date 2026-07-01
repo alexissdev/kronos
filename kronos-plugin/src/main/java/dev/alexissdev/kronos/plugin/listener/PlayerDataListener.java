@@ -3,9 +3,10 @@ package dev.alexissdev.kronos.plugin.listener;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import dev.alexissdev.kronos.common.config.MessagesConfig;
+import dev.alexissdev.kronos.players.service.PlayerService;
+import dev.alexissdev.kronos.plugin.tablist.TabListManager;
 import dev.alexissdev.kronos.timers.TimerApplicationService;
 import dev.alexissdev.kronos.timers.domain.TimerType;
-import dev.alexissdev.kronos.players.service.PlayerService;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -24,16 +25,19 @@ public class PlayerDataListener implements Listener {
 
     private final PlayerService playerService;
     private final TimerApplicationService timerService;
+    private final TabListManager tabListManager;
     private final Plugin plugin;
     private final MessagesConfig messages;
 
     @Inject
     public PlayerDataListener(PlayerService playerService,
                               TimerApplicationService timerService,
+                              TabListManager tabListManager,
                               Plugin plugin,
                               MessagesConfig messages) {
         this.playerService = playerService;
         this.timerService = timerService;
+        this.tabListManager = tabListManager;
         this.plugin = plugin;
         this.messages = messages;
     }
@@ -46,6 +50,8 @@ public class PlayerDataListener implements Listener {
                             + event.getPlayer().getName() + ": " + ex.getMessage());
                     return null;
                 });
+
+        tabListManager.refresh(event.getPlayer());
 
         timerService.loadTimersIntoCache(event.getPlayer().getUniqueId())
                 .thenCompose(ignored ->

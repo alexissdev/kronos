@@ -48,6 +48,7 @@ public class RootModule extends AbstractModule {
         bind(FactionCommand.class).in(Singleton.class);
         bind(KothListener.class).in(Singleton.class);
         bind(dev.alexissdev.kronos.plugin.listener.DeathbanListener.class).in(Singleton.class);
+        bind(dev.alexissdev.kronos.plugin.tablist.TabListManager.class).in(Singleton.class);
 
         bindConfig();
 

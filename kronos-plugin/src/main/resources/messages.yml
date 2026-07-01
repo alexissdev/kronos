@@ -177,13 +177,21 @@ chat:
   no-faction: "&cNo estás en ninguna facción."
 
 hcf:
-  reloading: "&eRecargando configuración... (WIP)"
+  reloaded: "&aMessages.yml recargado correctamente."
+  reload-file-not-found: "&cNo se encontró messages.yml en la carpeta del plugin."
   player-not-found: "&cJugador no encontrado."
   amount-invalid: "&cCantidad inválida."
   give-money-sender: "&aDiste &e${amount} &aa &e{player}"
   give-money-target: "&aRecibiste &e${amount} &adel staff."
   set-money-wip: "&eSetear balance: (WIP)"
   help-header: "&6&lComandos Administrativos HCF:"
-  help-reload: "&e/hcf reload &7- Recargar configuración"
+  help-reload: "&e/hcf reload &7- Recargar messages.yml"
   help-give-money: "&e/hcf give-money <jugador> <$> &7- Dar dinero"
   help-set-money: "&e/hcf set-money <jugador> <$> &7- Establecer balance"
+
+tablist:
+  leader:    "&4[{faction}] &f{player}"
+  co_leader: "&c[{faction}] &f{player}"
+  captain:   "&6[{faction}] &f{player}"
+  member:    "&e[{faction}] &f{player}"
+  no-faction: "&7{player}"

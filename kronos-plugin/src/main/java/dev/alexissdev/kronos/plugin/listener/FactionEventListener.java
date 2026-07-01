@@ -18,6 +18,7 @@ import dev.alexissdev.kronos.factions.event.PlayerLeftFactionDomainEvent;
 import dev.alexissdev.kronos.factions.event.FactionClaimedDomainEvent;
 import dev.alexissdev.kronos.claims.domain.ClaimType;
 import dev.alexissdev.kronos.factions.service.FactionService;
+import dev.alexissdev.kronos.plugin.tablist.TabListManager;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
@@ -36,14 +37,17 @@ public class FactionEventListener implements Listener {
     private final FactionService factionService;
     private final EventBus eventBus;
     private final MessagesConfig messages;
+    private final TabListManager tabListManager;
 
     @Inject
     public FactionEventListener(Plugin plugin, FactionService factionService,
-                                 EventBus eventBus, MessagesConfig messages) {
+                                 EventBus eventBus, MessagesConfig messages,
+                                 TabListManager tabListManager) {
         this.plugin = plugin;
         this.factionService = factionService;
         this.eventBus = eventBus;
         this.messages = messages;
+        this.tabListManager = tabListManager;
         this.eventBus.register(this);
     }
 
@@ -67,6 +71,8 @@ public class FactionEventListener implements Listener {
                     event.getFactionId(), event.getFactionName(), event.getActorUuid());
             Bukkit.getPluginManager().callEvent(bukkitEvent);
             Bukkit.broadcastMessage(messages.format("faction.broadcast.disbanded", "name", event.getFactionName()));
+            // Reset tab names for all online players (former members get no-faction format)
+            tabListManager.refreshAll();
         });
     }
 
@@ -76,6 +82,7 @@ public class FactionEventListener implements Listener {
             PlayerJoinFactionEvent bukkitEvent = new PlayerJoinFactionEvent(
                     event.getPlayerUuid(), event.getFactionId());
             Bukkit.getPluginManager().callEvent(bukkitEvent);
+            tabListManager.refresh(event.getPlayerUuid());
         });
     }
 
@@ -85,6 +92,8 @@ public class FactionEventListener implements Listener {
             PlayerLeaveFactionEvent bukkitEvent = new PlayerLeaveFactionEvent(
                     event.getPlayerUuid(), event.getFactionId(), event.wasKicked());
             Bukkit.getPluginManager().callEvent(bukkitEvent);
+
+            tabListManager.refresh(event.getPlayerUuid());
 
             Player player = Bukkit.getPlayer(event.getPlayerUuid());
             if (player != null) {

@@ -277,9 +277,10 @@ public class FactionApplicationService implements FactionService {
             if (faction.hasMember(deadMemberUuid)) {
                 faction.decrementDtk();
                 if (faction.isAtDtk()) {
-                    faction.getMember(deadMemberUuid).ifPresent(m ->
-                            faction.removeMember(deadMemberUuid));
-                    eventBus.post(new PlayerLeftFactionDomainEvent(deadMemberUuid, factionId, true));
+                    // DTK exhausted — auto-disband the faction
+                    return factionRepository.delete(factionId).thenRun(() ->
+                            eventBus.post(new FactionDisbandedDomainEvent(
+                                    factionId, faction.getName(), deadMemberUuid)));
                 }
             }
             return factionRepository.save(faction).thenApply(f -> null);

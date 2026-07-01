@@ -1,13 +1,18 @@
 package dev.alexissdev.kronos.common.config;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class MessagesConfig {
 
-    private final Map<String, String> messages;
+    private volatile Map<String, String> messages;
 
     public MessagesConfig(Map<String, String> messages) {
         this.messages = messages;
+    }
+
+    public void reload(Map<String, String> newMessages) {
+        this.messages = new LinkedHashMap<>(newMessages);
     }
 
     public String get(String key) {

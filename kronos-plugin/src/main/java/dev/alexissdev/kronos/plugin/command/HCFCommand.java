@@ -8,8 +8,14 @@ import com.google.inject.Singleton;
 import dev.alexissdev.kronos.economy.service.EconomyService;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
+
+import java.io.File;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @Singleton
 public class HCFCommand extends BaseCommand {
@@ -31,15 +37,28 @@ public class HCFCommand extends BaseCommand {
         if (args.length == 0) { sendHelp(sender); return; }
 
         switch (args[0].toLowerCase()) {
-            case "reload": handleReload(sender); break;
+            case "reload":     handleReload(sender);       break;
             case "give-money": handleGiveMoney(sender, args); break;
-            case "set-money": handleSetMoney(sender, args); break;
-            default: sendHelp(sender);
+            case "set-money":  handleSetMoney(sender, args);  break;
+            default:           sendHelp(sender);
         }
     }
 
     private void handleReload(CommandSender sender) {
-        sender.sendMessage(messages.get("hcf.reloading"));
+        File file = new File(plugin.getDataFolder(), "messages.yml");
+        if (!file.exists()) {
+            sender.sendMessage(messages.get("hcf.reload-file-not-found"));
+            return;
+        }
+        FileConfiguration yaml = YamlConfiguration.loadConfiguration(file);
+        Map<String, String> map = new LinkedHashMap<>();
+        for (String key : yaml.getKeys(true)) {
+            if (!yaml.isConfigurationSection(key)) {
+                map.put(key, yaml.getString(key, ""));
+            }
+        }
+        messages.reload(map);
+        sender.sendMessage(messages.get("hcf.reloaded"));
     }
 
     private void handleGiveMoney(CommandSender sender, String[] args) {
