@@ -6,5 +6,5 @@ include(
     ":application",
     ":api",
     ":presentation",
-    ":bootstrap"
+    ":plugin"
 )
