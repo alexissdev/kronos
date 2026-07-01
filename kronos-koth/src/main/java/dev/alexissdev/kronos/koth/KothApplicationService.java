@@ -38,7 +38,7 @@ public class KothApplicationService implements KothService {
             int cz = (zone.getCaptureMinZ() + zone.getCaptureMaxZ()) / 2;
             return kothRepository.save(zone).thenRun(() ->
                     eventBus.post(new KothStartedDomainEvent(
-                            name, cx, cz, zone.getCaptureTimeSeconds())));
+                            name, cx, cz, zone.getCaptureTimeSeconds(), zone)));
         });
     }
 

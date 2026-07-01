@@ -63,8 +63,7 @@ public class KothListener implements Listener {
 
     @Subscribe
     public void onKothStarted(KothStartedDomainEvent event) {
-        kothService.getKoth(event.getKothName()).thenAccept(opt ->
-                opt.ifPresent(z -> activeKothCache.put(z.getName(), z)));
+        activeKothCache.put(event.getZone().getName(), event.getZone());
 
         Bukkit.getScheduler().runTask(plugin, () -> {
             KothStartEvent bukkitEvent = new KothStartEvent(event.getKothName());

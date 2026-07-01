@@ -112,7 +112,14 @@ public class TimerApplicationService implements TimerService<UUID> {
 
     public CompletableFuture<Void> loadTimersIntoCache(UUID playerUuid) {
         List<CompletableFuture<Void>> futures = Arrays.stream(TimerType.values())
-                .map(type -> hasActiveTimer(playerUuid, type).thenApply(v -> (Void) null))
+                .map(type -> timerRepository.findTimer(playerUuid, type).thenAccept(opt -> {
+                    if (opt.isPresent() && !opt.get().isExpired()) {
+                        timerCache.markActive(playerUuid, type);
+                        // Notify scoreboard of existing timers with remaining time
+                        eventBus.post(new PlayerTimerStartedDomainEvent(
+                                playerUuid, type, opt.get().getRemainingMillis()));
+                    }
+                }))
                 .collect(Collectors.toList());
         return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }
