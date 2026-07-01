@@ -14,6 +14,7 @@ dependencies {
     implementation(project(":kronos-classes"))
     implementation(project(":kronos-api"))
     implementation(project(":kronos-scoreboard"))
+    implementation(project(":kronos-spawn"))
     compileOnly("org.spigotmc:spigot-api:1.13.2-R0.1-SNAPSHOT")
     compileOnly("com.github.MilkBowl:VaultAPI:1.7")
     implementation("com.google.inject:guice:5.1.0")
@@ -60,6 +61,11 @@ bukkit {
             usage = "/hcf <reload|give-money|set-money>"
             permission = "hcf.admin"
         }
+        register("spawn") {
+            description = "Gestión de la zona de spawn"
+            usage = "/spawn <setzone|info|remove>"
+            permission = "hcf.spawn.admin"
+        }
     }
 
     permissions {
@@ -85,6 +91,10 @@ bukkit {
         }
         register("hcf.bypass.claimprotection") {
             description = "Construir en cualquier claim"
+            default = net.minecrell.pluginyml.bukkit.BukkitPluginDescription.Permission.Default.OP
+        }
+        register("hcf.spawn.admin") {
+            description = "Gestionar zona de spawn"
             default = net.minecrell.pluginyml.bukkit.BukkitPluginDescription.Permission.Default.OP
         }
     }

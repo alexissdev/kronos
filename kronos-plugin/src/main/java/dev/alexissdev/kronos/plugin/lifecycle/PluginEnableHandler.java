@@ -21,6 +21,10 @@ import dev.alexissdev.kronos.plugin.listener.TimerListener;
 import dev.alexissdev.kronos.scoreboard.ScoreboardListener;
 import dev.alexissdev.kronos.scoreboard.ScoreboardManager;
 import dev.alexissdev.kronos.scoreboard.ScoreboardTask;
+import dev.alexissdev.kronos.spawn.SpawnApplicationService;
+import dev.alexissdev.kronos.spawn.command.SpawnCommand;
+import dev.alexissdev.kronos.spawn.listener.SpawnListener;
+import dev.alexissdev.kronos.spawn.listener.SpawnWandListener;
 import dev.alexissdev.kronos.timers.TimerApplicationService;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.ServicePriority;
@@ -43,6 +47,7 @@ public class PluginEnableHandler {
         registerListeners();
         registerApiService();
 
+        injector.getInstance(SpawnApplicationService.class).loadZone();
         injector.getInstance(ClaimListener.class).preloadCache();
         injector.getInstance(TimerApplicationService.class).scheduleExpiryChecks(plugin);
         injector.getInstance(ScoreboardTask.class); // schedules periodic tasks
@@ -63,6 +68,7 @@ public class PluginEnableHandler {
         registerCommand("balance", injector.getInstance(MoneyCommand.class));
         registerCommand("staff",   injector.getInstance(StaffCommand.class));
         registerCommand("hcf",     injector.getInstance(HCFCommand.class));
+        registerCommand("spawn",   injector.getInstance(SpawnCommand.class));
     }
 
     private void registerCommand(String name, org.bukkit.command.CommandExecutor executor) {
@@ -83,6 +89,8 @@ public class PluginEnableHandler {
         pm.registerEvents(injector.getInstance(FactionEventListener.class), plugin);
         pm.registerEvents(injector.getInstance(ScoreboardListener.class), plugin);
         pm.registerEvents(injector.getInstance(KothWandListener.class), plugin);
+        pm.registerEvents(injector.getInstance(SpawnListener.class), plugin);
+        pm.registerEvents(injector.getInstance(SpawnWandListener.class), plugin);
     }
 
     private void registerApiService() {

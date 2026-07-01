@@ -11,5 +11,6 @@ include(
     ":kronos-classes",
     ":kronos-api",
     ":kronos-scoreboard",
+    ":kronos-spawn",
     ":kronos-plugin"
 )
