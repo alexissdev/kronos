@@ -30,6 +30,7 @@ bukkit {
     description = "Plugin HCF completo para Spigot 1.13.2"
     authors = listOf("alexissdev")
     depend = listOf("Vault")
+    softDepend = listOf("PlaceholderAPI, Apolo")
     website = "https://github.com/alexissdev/kronos"
 
     commands {
