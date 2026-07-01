@@ -1,0 +1,37 @@
+database:
+  mongo:
+    uri: "mongodb://localhost:27017"
+    database: "kronoshcf"
+  redis:
+    host: "localhost"
+    port: 6379
+    password: ""
+
+faction:
+  max-allies: 3
+  max-enemies: 10
+  default-dtk: 20
+  max-claims-per-faction: 50
+
+timers:
+  combat-tag-seconds: 30
+  pvp-timer-minutes: 30
+  enderpearl-cooldown-seconds: 15
+  home-delay-seconds: 5
+  logout-timer-seconds: 30
+
+koth:
+  default-capture-time-seconds: 300
+
+spawn:
+  world: "world"
+  x: 0.5
+  y: 65.0
+  z: 0.5
+  yaw: 0.0
+  pitch: 0.0
+
+messages:
+  prefix: "&8[&6Kronos&8] &r"
+  no-permission: "&cNo tienes permiso para hacer esto."
+  player-only: "&cSolo jugadores pueden usar este comando."
