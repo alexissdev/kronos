@@ -23,13 +23,14 @@ final class ScoreboardRenderer {
 
         String faction = data.getFactionName();
         if (faction != null) {
-            lines.add("§7Facción: §e" + faction);
+            lines.add("§7Faction: §e" + faction);
             lines.add("§7DTK: §e" + data.getDtkRemaining());
         } else {
-            lines.add("§7Facción: §cSin facción");
+            lines.add("§7Facción:");
         }
 
-        lines.add("§7Kills: §a" + data.getKills() + " §8│ §7Muertes: §c" + data.getDeaths());
+        lines.add("§7Kills: §a" + data.getKills());
+        lines.add("§7Deaths: §c" + data.getDeaths());
         lines.add("§7Balance: §a$" + fmtBalance(data.getBalance()));
 
         // Active KOTHs (global, same for every player)
