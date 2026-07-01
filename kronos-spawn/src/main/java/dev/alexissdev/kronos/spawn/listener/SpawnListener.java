@@ -20,12 +20,13 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
 
 @Singleton
 public class SpawnListener implements Listener {
 
     // Remaining PvP timer millis paused while the player is inside spawn.
-    private final ConcurrentHashMap<UUID, Long> pausedPvpMs = new ConcurrentHashMap<>();
+    private final Map<UUID, Long> pausedPvpMs = new ConcurrentHashMap<>();
 
     private final SpawnService spawnService;
     private final TimerApplicationService timerService;

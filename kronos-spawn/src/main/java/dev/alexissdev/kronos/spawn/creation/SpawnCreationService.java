@@ -10,13 +10,14 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
 
 @Singleton
 public class SpawnCreationService {
 
     private static final String WAND_NAME = ChatColor.AQUA + "" + ChatColor.BOLD + "Spawn Wand";
 
-    private final ConcurrentHashMap<UUID, SpawnCreationSession> sessions = new ConcurrentHashMap<>();
+    private final Map<UUID, SpawnCreationSession> sessions = new ConcurrentHashMap<>();
 
     public void startSession(UUID uuid) {
         sessions.put(uuid, new SpawnCreationSession());

@@ -34,6 +34,9 @@ public class KothApplicationService implements KothService {
     public CompletableFuture<Void> startKoth(String name) {
         return kothRepository.findByName(name).thenCompose(opt -> {
             KothZone zone = opt.orElseThrow(() -> new KothNotFoundException(name));
+            if (zone.isActive()) {
+                throw new IllegalStateException("El KOTH '" + name + "' ya está activo.");
+            }
             zone.setActive(true);
             int cx = (zone.getCaptureMinX() + zone.getCaptureMaxX()) / 2;
             int cz = (zone.getCaptureMinZ() + zone.getCaptureMaxZ()) / 2;
@@ -47,6 +50,9 @@ public class KothApplicationService implements KothService {
     public CompletableFuture<Void> endKoth(String name) {
         return kothRepository.findByName(name).thenCompose(opt -> {
             KothZone zone = opt.orElseThrow(() -> new KothNotFoundException(name));
+            if (!zone.isActive()) {
+                throw new IllegalStateException("El KOTH '" + name + "' no está activo.");
+            }
             zone.setActive(false);
             return kothRepository.save(zone).thenRun(() ->
                     eventBus.post(new KothEndedDomainEvent(name)));

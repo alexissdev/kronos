@@ -27,6 +27,7 @@ import org.bukkit.potion.PotionEffectType;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
 
 @Singleton
 public class ClassListener implements Listener {
@@ -35,7 +36,7 @@ public class ClassListener implements Listener {
     private final TimerApplicationService timerService;
     private final Plugin plugin;
 
-    private final ConcurrentHashMap<UUID, KitType> playerKitCache = new ConcurrentHashMap<>();
+    private final Map<UUID, KitType> playerKitCache = new ConcurrentHashMap<>();
 
     @Inject
     public ClassListener(KitService kitService, TimerApplicationService timerService, Plugin plugin) {

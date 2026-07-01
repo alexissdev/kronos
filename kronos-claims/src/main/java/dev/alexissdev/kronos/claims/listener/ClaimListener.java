@@ -26,6 +26,7 @@ import org.bukkit.plugin.Plugin;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
 
 @Singleton
 public class ClaimListener implements Listener {
@@ -35,9 +36,9 @@ public class ClaimListener implements Listener {
     private final Plugin plugin;
     private final EventBus eventBus;
 
-    private final ConcurrentHashMap<String, Claim> claimCache = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<UUID, String> playerFactionMap = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<UUID, String> playerChunkCache = new ConcurrentHashMap<>();
+    private final Map<String, Claim> claimCache = new ConcurrentHashMap<>();
+    private final Map<UUID, String> playerFactionMap = new ConcurrentHashMap<>();
+    private final Map<UUID, String> playerChunkCache = new ConcurrentHashMap<>();
 
     @Inject
     public ClaimListener(ClaimService claimService, FactionService factionService,

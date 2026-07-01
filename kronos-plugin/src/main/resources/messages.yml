@@ -77,6 +77,9 @@ koth:
     create-error: "&cError al crear KOTH: {error}"
   cmd:
     started: "&aKOTH &e{name} &ainiciado!"
+    already-active: "&cEl KOTH &e{name} &cya está activo."
+    not-active: "&cEl KOTH &e{name} &cno está activo."
+    not-found: "&cNo existe ningún KOTH llamado &e{name}&c."
     ended: "&eKOTH &f{name} &efinalizado."
     deleted: "&eKOTH &f{name} &eeliminado."
     list-header: "&6&lKOTHs registrados:"

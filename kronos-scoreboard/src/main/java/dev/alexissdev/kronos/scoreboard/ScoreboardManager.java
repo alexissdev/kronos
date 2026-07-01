@@ -20,15 +20,16 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
 
 @Singleton
 public class ScoreboardManager {
 
     private static final String TITLE = "§e§lKRONOS HCF";
 
-    private final ConcurrentHashMap<UUID, PlayerBoard>     boards      = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<UUID, PlayerBoardData> cache       = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, KothEntry>     activeKoths = new ConcurrentHashMap<>();
+    private final Map<UUID, PlayerBoard>     boards      = new ConcurrentHashMap<>();
+    private final Map<UUID, PlayerBoardData> cache       = new ConcurrentHashMap<>();
+    private final Map<String, KothEntry>     activeKoths = new ConcurrentHashMap<>();
 
     private final ScoreboardRenderer renderer;
     private final JavaPlugin plugin;

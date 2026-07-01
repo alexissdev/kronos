@@ -35,16 +35,16 @@ public class KothListener implements Listener {
     private final MessagesConfig messages;
 
     // All registered KOTHs — used for zone enter/leave messages regardless of active state
-    private final ConcurrentHashMap<String, KothZone> allKothCache    = new ConcurrentHashMap<>();
+    private final Map<String, KothZone> allKothCache    = new ConcurrentHashMap<>();
     // Only active KOTHs — used for capture logic
-    private final ConcurrentHashMap<String, KothZone> activeKothCache = new ConcurrentHashMap<>();
+    private final Map<String, KothZone> activeKothCache = new ConcurrentHashMap<>();
 
     // Per-player outer zone tracking (for enter/leave messages)
-    private final ConcurrentHashMap<UUID, String> playerOuterZone = new ConcurrentHashMap<>();
+    private final Map<UUID, String> playerOuterZone = new ConcurrentHashMap<>();
 
     // Per-player capture state
-    private final ConcurrentHashMap<UUID, String> capturingKoth = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<UUID, Long>   captureStart  = new ConcurrentHashMap<>();
+    private final Map<UUID, String> capturingKoth = new ConcurrentHashMap<>();
+    private final Map<UUID, Long>   captureStart  = new ConcurrentHashMap<>();
 
     @Inject
     public KothListener(KothService kothService, Plugin plugin, EventBus eventBus, MessagesConfig messages) {
@@ -70,6 +70,11 @@ public class KothListener implements Listener {
         KothZone zone = event.getZone();
         allKothCache.put(zone.getName(), zone);
         activeKothCache.put(zone.getName(), zone);
+        plugin.getLogger().info("[KOTH] Iniciado: " + zone.getName()
+                + " | mundo=" + zone.getWorld()
+                + " | captura=(" + zone.getCaptureMinX() + "," + zone.getCaptureMinZ()
+                + ")->(" + zone.getCaptureMaxX() + "," + zone.getCaptureMaxZ() + ")"
+                + " | tiempo=" + zone.getCaptureTimeSeconds() + "s");
 
         Bukkit.getScheduler().runTask(plugin, () -> {
             KothStartEvent bukkitEvent = new KothStartEvent(event.getKothName());
@@ -147,8 +152,13 @@ public class KothListener implements Listener {
         }
 
         if (captureZone != null) {
+            boolean isNew = captureStart.putIfAbsent(uuid, System.currentTimeMillis()) == null;
             capturingKoth.put(uuid, captureZone.getName());
-            captureStart.putIfAbsent(uuid, System.currentTimeMillis());
+            if (isNew) {
+                plugin.getLogger().info("[KOTH] " + player.getName()
+                        + " empezó a capturar " + captureZone.getName()
+                        + " en (" + (int)x + "," + (int)z + ")");
+            }
         } else {
             capturingKoth.remove(uuid);
             captureStart.remove(uuid);
@@ -183,11 +193,12 @@ public class KothListener implements Listener {
                 long requiredMs = (long) zone.getCaptureTimeSeconds() * 1000L;
 
                 if (elapsed >= requiredMs) {
+                    plugin.getLogger().info("[KOTH] " + playerUuid + " capturó " + kothName + " (elapsed=" + elapsed + "ms)");
                     capturingKoth.remove(playerUuid);
                     captureStart.remove(playerUuid);
                     kothService.captureKoth(kothName, playerUuid)
                             .exceptionally(ex -> {
-                                plugin.getLogger().warning("Error al capturar KOTH " + kothName + ": " + ex.getMessage());
+                                plugin.getLogger().warning("[KOTH] Error al capturar " + kothName + ": " + ex.getMessage());
                                 return null;
                             });
                 }

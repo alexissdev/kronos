@@ -4,11 +4,12 @@ import com.google.inject.Singleton;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
 
 @Singleton
 public class ChatManager {
 
-    private final ConcurrentHashMap<UUID, ChatMode> modes = new ConcurrentHashMap<>();
+    private final Map<UUID, ChatMode> modes = new ConcurrentHashMap<>();
 
     public ChatMode getMode(UUID uuid) {
         return modes.getOrDefault(uuid, ChatMode.GLOBAL);

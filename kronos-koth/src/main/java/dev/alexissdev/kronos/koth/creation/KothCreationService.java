@@ -10,13 +10,14 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
 
 @Singleton
 public class KothCreationService {
 
     private static final String WAND_NAME = ChatColor.GOLD + "" + ChatColor.BOLD + "KOTH Wand";
 
-    private final ConcurrentHashMap<UUID, KothCreationSession> sessions = new ConcurrentHashMap<>();
+    private final Map<UUID, KothCreationSession> sessions = new ConcurrentHashMap<>();
 
     public void startSession(UUID uuid, String name, int captureTimeSeconds) {
         sessions.put(uuid, new KothCreationSession(name, captureTimeSeconds));

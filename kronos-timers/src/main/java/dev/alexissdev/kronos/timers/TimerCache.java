@@ -8,6 +8,7 @@ import java.util.EnumSet;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
 
 /**
  * In-memory mirror of active timers for synchronous lookups in event handlers.
@@ -16,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Singleton
 public class TimerCache {
 
-    private final ConcurrentHashMap<UUID, Set<TimerType>> activeTimers = new ConcurrentHashMap<>();
+    private final Map<UUID, Set<TimerType>> activeTimers = new ConcurrentHashMap<>();
 
     public void markActive(UUID playerUuid, TimerType type) {
         activeTimers.computeIfAbsent(playerUuid, k ->
