@@ -5,6 +5,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import dev.alexissdev.kronos.koth.domain.KothZone;
 import dev.alexissdev.kronos.koth.event.KothCapturedDomainEvent;
+import dev.alexissdev.kronos.koth.event.KothDeletedDomainEvent;
 import dev.alexissdev.kronos.koth.event.KothEndedDomainEvent;
 import dev.alexissdev.kronos.koth.event.KothStartedDomainEvent;
 import dev.alexissdev.kronos.koth.exception.KothNotFoundException;
@@ -85,6 +86,7 @@ public class KothApplicationService implements KothService {
 
     @Override
     public CompletableFuture<Void> deleteKoth(String name) {
-        return kothRepository.delete(name);
+        return kothRepository.delete(name)
+                .thenRun(() -> eventBus.post(new KothDeletedDomainEvent(name)));
     }
 }

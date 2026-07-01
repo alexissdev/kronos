@@ -9,6 +9,7 @@ import dev.alexissdev.kronos.api.event.KothStartEvent;
 import dev.alexissdev.kronos.common.config.MessagesConfig;
 import dev.alexissdev.kronos.koth.domain.KothZone;
 import dev.alexissdev.kronos.koth.event.KothCapturedDomainEvent;
+import dev.alexissdev.kronos.koth.event.KothDeletedDomainEvent;
 import dev.alexissdev.kronos.koth.event.KothEndedDomainEvent;
 import dev.alexissdev.kronos.koth.event.KothStartedDomainEvent;
 import dev.alexissdev.kronos.koth.service.KothService;
@@ -100,6 +101,14 @@ public class KothListener implements Listener {
     public void onKothEnded(KothEndedDomainEvent event) {
         activeKothCache.remove(event.getKothName());
         evictCapturingPlayers(event.getKothName());
+    }
+
+    @Subscribe
+    public void onKothDeleted(KothDeletedDomainEvent event) {
+        allKothCache.remove(event.getKothName());
+        activeKothCache.remove(event.getKothName());
+        evictCapturingPlayers(event.getKothName());
+        playerOuterZone.entrySet().removeIf(e -> event.getKothName().equals(e.getValue()));
     }
 
     // ── Player movement ───────────────────────────────────────────────────

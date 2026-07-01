@@ -110,6 +110,10 @@ public class TimerApplicationService implements TimerService<UUID> {
         return startTimer(playerUuid, TimerType.HOME, durationMillis);
     }
 
+    public void clearCache(UUID playerUuid) {
+        timerCache.clearAll(playerUuid);
+    }
+
     public CompletableFuture<Void> loadTimersIntoCache(UUID playerUuid) {
         List<CompletableFuture<Void>> futures = Arrays.stream(TimerType.values())
                 .map(type -> timerRepository.findTimer(playerUuid, type).thenAccept(opt -> {

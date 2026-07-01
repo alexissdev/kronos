@@ -15,6 +15,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
 
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @Singleton
@@ -84,11 +85,14 @@ public class PlayerDataListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent event) {
-        timerService.hasActiveTimer(event.getPlayer().getUniqueId(), TimerType.COMBAT_TAG)
+        UUID uuid = event.getPlayer().getUniqueId();
+        timerService.hasActiveTimer(uuid, TimerType.COMBAT_TAG)
                 .thenAccept(hasCombatTag -> {
                     if (hasCombatTag) {
-                        timerService.startLogoutTimer(event.getPlayer().getUniqueId(), LOGOUT_TIMER_DURATION_MS);
+                        timerService.startLogoutTimer(uuid, LOGOUT_TIMER_DURATION_MS);
                     }
+                    // Clear in-memory cache so next login starts fresh from Redis
+                    timerService.clearCache(uuid);
                 });
     }
 }
