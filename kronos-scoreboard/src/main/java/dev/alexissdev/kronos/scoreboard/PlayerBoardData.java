@@ -21,6 +21,10 @@ final class PlayerBoardData {
     // Maps TimerType → absolute epoch-ms when the timer expires.
     private final Map<TimerType, Long> timerExpiryMs = new EnumMap<>(TimerType.class);
 
+    // KOTH capture progress for this player
+    private volatile String capturingKothName;
+    private volatile long   captureExpiresAt;
+
     // ── stats ─────────────────────────────────────────────────────────────
 
     int getKills()        { return kills; }
@@ -49,5 +53,24 @@ final class PlayerBoardData {
         Long expiry = timerExpiryMs.get(type);
         if (expiry == null) return 0L;
         return Math.max(0L, expiry - System.currentTimeMillis());
+    }
+
+    // ── KOTH capture ──────────────────────────────────────────────────────
+
+    void setKothCapture(String kothName, long remainingMs) {
+        this.capturingKothName = kothName;
+        this.captureExpiresAt  = System.currentTimeMillis() + remainingMs;
+    }
+
+    void clearKothCapture() {
+        this.capturingKothName = null;
+        this.captureExpiresAt  = 0;
+    }
+
+    String getCapturingKothName()   { return capturingKothName; }
+
+    long getCaptureRemainingMs() {
+        if (capturingKothName == null) return 0L;
+        return Math.max(0L, captureExpiresAt - System.currentTimeMillis());
     }
 }

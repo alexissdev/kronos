@@ -122,6 +122,20 @@ public class ScoreboardManager {
         Bukkit.getScheduler().runTask(plugin, this::tickAll);
     }
 
+    // ── KOTH capture progress (called from KothListener) ─────────────────
+
+    public void updateKothCapture(UUID uuid, String kothName, long remainingMs) {
+        PlayerBoardData data = cache.get(uuid);
+        if (data == null) return;
+        data.setKothCapture(kothName, remainingMs);
+    }
+
+    public void clearKothCapture(UUID uuid) {
+        PlayerBoardData data = cache.get(uuid);
+        if (data == null) return;
+        data.clearKothCapture();
+    }
+
     // ── internals ─────────────────────────────────────────────────────────
 
     private void redraw(UUID uuid) {

@@ -42,7 +42,6 @@ public class KothCommand extends BaseCommand {
             case "list":   handleList(sender);         break;
             case "create": handleCreate(sender, args); break;
             case "delete": handleDelete(sender, args); break;
-            case "debug":  handleDebug(sender);        break;
             default:       sendHelp(sender);
         }
     }
@@ -136,40 +135,6 @@ public class KothCommand extends BaseCommand {
         player.sendMessage(messages.format("koth.cmd.creating", "name", name, "seconds", captureTime));
         player.sendMessage(messages.get("koth.cmd.select-claim-hint"));
         player.sendMessage(messages.get("koth.cmd.select-controls"));
-    }
-
-    private void handleDebug(CommandSender sender) {
-        if (!(sender instanceof Player)) {
-            sender.sendMessage("§cSolo para jugadores.");
-            return;
-        }
-        Player player = (Player) sender;
-        double px = player.getLocation().getX();
-        double pz = player.getLocation().getZ();
-        String pw = player.getWorld().getName();
-
-        sender.sendMessage("§6=== KOTH Debug ===");
-        sender.sendMessage("§7Tu pos: §f" + String.format("%.1f", px) + ", " + String.format("%.1f", pz)
-                + " §7mundo=§f" + pw);
-
-        kothService.getAllKoths().thenAccept(koths -> Bukkit.getScheduler().runTask(plugin, () -> {
-            if (koths.isEmpty()) {
-                sender.sendMessage("§cNo hay KOTHs en la base de datos.");
-                return;
-            }
-            for (KothZone zone : koths) {
-                boolean inClaim   = zone.containsLocation(pw, px, pz);
-                boolean inCapture = zone.isInCaptureZone(pw, px, pz);
-                sender.sendMessage("§e" + zone.getName() + " §7| activo=" + zone.isActive()
-                        + " | mundo=§f" + zone.getWorld());
-                sender.sendMessage("  §7Claim: §f(" + zone.getMinX() + "," + zone.getMinZ()
-                        + ") -> (" + zone.getMaxX() + "," + zone.getMaxZ() + ")");
-                sender.sendMessage("  §7Captura: §f(" + zone.getCaptureMinX() + "," + zone.getCaptureMinZ()
-                        + ") -> (" + zone.getCaptureMaxX() + "," + zone.getCaptureMaxZ() + ")");
-                sender.sendMessage("  §7¿En claim? " + (inClaim ? "§aSÍ" : "§cNO")
-                        + " §7¿En captura? " + (inCapture ? "§aSÍ" : "§cNO"));
-            }
-        }));
     }
 
     private void handleDelete(CommandSender sender, String[] args) {

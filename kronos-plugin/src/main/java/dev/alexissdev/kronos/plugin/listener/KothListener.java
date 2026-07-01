@@ -13,6 +13,7 @@ import dev.alexissdev.kronos.koth.event.KothDeletedDomainEvent;
 import dev.alexissdev.kronos.koth.event.KothEndedDomainEvent;
 import dev.alexissdev.kronos.koth.event.KothStartedDomainEvent;
 import dev.alexissdev.kronos.koth.service.KothService;
+import dev.alexissdev.kronos.scoreboard.ScoreboardManager;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -33,6 +34,7 @@ public class KothListener implements Listener {
     private final KothService kothService;
     private final Plugin plugin;
     private final MessagesConfig messages;
+    private final ScoreboardManager scoreboardManager;
 
     // All registered KOTHs — used for zone enter/leave messages regardless of active state
     private final Map<String, KothZone> allKothCache    = new ConcurrentHashMap<>();
@@ -47,10 +49,12 @@ public class KothListener implements Listener {
     private final Map<UUID, Long>   captureStart  = new ConcurrentHashMap<>();
 
     @Inject
-    public KothListener(KothService kothService, Plugin plugin, EventBus eventBus, MessagesConfig messages) {
-        this.kothService = kothService;
-        this.plugin      = plugin;
-        this.messages    = messages;
+    public KothListener(KothService kothService, Plugin plugin, EventBus eventBus,
+                        MessagesConfig messages, ScoreboardManager scoreboardManager) {
+        this.kothService        = kothService;
+        this.plugin             = plugin;
+        this.messages           = messages;
+        this.scoreboardManager  = scoreboardManager;
         eventBus.register(this);
 
         kothService.getAllKoths().thenAccept(zones -> {
@@ -70,17 +74,13 @@ public class KothListener implements Listener {
         KothZone zone = event.getZone();
         allKothCache.put(zone.getName(), zone);
         activeKothCache.put(zone.getName(), zone);
-        plugin.getLogger().info("[KOTH] Iniciado: " + zone.getName()
-                + " | mundo=" + zone.getWorld()
-                + " | captura=(" + zone.getCaptureMinX() + "," + zone.getCaptureMinZ()
-                + ")->(" + zone.getCaptureMaxX() + "," + zone.getCaptureMaxZ() + ")"
-                + " | tiempo=" + zone.getCaptureTimeSeconds() + "s");
 
         Bukkit.getScheduler().runTask(plugin, () -> {
             KothStartEvent bukkitEvent = new KothStartEvent(event.getKothName());
             Bukkit.getPluginManager().callEvent(bukkitEvent);
             if (!bukkitEvent.isCancelled()) {
-                Bukkit.broadcastMessage(messages.format("koth.broadcast.started", "name", event.getKothName()));
+                String msg = messages.format("koth.broadcast.started", "name", event.getKothName());
+                for (Player online : Bukkit.getOnlinePlayers()) online.sendMessage(msg);
             }
         });
     }
@@ -95,8 +95,9 @@ public class KothListener implements Listener {
             Bukkit.getPluginManager().callEvent(bukkitEvent);
             Player captor = Bukkit.getPlayer(event.getCaptorUuid());
             String captorName = captor != null ? captor.getName() : "Unknown";
-            Bukkit.broadcastMessage(messages.format("koth.broadcast.captured",
-                    "player", captorName, "name", event.getKothName()));
+            String msg = messages.format("koth.broadcast.captured",
+                    "player", captorName, "name", event.getKothName());
+            for (Player online : Bukkit.getOnlinePlayers()) online.sendMessage(msg);
         });
     }
 
@@ -155,13 +156,20 @@ public class KothListener implements Listener {
             boolean isNew = captureStart.putIfAbsent(uuid, System.currentTimeMillis()) == null;
             capturingKoth.put(uuid, captureZone.getName());
             if (isNew) {
-                plugin.getLogger().info("[KOTH] " + player.getName()
-                        + " empezó a capturar " + captureZone.getName()
-                        + " en (" + (int)x + "," + (int)z + ")");
+                long remainingMs = (long) captureZone.getCaptureTimeSeconds() * 1000L;
+                String captureMsg = messages.format("koth.started-capturing",
+                        "player", player.getName(),
+                        "name", captureZone.getName());
+                for (Player online : Bukkit.getOnlinePlayers()) {
+                    online.sendMessage(captureMsg);
+                }
+                scoreboardManager.updateKothCapture(uuid, captureZone.getName(), remainingMs);
             }
         } else {
-            capturingKoth.remove(uuid);
-            captureStart.remove(uuid);
+            if (capturingKoth.remove(uuid) != null) {
+                captureStart.remove(uuid);
+                scoreboardManager.clearKothCapture(uuid);
+            }
         }
     }
 
@@ -171,6 +179,7 @@ public class KothListener implements Listener {
         playerOuterZone.remove(uuid);
         capturingKoth.remove(uuid);
         captureStart.remove(uuid);
+        scoreboardManager.clearKothCapture(uuid);
     }
 
     // ── Capture tick ──────────────────────────────────────────────────────
@@ -192,15 +201,19 @@ public class KothListener implements Listener {
                 long elapsed    = System.currentTimeMillis() - startTime;
                 long requiredMs = (long) zone.getCaptureTimeSeconds() * 1000L;
 
+                long remainingMs = requiredMs - elapsed;
+
                 if (elapsed >= requiredMs) {
-                    plugin.getLogger().info("[KOTH] " + playerUuid + " capturó " + kothName + " (elapsed=" + elapsed + "ms)");
                     capturingKoth.remove(playerUuid);
                     captureStart.remove(playerUuid);
+                    scoreboardManager.clearKothCapture(playerUuid);
                     kothService.captureKoth(kothName, playerUuid)
                             .exceptionally(ex -> {
                                 plugin.getLogger().warning("[KOTH] Error al capturar " + kothName + ": " + ex.getMessage());
                                 return null;
                             });
+                } else {
+                    scoreboardManager.updateKothCapture(playerUuid, kothName, remainingMs);
                 }
             }
         }, 20L, 20L);
@@ -209,7 +222,13 @@ public class KothListener implements Listener {
     // ── Helpers ───────────────────────────────────────────────────────────
 
     private void evictCapturingPlayers(String kothName) {
-        capturingKoth.entrySet().removeIf(e -> kothName.equals(e.getValue()));
+        capturingKoth.entrySet().removeIf(e -> {
+            if (kothName.equals(e.getValue())) {
+                scoreboardManager.clearKothCapture(e.getKey());
+                return true;
+            }
+            return false;
+        });
         captureStart.entrySet().removeIf(e -> !capturingKoth.containsKey(e.getKey()));
     }
 

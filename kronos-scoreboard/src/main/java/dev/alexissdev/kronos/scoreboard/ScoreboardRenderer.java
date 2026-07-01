@@ -38,9 +38,16 @@ final class ScoreboardRenderer {
             lines.add(SEP);
             for (KothEntry koth : koths) {
                 lines.add("§6KOTH §e" + koth.name);
-                lines.add(" §7Cap: §f" + koth.captureTimeSeconds + "s");
                 lines.add(" §7Loc: §a" + koth.centerX + "§7, §a" + koth.centerZ);
             }
+        }
+
+        // Per-player KOTH capture countdown
+        long captureMs = data.getCaptureRemainingMs();
+        if (captureMs > 0) {
+            lines.add(SEP);
+            lines.add("§6Capturando §e" + data.getCapturingKothName());
+            lines.add(" §7Tiempo: §f" + fmtMs(captureMs));
         }
 
         // Per-player timers

@@ -70,7 +70,8 @@ public class FactionEventListener implements Listener {
             FactionDisbandEvent bukkitEvent = new FactionDisbandEvent(
                     event.getFactionId(), event.getFactionName(), event.getActorUuid());
             Bukkit.getPluginManager().callEvent(bukkitEvent);
-            Bukkit.broadcastMessage(messages.format("faction.broadcast.disbanded", "name", event.getFactionName()));
+            String msg = messages.format("faction.broadcast.disbanded", "name", event.getFactionName());
+            for (org.bukkit.entity.Player online : Bukkit.getOnlinePlayers()) online.sendMessage(msg);
             // Reset tab names for all online players (former members get no-faction format)
             tabListManager.refreshAll();
         });

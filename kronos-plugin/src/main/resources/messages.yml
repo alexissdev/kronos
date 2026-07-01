@@ -57,6 +57,7 @@ spawn:
 koth:
   entered-zone: "&6Entraste al territorio del KOTH &e{name}&6."
   left-zone: "&7Saliste del territorio del KOTH &e{name}&7."
+  started-capturing: "&6[KOTH] &e{player} &6está capturando el KOTH &e{name}&6."
   capturing: "&eEstás capturando &f{name}&e. Tiempo restante: &f{remaining}s"
   broadcast:
     started: "&6[KOTH] &e¡El KOTH &f{name} &eha comenzado!"
