@@ -15,8 +15,11 @@ import dev.alexissdev.kronos.plugin.listener.CrateListener;
 import dev.alexissdev.kronos.plugin.listener.DeathbanListener;
 import dev.alexissdev.kronos.plugin.listener.KothListener;
 import dev.alexissdev.kronos.plugin.command.FactionCommand;
+import dev.alexissdev.kronos.plugin.command.FixCommand;
 import dev.alexissdev.kronos.plugin.command.HCFCommand;
+import dev.alexissdev.kronos.plugin.command.NearCommand;
 import dev.alexissdev.kronos.plugin.command.PvpTimerCommand;
+import dev.alexissdev.kronos.plugin.command.StatsCommand;
 import dev.alexissdev.kronos.plugin.listener.FactionEventListener;
 import dev.alexissdev.kronos.plugin.listener.PlayerDataListener;
 import dev.alexissdev.kronos.plugin.listener.PvpListener;
@@ -72,6 +75,9 @@ public class PluginEnableHandler {
         registerCommand("hcf",      injector.getInstance(HCFCommand.class));
         registerCommand("pvptimer", injector.getInstance(PvpTimerCommand.class));
         registerCommand("spawn",    injector.getInstance(SpawnCommand.class));
+        registerCommand("stats",    injector.getInstance(StatsCommand.class));
+        registerCommand("near",     injector.getInstance(NearCommand.class));
+        registerCommand("fix",      injector.getInstance(FixCommand.class));
     }
 
     private void registerCommand(String name, org.bukkit.command.CommandExecutor executor) {

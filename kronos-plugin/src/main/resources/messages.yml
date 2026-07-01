@@ -219,6 +219,22 @@ pvptimer:
   help-give: "&e/pvptimer give <jugador> &7- Dar PvP Timer"
   help-remove: "&e/pvptimer remove <jugador> &7- Quitar PvP Timer"
 
+stats:
+  header:    "&6&lEstadísticas de &e{player}&6:"
+  faction:   "  &7Facción: &e{faction}"
+  kills:     "  &7Kills: &a{kills}"
+  deaths:    "  &7Deaths: &c{deaths}"
+  lives:     "  &7Vidas: &f{lives}"
+  no-faction: "&7Ninguna"
+
+near:
+  header: "&6Jugadores cercanos &7(radio: &e{radius}m&7, total: &e{count}&7):"
+  entry:  "  &e{player}"
+  none:   "&7No hay jugadores en un radio de &e{radius}m&7."
+
+fix:
+  done: "&aInventario reparado."
+
 scoreboard:
   separator:  "&8&m                       &r"
   faction:    "&7Facción: &e{faction}"

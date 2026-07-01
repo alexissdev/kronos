@@ -65,6 +65,19 @@ bukkit {
             usage = "/spawn <setzone|info|remove>"
             permission = "hcf.spawn.admin"
         }
+        register("stats") {
+            description = "Ver estadísticas de un jugador"
+            usage = "/stats [jugador]"
+        }
+        register("near") {
+            description = "Ver jugadores cercanos"
+            usage = "/near [radio]"
+        }
+        register("fix") {
+            description = "Reparar inventario"
+            usage = "/fix"
+            permission = "hcf.admin"
+        }
     }
 
     permissions {
