@@ -1,6 +1,6 @@
 plugins {
     java
-    id("com.github.johnrengelman.shadow") version "7.1.2" apply false
+    id("com.gradleup.shadow") version "8.3.6" apply false
     id("net.minecrell.plugin-yml.bukkit") version "0.6.0" apply false
 }
 
