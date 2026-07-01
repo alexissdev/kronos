@@ -2,12 +2,12 @@ package dev.alexissdev.kronos.spawn.listener;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import dev.alexissdev.kronos.common.config.MessagesConfig;
 import dev.alexissdev.kronos.spawn.creation.SpawnCreationService;
 import dev.alexissdev.kronos.spawn.creation.SpawnCreationSession;
 import dev.alexissdev.kronos.spawn.domain.SpawnZone;
 import dev.alexissdev.kronos.spawn.service.SpawnService;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -24,19 +24,20 @@ import java.util.Optional;
 @Singleton
 public class SpawnWandListener implements Listener {
 
-    private static final String PREFIX = ChatColor.AQUA + "[Spawn] " + ChatColor.RESET;
-
     private final SpawnCreationService creationService;
     private final SpawnService spawnService;
     private final JavaPlugin plugin;
+    private final MessagesConfig messages;
 
     @Inject
     public SpawnWandListener(SpawnCreationService creationService,
                               SpawnService spawnService,
-                              JavaPlugin plugin) {
+                              JavaPlugin plugin,
+                              MessagesConfig messages) {
         this.creationService = creationService;
         this.spawnService    = spawnService;
         this.plugin          = plugin;
+        this.messages        = messages;
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -56,7 +57,7 @@ public class SpawnWandListener implements Listener {
 
         Optional<SpawnCreationSession> sessionOpt = creationService.getSession(player.getUniqueId());
         if (!sessionOpt.isPresent()) {
-            player.sendMessage(PREFIX + ChatColor.RED + "No tienes sesión activa. Usa /spawn setzone.");
+            player.sendMessage(messages.get("spawn.wand.no-session"));
             return;
         }
 
@@ -67,14 +68,14 @@ public class SpawnWandListener implements Listener {
 
         if (isPos1) {
             session.setPos1(block.getWorld().getName(), x, z);
-            player.sendMessage(PREFIX + ChatColor.GREEN + "Pos 1: " + ChatColor.WHITE + x + ", " + z);
+            player.sendMessage(messages.format("spawn.wand.pos1-set", "x", x, "z", z));
         } else {
             if (!session.hasPos1()) {
-                player.sendMessage(PREFIX + ChatColor.RED + "Primero establece la Pos 1 (clic izquierdo).");
+                player.sendMessage(messages.get("spawn.wand.need-pos1"));
                 return;
             }
             session.setPos2(x, z);
-            player.sendMessage(PREFIX + ChatColor.YELLOW + "Pos 2: " + ChatColor.WHITE + x + ", " + z);
+            player.sendMessage(messages.format("spawn.wand.pos2-set", "x", x, "z", z));
             finalizeZone(player, session);
         }
     }
@@ -92,16 +93,16 @@ public class SpawnWandListener implements Listener {
                     removeWand(player);
                     creationService.cancelSession(player.getUniqueId());
 
-                    player.sendMessage(PREFIX + ChatColor.GREEN + "¡Zona de Spawn configurada!");
-                    player.sendMessage(ChatColor.GRAY + "  Mundo: " + ChatColor.WHITE + zone.getWorld());
-                    player.sendMessage(ChatColor.GRAY + "  Esquinas: "
-                            + ChatColor.WHITE + "(" + zone.getMinX() + ", " + zone.getMinZ() + ")"
-                            + ChatColor.GRAY + " → "
-                            + ChatColor.WHITE + "(" + zone.getMaxX() + ", " + zone.getMaxZ() + ")");
+                    player.sendMessage(messages.get("spawn.wand.zone-set"));
+                    player.sendMessage(messages.format("spawn.wand.zone-world", "world", zone.getWorld()));
+                    player.sendMessage(messages.format("spawn.wand.zone-corners",
+                            "minX", zone.getMinX(), "minZ", zone.getMinZ(),
+                            "maxX", zone.getMaxX(), "maxZ", zone.getMaxZ()));
                 }))
                 .exceptionally(ex -> {
                     Bukkit.getScheduler().runTask(plugin, () ->
-                            player.sendMessage(PREFIX + ChatColor.RED + "Error al guardar: " + ex.getMessage()));
+                            player.sendMessage(messages.format("spawn.wand.save-error",
+                                    "error", ex.getMessage())));
                     return null;
                 });
     }

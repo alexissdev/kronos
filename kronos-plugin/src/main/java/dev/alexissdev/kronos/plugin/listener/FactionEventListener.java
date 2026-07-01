@@ -10,6 +10,7 @@ import dev.alexissdev.kronos.api.event.FactionClaimEvent;
 import dev.alexissdev.kronos.api.event.PlayerJoinFactionEvent;
 import dev.alexissdev.kronos.api.event.PlayerLeaveFactionEvent;
 import dev.alexissdev.kronos.api.model.FactionSnapshot;
+import dev.alexissdev.kronos.common.config.MessagesConfig;
 import dev.alexissdev.kronos.factions.event.FactionCreatedDomainEvent;
 import dev.alexissdev.kronos.factions.event.FactionDisbandedDomainEvent;
 import dev.alexissdev.kronos.factions.event.PlayerJoinedFactionDomainEvent;
@@ -18,7 +19,6 @@ import dev.alexissdev.kronos.factions.event.FactionClaimedDomainEvent;
 import dev.alexissdev.kronos.claims.domain.ClaimType;
 import dev.alexissdev.kronos.factions.service.FactionService;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
@@ -35,12 +35,15 @@ public class FactionEventListener implements Listener {
     private final Plugin plugin;
     private final FactionService factionService;
     private final EventBus eventBus;
+    private final MessagesConfig messages;
 
     @Inject
-    public FactionEventListener(Plugin plugin, FactionService factionService, EventBus eventBus) {
+    public FactionEventListener(Plugin plugin, FactionService factionService,
+                                 EventBus eventBus, MessagesConfig messages) {
         this.plugin = plugin;
         this.factionService = factionService;
         this.eventBus = eventBus;
+        this.messages = messages;
         this.eventBus.register(this);
     }
 
@@ -63,9 +66,7 @@ public class FactionEventListener implements Listener {
             FactionDisbandEvent bukkitEvent = new FactionDisbandEvent(
                     event.getFactionId(), event.getFactionName(), event.getActorUuid());
             Bukkit.getPluginManager().callEvent(bukkitEvent);
-            Bukkit.broadcastMessage(ChatColor.GRAY + "[Facción] " +
-                    ChatColor.WHITE + event.getFactionName() +
-                    ChatColor.GRAY + " fue disuelta.");
+            Bukkit.broadcastMessage(messages.format("faction.broadcast.disbanded", "name", event.getFactionName()));
         });
     }
 
@@ -93,8 +94,10 @@ public class FactionEventListener implements Listener {
                                 f.getMembers().values().stream()
                                         .map(m -> Bukkit.getPlayer(m.getUuid()))
                                         .filter(p -> p != null)
-                                        .forEach(p -> p.sendMessage(ChatColor.YELLOW +
-                                                player.getName() + " fue " + reason + " de la facción.")))));
+                                        .forEach(p -> p.sendMessage(messages.format(
+                                                "faction.member.left",
+                                                "player", player.getName(),
+                                                "reason", reason))))));
             }
         });
     }

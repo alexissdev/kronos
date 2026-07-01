@@ -5,6 +5,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 import dev.alexissdev.kronos.api.guice.ApiModule;
+import dev.alexissdev.kronos.common.config.MessagesConfig;
 import dev.alexissdev.kronos.scoreboard.ScoreboardModule;
 import dev.alexissdev.kronos.spawn.SpawnModule;
 import dev.alexissdev.kronos.classes.ClassesModule;
@@ -26,15 +27,18 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class RootModule extends AbstractModule {
 
     private final JavaPlugin plugin;
+    private final MessagesConfig messagesConfig;
 
-    public RootModule(JavaPlugin plugin) {
+    public RootModule(JavaPlugin plugin, MessagesConfig messagesConfig) {
         this.plugin = plugin;
+        this.messagesConfig = messagesConfig;
     }
 
     @Override
     protected void configure() {
         bind(JavaPlugin.class).toInstance(plugin);
         bind(org.bukkit.plugin.Plugin.class).toInstance(plugin);
+        bind(MessagesConfig.class).toInstance(messagesConfig);
         bind(EventBus.class).in(Singleton.class);
         bind(PlayerDataListener.class).in(Singleton.class);
         bind(PvpListener.class).in(Singleton.class);

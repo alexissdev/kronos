@@ -6,11 +6,11 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import dev.alexissdev.kronos.api.event.KothCaptureEvent;
 import dev.alexissdev.kronos.api.event.KothStartEvent;
+import dev.alexissdev.kronos.common.config.MessagesConfig;
 import dev.alexissdev.kronos.koth.event.KothCapturedDomainEvent;
 import dev.alexissdev.kronos.koth.event.KothStartedDomainEvent;
 import dev.alexissdev.kronos.koth.service.KothService;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -28,15 +28,17 @@ public class KothListener implements Listener {
     private final KothService kothService;
     private final Plugin plugin;
     private final EventBus eventBus;
+    private final MessagesConfig messages;
 
     private final ConcurrentHashMap<UUID, Long> captureProgress = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, String> currentKothCapturing = new ConcurrentHashMap<>();
 
     @Inject
-    public KothListener(KothService kothService, Plugin plugin, EventBus eventBus) {
+    public KothListener(KothService kothService, Plugin plugin, EventBus eventBus, MessagesConfig messages) {
         this.kothService = kothService;
         this.plugin = plugin;
         this.eventBus = eventBus;
+        this.messages = messages;
         this.eventBus.register(this);
         startCaptureTask();
     }
@@ -73,9 +75,7 @@ public class KothListener implements Listener {
             KothStartEvent bukkitEvent = new KothStartEvent(event.getKothName());
             Bukkit.getPluginManager().callEvent(bukkitEvent);
             if (!bukkitEvent.isCancelled()) {
-                Bukkit.broadcastMessage(ChatColor.GOLD + "[KOTH] " +
-                        ChatColor.YELLOW + "¡El KOTH " + ChatColor.WHITE + event.getKothName() +
-                        ChatColor.YELLOW + " ha comenzado!");
+                Bukkit.broadcastMessage(messages.format("koth.broadcast.started", "name", event.getKothName()));
             }
         });
     }
@@ -87,9 +87,8 @@ public class KothListener implements Listener {
             Bukkit.getPluginManager().callEvent(bukkitEvent);
             Player captor = Bukkit.getPlayer(event.getCaptorUuid());
             String captorName = captor != null ? captor.getName() : "Unknown";
-            Bukkit.broadcastMessage(ChatColor.GOLD + "[KOTH] " +
-                    ChatColor.WHITE + captorName + ChatColor.YELLOW + " capturó el KOTH " +
-                    ChatColor.WHITE + event.getKothName() + ChatColor.YELLOW + "!");
+            Bukkit.broadcastMessage(messages.format("koth.broadcast.captured",
+                    "player", captorName, "name", event.getKothName()));
         });
     }
 

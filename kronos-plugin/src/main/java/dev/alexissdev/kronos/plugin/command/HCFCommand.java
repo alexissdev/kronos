@@ -1,6 +1,7 @@
 package dev.alexissdev.kronos.plugin.command;
 
 import dev.alexissdev.kronos.common.command.BaseCommand;
+import dev.alexissdev.kronos.common.config.MessagesConfig;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -15,12 +16,14 @@ public class HCFCommand extends BaseCommand {
 
     private final EconomyService economyService;
     private final Plugin plugin;
+    private final MessagesConfig messages;
 
     @Inject
-    public HCFCommand(EconomyService economyService, Plugin plugin) {
+    public HCFCommand(EconomyService economyService, Plugin plugin, MessagesConfig messages) {
         super("hcf.admin");
         this.economyService = economyService;
         this.plugin = plugin;
+        this.messages = messages;
     }
 
     @Override
@@ -36,35 +39,38 @@ public class HCFCommand extends BaseCommand {
     }
 
     private void handleReload(CommandSender sender) {
-        msg(sender, "&eRecargando configuración... (WIP)");
+        sender.sendMessage(messages.get("hcf.reloading"));
     }
 
     private void handleGiveMoney(CommandSender sender, String[] args) {
         if (!requireArgs(sender, args, 3, "/hcf give-money <jugador> <cantidad>")) return;
         Player target = Bukkit.getPlayer(args[1]);
-        if (target == null) { msg(sender, "&cJugador no encontrado."); return; }
+        if (target == null) { sender.sendMessage(messages.get("hcf.player-not-found")); return; }
 
         double amount;
         try { amount = Double.parseDouble(args[2]); } catch (NumberFormatException e) {
-            msg(sender, "&cCantidad inválida."); return;
+            sender.sendMessage(messages.get("hcf.amount-invalid")); return;
         }
 
-        economyService.deposit(target.getUniqueId(), amount)
+        final double finalAmount = amount;
+        economyService.deposit(target.getUniqueId(), finalAmount)
                 .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
-                    msg(sender, "&aDiste &e$" + amount + "&a a &e" + target.getName());
-                    msg(target, "&aRecibiste &e$" + amount + "&a del staff.");
+                    sender.sendMessage(messages.format("hcf.give-money-sender",
+                            "amount", String.format("%.2f", finalAmount), "player", target.getName()));
+                    target.sendMessage(messages.format("hcf.give-money-target",
+                            "amount", String.format("%.2f", finalAmount)));
                 }));
     }
 
     private void handleSetMoney(CommandSender sender, String[] args) {
         if (!requireArgs(sender, args, 3, "/hcf set-money <jugador> <cantidad>")) return;
-        msg(sender, "&eSetear balance: (WIP)");
+        sender.sendMessage(messages.get("hcf.set-money-wip"));
     }
 
     private void sendHelp(CommandSender sender) {
-        msg(sender, "&6&lComandos Administrativos HCF:");
-        msg(sender, "&e/hcf reload &7- Recargar configuración");
-        msg(sender, "&e/hcf give-money <jugador> <$> &7- Dar dinero");
-        msg(sender, "&e/hcf set-money <jugador> <$> &7- Establecer balance");
+        sender.sendMessage(messages.get("hcf.help-header"));
+        sender.sendMessage(messages.get("hcf.help-reload"));
+        sender.sendMessage(messages.get("hcf.help-give-money"));
+        sender.sendMessage(messages.get("hcf.help-set-money"));
     }
 }

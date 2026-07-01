@@ -1,6 +1,7 @@
 package dev.alexissdev.kronos.economy.command;
 
 import dev.alexissdev.kronos.common.command.BaseCommand;
+import dev.alexissdev.kronos.common.config.MessagesConfig;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -19,12 +20,14 @@ public class MoneyCommand extends BaseCommand {
 
     private final EconomyService economyService;
     private final Plugin plugin;
+    private final MessagesConfig messages;
 
     @Inject
-    public MoneyCommand(EconomyService economyService, Plugin plugin) {
+    public MoneyCommand(EconomyService economyService, Plugin plugin, MessagesConfig messages) {
         super(null);
         this.economyService = economyService;
         this.plugin = plugin;
+        this.messages = messages;
     }
 
     @Override
@@ -40,7 +43,7 @@ public class MoneyCommand extends BaseCommand {
             default:
                 Player target = Bukkit.getPlayer(args[0]);
                 if (target != null) showBalance(player, target.getUniqueId(), target.getName());
-                else msg(player, "&cJugador no encontrado o no está online.");
+                else player.sendMessage(messages.get("economy.player-not-found"));
         }
     }
 
@@ -48,9 +51,12 @@ public class MoneyCommand extends BaseCommand {
         economyService.getBalance(targetUuid)
                 .thenAccept(balance -> Bukkit.getScheduler().runTask(plugin, () -> {
                     if (viewer.getUniqueId().equals(targetUuid)) {
-                        msg(viewer, "&6Tu balance: &e$" + String.format("%.2f", balance));
+                        viewer.sendMessage(messages.format("economy.balance-self",
+                                "amount", String.format("%.2f", balance)));
                     } else {
-                        msg(viewer, "&6Balance de &e" + targetName + "&6: &e$" + String.format("%.2f", balance));
+                        viewer.sendMessage(messages.format("economy.balance-other",
+                                "player", targetName,
+                                "amount", String.format("%.2f", balance)));
                     }
                 }));
     }
@@ -58,30 +64,36 @@ public class MoneyCommand extends BaseCommand {
     private void handlePay(Player sender, String[] args) {
         if (!requireArgs(sender, args, 3, "/money pay <jugador> <cantidad>")) return;
         Player target = Bukkit.getPlayer(args[1]);
-        if (target == null) { msg(sender, "&cJugador no encontrado."); return; }
-        if (target.equals(sender)) { msg(sender, "&cNo puedes pagarte a ti mismo."); return; }
+        if (target == null) { sender.sendMessage(messages.get("economy.player-not-found")); return; }
+        if (target.equals(sender)) { sender.sendMessage(messages.get("economy.pay-self")); return; }
 
         double amount;
         try { amount = Double.parseDouble(args[2]); } catch (NumberFormatException e) {
-            msg(sender, "&cCantidad inválida."); return;
+            sender.sendMessage(messages.get("economy.amount-invalid")); return;
         }
-        if (amount <= 0) { msg(sender, "&cLa cantidad debe ser positiva."); return; }
+        if (amount <= 0) { sender.sendMessage(messages.get("economy.amount-positive")); return; }
 
-        economyService.transfer(sender.getUniqueId(), target.getUniqueId(), amount)
+        final double finalAmount = amount;
+        economyService.transfer(sender.getUniqueId(), target.getUniqueId(), finalAmount)
                 .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
-                    msg(sender, "&aPagaste &e$" + String.format("%.2f", amount) + "&a a &e" + target.getName());
-                    msg(target, "&e" + sender.getName() + "&a te pagó &e$" + String.format("%.2f", amount));
+                    sender.sendMessage(messages.format("economy.pay-sent",
+                            "amount", String.format("%.2f", finalAmount),
+                            "player", target.getName()));
+                    target.sendMessage(messages.format("economy.pay-received",
+                            "sender", sender.getName(),
+                            "amount", String.format("%.2f", finalAmount)));
                 }))
                 .exceptionally(ex -> {
-                    Bukkit.getScheduler().runTask(plugin,
-                            () -> msg(sender, "&c" + (ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage())));
+                    Bukkit.getScheduler().runTask(plugin, () ->
+                            sender.sendMessage(messages.format("economy.error",
+                                    "error", ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage())));
                     return null;
                 });
     }
 
     private void handleTop(Player player) {
         Collection<? extends Player> online = Bukkit.getOnlinePlayers();
-        if (online.isEmpty()) { msg(player, "&cNo hay jugadores online."); return; }
+        if (online.isEmpty()) { player.sendMessage(messages.get("economy.player-not-found")); return; }
 
         List<CompletableFuture<Map.Entry<String, Double>>> futures = online.stream()
                 .map(p -> economyService.getBalance(p.getUniqueId())
@@ -96,10 +108,12 @@ public class MoneyCommand extends BaseCommand {
                             .limit(10)
                             .collect(Collectors.toList());
                     Bukkit.getScheduler().runTask(plugin, () -> {
-                        msg(player, "&6&lTop Riqueza (online):");
+                        player.sendMessage(messages.get("economy.top-header"));
                         for (int i = 0; i < sorted.size(); i++) {
-                            msg(player, "&e" + (i + 1) + ". &f" + sorted.get(i).getKey()
-                                    + " &7- &e$" + String.format("%.2f", sorted.get(i).getValue()));
+                            player.sendMessage(messages.format("economy.top-entry",
+                                    "rank", i + 1,
+                                    "player", sorted.get(i).getKey(),
+                                    "amount", String.format("%.2f", sorted.get(i).getValue())));
                         }
                     });
                 });

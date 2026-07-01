@@ -2,11 +2,11 @@ package dev.alexissdev.kronos.plugin.listener;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import dev.alexissdev.kronos.common.config.MessagesConfig;
 import dev.alexissdev.kronos.timers.TimerApplicationService;
 import dev.alexissdev.kronos.timers.domain.TimerType;
 import dev.alexissdev.kronos.players.service.PlayerService;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -25,13 +25,17 @@ public class PlayerDataListener implements Listener {
     private final PlayerService playerService;
     private final TimerApplicationService timerService;
     private final Plugin plugin;
+    private final MessagesConfig messages;
 
     @Inject
     public PlayerDataListener(PlayerService playerService,
-                              TimerApplicationService timerService, Plugin plugin) {
+                              TimerApplicationService timerService,
+                              Plugin plugin,
+                              MessagesConfig messages) {
         this.playerService = playerService;
         this.timerService = timerService;
         this.plugin = plugin;
+        this.messages = messages;
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -60,8 +64,7 @@ public class PlayerDataListener implements Listener {
                         Bukkit.getScheduler().runTask(plugin, () -> {
                             if (event.getPlayer().isOnline()) {
                                 event.getPlayer().setHealth(0);
-                                event.getPlayer().sendMessage(
-                                        ChatColor.RED + "Moriste por desconectarte en combate.");
+                                event.getPlayer().sendMessage(messages.get("timers.logout-death"));
                             }
                         });
                     }

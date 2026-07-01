@@ -1,6 +1,7 @@
 package dev.alexissdev.kronos.plugin.command;
 
 import dev.alexissdev.kronos.common.command.BaseCommand;
+import dev.alexissdev.kronos.common.config.MessagesConfig;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -27,13 +28,16 @@ public class FactionCommand extends BaseCommand {
     private final FactionService factionService;
     private final ClaimService claimService;
     private final Plugin plugin;
+    private final MessagesConfig messages;
 
     @Inject
-    public FactionCommand(FactionService factionService, ClaimService claimService, Plugin plugin) {
+    public FactionCommand(FactionService factionService, ClaimService claimService,
+                          Plugin plugin, MessagesConfig messages) {
         super(null);
         this.factionService = factionService;
         this.claimService = claimService;
         this.plugin = plugin;
+        this.messages = messages;
     }
 
     @Override
@@ -41,10 +45,7 @@ public class FactionCommand extends BaseCommand {
         Player player = requirePlayer(sender);
         if (player == null) return;
 
-        if (args.length == 0) {
-            sendHelp(player);
-            return;
-        }
+        if (args.length == 0) { sendHelp(player); return; }
 
         switch (args[0].toLowerCase()) {
             case "create": handleCreate(player, args); break;
@@ -72,10 +73,10 @@ public class FactionCommand extends BaseCommand {
         if (!requireArgs(player, args, 2, "/f create <nombre>")) return;
         factionService.createFaction(args[1], player.getUniqueId())
                 .thenAccept(faction -> Bukkit.getScheduler().runTask(plugin,
-                        () -> msg(player, "&aFacción &e" + faction.getName() + "&a creada con éxito!")))
+                        () -> player.sendMessage(messages.format("faction.cmd.created", "name", faction.getName()))))
                 .exceptionally(ex -> {
                     Bukkit.getScheduler().runTask(plugin,
-                            () -> msg(player, "&c" + getRootCause(ex).getMessage()));
+                            () -> player.sendMessage(messages.format("faction.cmd.error", "error", rootMsg(ex))));
                     return null;
                 });
     }
@@ -85,10 +86,10 @@ public class FactionCommand extends BaseCommand {
             if (opt.isEmpty()) throw new HCFException("No estás en una facción");
             return factionService.disbandFaction(opt.get().getId(), player.getUniqueId());
         }).thenRun(() -> Bukkit.getScheduler().runTask(plugin,
-                () -> msg(player, "&aTu facción ha sido disuelta.")))
+                () -> player.sendMessage(messages.get("faction.cmd.disbanded"))))
                 .exceptionally(ex -> {
                     Bukkit.getScheduler().runTask(plugin,
-                            () -> msg(player, "&c" + getRootCause(ex).getMessage()));
+                            () -> player.sendMessage(messages.format("faction.cmd.error", "error", rootMsg(ex))));
                     return null;
                 });
     }
@@ -96,17 +97,17 @@ public class FactionCommand extends BaseCommand {
     private void handleInvite(Player player, String[] args) {
         if (!requireArgs(player, args, 2, "/f invite <jugador>")) return;
         Player target = Bukkit.getPlayer(args[1]);
-        if (target == null) { msg(player, "&cJugador no encontrado."); return; }
+        if (target == null) { player.sendMessage(messages.get("faction.cmd.player-not-found")); return; }
 
         factionService.getByPlayer(player.getUniqueId()).thenCompose(opt -> {
             if (opt.isEmpty()) throw new HCFException("No estás en una facción");
             return factionService.inviteMember(opt.get().getId(), target.getUniqueId(), player.getUniqueId());
         }).thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
-            msg(player, "&aInvitación enviada a &e" + target.getName());
-            msg(target, "&e" + player.getName() + "&a te invitó a su facción. Usa &e/f accept <faccion>");
+            player.sendMessage(messages.format("faction.cmd.invite-sent", "player", target.getName()));
+            target.sendMessage(messages.format("faction.cmd.invite-received", "player", player.getName()));
         })).exceptionally(ex -> {
             Bukkit.getScheduler().runTask(plugin,
-                    () -> msg(player, "&c" + getRootCause(ex).getMessage()));
+                    () -> player.sendMessage(messages.format("faction.cmd.error", "error", rootMsg(ex))));
             return null;
         });
     }
@@ -117,10 +118,10 @@ public class FactionCommand extends BaseCommand {
             if (opt.isEmpty()) throw new HCFException("Facción no encontrada");
             return factionService.acceptInvite(player.getUniqueId(), opt.get().getId());
         }).thenRun(() -> Bukkit.getScheduler().runTask(plugin,
-                () -> msg(player, "&aTe uniste a la facción!")))
+                () -> player.sendMessage(messages.get("faction.cmd.joined"))))
                 .exceptionally(ex -> {
                     Bukkit.getScheduler().runTask(plugin,
-                            () -> msg(player, "&c" + getRootCause(ex).getMessage()));
+                            () -> player.sendMessage(messages.format("faction.cmd.error", "error", rootMsg(ex))));
                     return null;
                 });
     }
@@ -128,10 +129,10 @@ public class FactionCommand extends BaseCommand {
     private void handleLeave(Player player) {
         factionService.leaveFaction(player.getUniqueId())
                 .thenRun(() -> Bukkit.getScheduler().runTask(plugin,
-                        () -> msg(player, "&aSaliste de tu facción.")))
+                        () -> player.sendMessage(messages.get("faction.cmd.left"))))
                 .exceptionally(ex -> {
                     Bukkit.getScheduler().runTask(plugin,
-                            () -> msg(player, "&c" + getRootCause(ex).getMessage()));
+                            () -> player.sendMessage(messages.format("faction.cmd.error", "error", rootMsg(ex))));
                     return null;
                 });
     }
@@ -139,16 +140,16 @@ public class FactionCommand extends BaseCommand {
     private void handleKick(Player player, String[] args) {
         if (!requireArgs(player, args, 2, "/f kick <jugador>")) return;
         Player target = Bukkit.getPlayer(args[1]);
-        if (target == null) { msg(player, "&cJugador no encontrado."); return; }
+        if (target == null) { player.sendMessage(messages.get("faction.cmd.player-not-found")); return; }
 
         factionService.getByPlayer(player.getUniqueId()).thenCompose(opt -> {
             if (opt.isEmpty()) throw new HCFException("No estás en una facción");
             return factionService.kickMember(opt.get().getId(), target.getUniqueId(), player.getUniqueId());
         }).thenRun(() -> Bukkit.getScheduler().runTask(plugin,
-                () -> msg(player, "&aExpulsaste a &e" + target.getName())))
+                () -> player.sendMessage(messages.format("faction.cmd.kicked", "player", target.getName()))))
                 .exceptionally(ex -> {
                     Bukkit.getScheduler().runTask(plugin,
-                            () -> msg(player, "&c" + getRootCause(ex).getMessage()));
+                            () -> player.sendMessage(messages.format("faction.cmd.error", "error", rootMsg(ex))));
                     return null;
                 });
     }
@@ -158,37 +159,37 @@ public class FactionCommand extends BaseCommand {
             factionService.getByName(args[1]).thenAccept(opt ->
                     Bukkit.getScheduler().runTask(plugin,
                             () -> opt.ifPresentOrElse(f -> printFactionInfo(player, f),
-                                    () -> msg(player, "&cFacción no encontrada."))));
+                                    () -> player.sendMessage(messages.get("faction.cmd.faction-not-found")))));
         } else {
             factionService.getByPlayer(player.getUniqueId()).thenAccept(opt ->
                     Bukkit.getScheduler().runTask(plugin,
                             () -> opt.ifPresentOrElse(f -> printFactionInfo(player, f),
-                                    () -> msg(player, "&cNo estás en ninguna facción."))));
+                                    () -> player.sendMessage(messages.get("faction.cmd.not-in-faction")))));
         }
     }
 
     private void printFactionInfo(Player player, Faction f) {
-        msg(player, "&7&m--------------------");
-        msg(player, "&6Facción: &e" + f.getName());
-        msg(player, "&6Miembros: &e" + f.getMembers().size());
-        msg(player, "&6Kills: &e" + f.getKills() + " &6Deaths: &e" + f.getDeaths());
-        msg(player, "&6DTK: &e" + f.getDtkRemaining() + "/" + f.getMaxDtk());
-        msg(player, "&6Balance: &e$" + String.format("%.2f", f.getBalance()));
-        msg(player, "&7&m--------------------");
+        player.sendMessage(messages.get("faction.cmd.info-sep"));
+        player.sendMessage(messages.format("faction.cmd.info-name", "name", f.getName()));
+        player.sendMessage(messages.format("faction.cmd.info-members", "count", f.getMembers().size()));
+        player.sendMessage(messages.format("faction.cmd.info-stats", "kills", f.getKills(), "deaths", f.getDeaths()));
+        player.sendMessage(messages.format("faction.cmd.info-dtk", "remaining", f.getDtkRemaining(), "max", f.getMaxDtk()));
+        player.sendMessage(messages.format("faction.cmd.info-balance", "balance", String.format("%.2f", f.getBalance())));
+        player.sendMessage(messages.get("faction.cmd.info-sep"));
     }
 
     private void handleChat(Player player) {
-        msg(player, "&aChat de facción toggled. (WIP)");
+        player.sendMessage(messages.get("faction.cmd.chat-toggled"));
     }
 
     private void handleTop(Player player) {
         factionService.getTopFactions(10).thenAccept(factions ->
                 Bukkit.getScheduler().runTask(plugin, () -> {
-                    msg(player, "&6&lTop Facciones:");
+                    player.sendMessage(messages.get("faction.cmd.top-header"));
                     for (int i = 0; i < factions.size(); i++) {
                         Faction f = factions.get(i);
-                        msg(player, "&e" + (i + 1) + ". &f" + f.getName() +
-                                " &7- Kills: &e" + f.getKills());
+                        player.sendMessage(messages.format("faction.cmd.top-entry",
+                                "rank", i + 1, "name", f.getName(), "kills", f.getKills()));
                     }
                 }));
     }
@@ -202,10 +203,10 @@ public class FactionCommand extends BaseCommand {
                 return factionService.setAlly(optA.get().getId(), optB.get().getId(), player.getUniqueId());
             });
         }).thenRun(() -> Bukkit.getScheduler().runTask(plugin,
-                () -> msg(player, "&aAlianza establecida.")))
+                () -> player.sendMessage(messages.get("faction.cmd.ally-set"))))
                 .exceptionally(ex -> {
                     Bukkit.getScheduler().runTask(plugin,
-                            () -> msg(player, "&c" + getRootCause(ex).getMessage()));
+                            () -> player.sendMessage(messages.format("faction.cmd.error", "error", rootMsg(ex))));
                     return null;
                 });
     }
@@ -219,10 +220,10 @@ public class FactionCommand extends BaseCommand {
                 return factionService.setEnemy(optA.get().getId(), optB.get().getId(), player.getUniqueId());
             });
         }).thenRun(() -> Bukkit.getScheduler().runTask(plugin,
-                () -> msg(player, "&cRelación de enemigos establecida.")))
+                () -> player.sendMessage(messages.get("faction.cmd.enemy-set"))))
                 .exceptionally(ex -> {
                     Bukkit.getScheduler().runTask(plugin,
-                            () -> msg(player, "&c" + getRootCause(ex).getMessage()));
+                            () -> player.sendMessage(messages.format("faction.cmd.error", "error", rootMsg(ex))));
                     return null;
                 });
     }
@@ -231,16 +232,18 @@ public class FactionCommand extends BaseCommand {
         if (!requireArgs(player, args, 2, "/f deposit <cantidad>")) return;
         double amount;
         try { amount = Double.parseDouble(args[1]); } catch (NumberFormatException e) {
-            msg(player, "&cCantidad inválida."); return;
+            player.sendMessage(messages.get("faction.cmd.amount-invalid")); return;
         }
+        final double finalAmount = amount;
         factionService.getByPlayer(player.getUniqueId()).thenCompose(opt -> {
             if (opt.isEmpty()) throw new HCFException("No estás en una facción");
-            return factionService.deposit(opt.get().getId(), player.getUniqueId(), amount);
+            return factionService.deposit(opt.get().getId(), player.getUniqueId(), finalAmount);
         }).thenRun(() -> Bukkit.getScheduler().runTask(plugin,
-                () -> msg(player, "&aDepositaste &e$" + amount + "&a a la facción.")))
+                () -> player.sendMessage(messages.format("faction.cmd.deposited",
+                        "amount", String.format("%.2f", finalAmount)))))
                 .exceptionally(ex -> {
                     Bukkit.getScheduler().runTask(plugin,
-                            () -> msg(player, "&c" + getRootCause(ex).getMessage()));
+                            () -> player.sendMessage(messages.format("faction.cmd.error", "error", rootMsg(ex))));
                     return null;
                 });
     }
@@ -249,16 +252,18 @@ public class FactionCommand extends BaseCommand {
         if (!requireArgs(player, args, 2, "/f withdraw <cantidad>")) return;
         double amount;
         try { amount = Double.parseDouble(args[1]); } catch (NumberFormatException e) {
-            msg(player, "&cCantidad inválida."); return;
+            player.sendMessage(messages.get("faction.cmd.amount-invalid")); return;
         }
+        final double finalAmount = amount;
         factionService.getByPlayer(player.getUniqueId()).thenCompose(opt -> {
             if (opt.isEmpty()) throw new HCFException("No estás en una facción");
-            return factionService.withdraw(opt.get().getId(), player.getUniqueId(), amount);
+            return factionService.withdraw(opt.get().getId(), player.getUniqueId(), finalAmount);
         }).thenRun(() -> Bukkit.getScheduler().runTask(plugin,
-                () -> msg(player, "&aRetiraste &e$" + amount + "&a de la facción.")))
+                () -> player.sendMessage(messages.format("faction.cmd.withdrawn",
+                        "amount", String.format("%.2f", finalAmount)))))
                 .exceptionally(ex -> {
                     Bukkit.getScheduler().runTask(plugin,
-                            () -> msg(player, "&c" + getRootCause(ex).getMessage()));
+                            () -> player.sendMessage(messages.format("faction.cmd.error", "error", rootMsg(ex))));
                     return null;
                 });
     }
@@ -272,10 +277,10 @@ public class FactionCommand extends BaseCommand {
             if (opt.isEmpty()) throw new HCFException("No estás en una facción");
             return claimService.claim(opt.get().getId(), player.getUniqueId(), world, cx, cz, cx, cz);
         }).thenAccept(claim -> Bukkit.getScheduler().runTask(plugin,
-                () -> msg(player, "&aReclamaste el chunk &e(" + cx + ", " + cz + ")&a.")))
+                () -> player.sendMessage(messages.format("faction.cmd.claimed", "x", cx, "z", cz))))
                 .exceptionally(ex -> {
                     Bukkit.getScheduler().runTask(plugin,
-                            () -> msg(player, "&c" + getRootCause(ex).getMessage()));
+                            () -> player.sendMessage(messages.format("faction.cmd.error", "error", rootMsg(ex))));
                     return null;
                 });
     }
@@ -289,10 +294,10 @@ public class FactionCommand extends BaseCommand {
             if (opt.isEmpty()) throw new HCFException("No estás en una facción");
             return claimService.unclaim(opt.get().getId(), player.getUniqueId(), world, cx, cz);
         }).thenRun(() -> Bukkit.getScheduler().runTask(plugin,
-                () -> msg(player, "&aDesreclamaste el chunk &e(" + cx + ", " + cz + ")&a.")))
+                () -> player.sendMessage(messages.format("faction.cmd.unclaimed", "x", cx, "z", cz))))
                 .exceptionally(ex -> {
                     Bukkit.getScheduler().runTask(plugin,
-                            () -> msg(player, "&c" + getRootCause(ex).getMessage()));
+                            () -> player.sendMessage(messages.format("faction.cmd.error", "error", rootMsg(ex))));
                     return null;
                 });
     }
@@ -306,10 +311,10 @@ public class FactionCommand extends BaseCommand {
             if (opt.isEmpty()) throw new HCFException("No estás en una facción");
             return claimService.overclaim(opt.get().getId(), player.getUniqueId(), world, cx, cz);
         }).thenRun(() -> Bukkit.getScheduler().runTask(plugin,
-                () -> msg(player, "&aOverclaim exitoso en chunk &e(" + cx + ", " + cz + ")&a.")))
+                () -> player.sendMessage(messages.format("faction.cmd.overclaimed", "x", cx, "z", cz))))
                 .exceptionally(ex -> {
                     Bukkit.getScheduler().runTask(plugin,
-                            () -> msg(player, "&c" + getRootCause(ex).getMessage()));
+                            () -> player.sendMessage(messages.format("faction.cmd.error", "error", rootMsg(ex))));
                     return null;
                 });
     }
@@ -344,9 +349,9 @@ public class FactionCommand extends BaseCommand {
                     return buildMapLines(claimGrid, ownId, allyIds, enemyIds, centerX, centerZ);
                 }
         ).thenAccept(lines -> Bukkit.getScheduler().runTask(plugin, () -> {
-            msg(player, "&7&m---------&r &6Mapa de Claims &7&m---------");
+            player.sendMessage(messages.get("faction.cmd.map-header"));
             lines.forEach(player::sendMessage);
-            msg(player, "&a■&7=Propio &c■&7=Enemigo &e■&7=Aliado &9■&7=Sistema &7■&7=Libre");
+            player.sendMessage(messages.get("faction.cmd.map-legend"));
         }));
     }
 
@@ -388,26 +393,27 @@ public class FactionCommand extends BaseCommand {
     }
 
     private void sendHelp(Player player) {
-        msg(player, "&6&lComandos de Facción:");
-        msg(player, "&e/f create <nombre> &7- Crear facción");
-        msg(player, "&e/f disband &7- Disolver facción");
-        msg(player, "&e/f invite <jugador> &7- Invitar jugador");
-        msg(player, "&e/f accept <faccion> &7- Aceptar invitación");
-        msg(player, "&e/f leave &7- Salir de la facción");
-        msg(player, "&e/f kick <jugador> &7- Expulsar miembro");
-        msg(player, "&e/f info [faccion] &7- Ver información");
-        msg(player, "&e/f top &7- Top facciones");
-        msg(player, "&e/f ally <faccion> &7- Ser aliados");
-        msg(player, "&e/f enemy <faccion> &7- Ser enemigos");
-        msg(player, "&e/f deposit <$> &7- Depositar dinero");
-        msg(player, "&e/f withdraw <$> &7- Retirar dinero");
-        msg(player, "&e/f claim &7- Reclamar chunk actual");
-        msg(player, "&e/f unclaim &7- Desreclamar chunk actual");
-        msg(player, "&e/f overclaim &7- Overclaim territorio enemigo");
-        msg(player, "&e/f map &7- Mapa de claims");
+        player.sendMessage(messages.get("faction.cmd.help-header"));
+        player.sendMessage(messages.get("faction.cmd.help-create"));
+        player.sendMessage(messages.get("faction.cmd.help-disband"));
+        player.sendMessage(messages.get("faction.cmd.help-invite"));
+        player.sendMessage(messages.get("faction.cmd.help-accept"));
+        player.sendMessage(messages.get("faction.cmd.help-leave"));
+        player.sendMessage(messages.get("faction.cmd.help-kick"));
+        player.sendMessage(messages.get("faction.cmd.help-info"));
+        player.sendMessage(messages.get("faction.cmd.help-top"));
+        player.sendMessage(messages.get("faction.cmd.help-ally"));
+        player.sendMessage(messages.get("faction.cmd.help-enemy"));
+        player.sendMessage(messages.get("faction.cmd.help-deposit"));
+        player.sendMessage(messages.get("faction.cmd.help-withdraw"));
+        player.sendMessage(messages.get("faction.cmd.help-claim"));
+        player.sendMessage(messages.get("faction.cmd.help-unclaim"));
+        player.sendMessage(messages.get("faction.cmd.help-overclaim"));
+        player.sendMessage(messages.get("faction.cmd.help-map"));
     }
 
-    private Throwable getRootCause(Throwable ex) {
-        return ex.getCause() != null ? ex.getCause() : ex;
+    private static String rootMsg(Throwable ex) {
+        Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
+        return cause.getMessage() != null ? cause.getMessage() : cause.getClass().getSimpleName();
     }
 }

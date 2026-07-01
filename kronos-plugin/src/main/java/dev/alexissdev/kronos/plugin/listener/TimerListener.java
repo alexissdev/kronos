@@ -6,10 +6,10 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import dev.alexissdev.kronos.api.event.PlayerCombatTagEvent;
 import dev.alexissdev.kronos.api.event.PlayerTimerExpireEvent;
+import dev.alexissdev.kronos.common.config.MessagesConfig;
 import dev.alexissdev.kronos.timers.event.PlayerCombatTaggedDomainEvent;
 import dev.alexissdev.kronos.timers.event.PlayerTimerExpiredDomainEvent;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
@@ -19,11 +19,13 @@ public class TimerListener implements Listener {
 
     private final Plugin plugin;
     private final EventBus eventBus;
+    private final MessagesConfig messages;
 
     @Inject
-    public TimerListener(Plugin plugin, EventBus eventBus) {
+    public TimerListener(Plugin plugin, EventBus eventBus, MessagesConfig messages) {
         this.plugin = plugin;
         this.eventBus = eventBus;
+        this.messages = messages;
         this.eventBus.register(this);
     }
 
@@ -36,8 +38,8 @@ public class TimerListener implements Listener {
             if (!bukkitEvent.isCancelled()) {
                 Player tagged = Bukkit.getPlayer(domainEvent.getTaggedUuid());
                 Player tagger = Bukkit.getPlayer(domainEvent.getTaggerUuid());
-                if (tagged != null) tagged.sendMessage(ChatColor.RED + "¡Estás en combate! No puedes desconectarte.");
-                if (tagger != null) tagger.sendMessage(ChatColor.RED + "¡Estás en combate!");
+                if (tagged != null) tagged.sendMessage(messages.get("timers.combat-tag.tagged"));
+                if (tagger != null) tagger.sendMessage(messages.get("timers.combat-tag.tagger"));
             }
         });
     }
@@ -54,15 +56,13 @@ public class TimerListener implements Listener {
 
             switch (domainEvent.getTimerType()) {
                 case COMBAT_TAG:
-                    player.sendMessage(ChatColor.GREEN + "Ya no estás en combate.");
+                    player.sendMessage(messages.get("timers.combat-tag.expired"));
                     break;
                 case PVP_TIMER:
-                    player.sendMessage(ChatColor.RED + "Tu PvP Timer expiró. ¡Ya puedes ser atacado!");
+                    player.sendMessage(messages.get("timers.pvp-timer.expired"));
                     break;
                 case ENDERPEARL:
-                    player.sendMessage(ChatColor.GREEN + "Puedes usar enderpearl de nuevo.");
-                    break;
-                case LOGOUT:
+                    player.sendMessage(messages.get("timers.enderpearl.expired"));
                     break;
                 default:
                     break;

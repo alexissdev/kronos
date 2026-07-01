@@ -2,12 +2,12 @@ package dev.alexissdev.kronos.spawn.listener;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import dev.alexissdev.kronos.common.config.MessagesConfig;
 import dev.alexissdev.kronos.spawn.domain.SpawnZone;
 import dev.alexissdev.kronos.spawn.service.SpawnService;
 import dev.alexissdev.kronos.timers.TimerApplicationService;
 import dev.alexissdev.kronos.timers.domain.TimerType;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -24,22 +24,23 @@ import java.util.concurrent.ConcurrentHashMap;
 @Singleton
 public class SpawnListener implements Listener {
 
-    private static final String PREFIX = ChatColor.AQUA + "[Spawn] " + ChatColor.RESET;
-
     // Remaining PvP timer millis paused while the player is inside spawn.
     private final ConcurrentHashMap<UUID, Long> pausedPvpMs = new ConcurrentHashMap<>();
 
     private final SpawnService spawnService;
     private final TimerApplicationService timerService;
     private final JavaPlugin plugin;
+    private final MessagesConfig messages;
 
     @Inject
     public SpawnListener(SpawnService spawnService,
                          TimerApplicationService timerService,
-                         JavaPlugin plugin) {
+                         JavaPlugin plugin,
+                         MessagesConfig messages) {
         this.spawnService = spawnService;
         this.timerService = timerService;
         this.plugin       = plugin;
+        this.messages     = messages;
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -76,20 +77,18 @@ public class SpawnListener implements Listener {
 
         if (timerService.hasActiveTimerSync(uuid, TimerType.COMBAT_TAG)) {
             event.setCancelled(true);
-            player.sendMessage(PREFIX + ChatColor.RED + "No puedes entrar al spawn estando en "
-                    + ChatColor.BOLD + "Combat Tag" + ChatColor.RED + "!");
+            player.sendMessage(messages.get("spawn.blocked-combat-tag"));
             return;
         }
 
-        // Pause the PvP timer: save remaining ms, then cancel in Redis.
         if (timerService.hasActiveTimerSync(uuid, TimerType.PVP_TIMER)) {
             timerService.getRemainingMillis(uuid, TimerType.PVP_TIMER).thenAccept(opt ->
                     opt.ifPresent(remaining -> {
                         pausedPvpMs.put(uuid, remaining);
                         timerService.cancelTimer(uuid, TimerType.PVP_TIMER);
                         Bukkit.getScheduler().runTask(plugin, () ->
-                                player.sendMessage(PREFIX + ChatColor.YELLOW + "PvP Timer pausado "
-                                        + ChatColor.GRAY + "(" + fmtMs(remaining) + " restante)"));
+                                player.sendMessage(messages.format("spawn.pvp-timer-paused",
+                                        "remaining", fmtMs(remaining))));
                     })
             );
         }
@@ -102,8 +101,7 @@ public class SpawnListener implements Listener {
         if (remaining == null || remaining <= 0) return;
 
         timerService.startTimer(player.getUniqueId(), TimerType.PVP_TIMER, remaining);
-        player.sendMessage(PREFIX + ChatColor.GREEN + "PvP Timer reanudado "
-                + ChatColor.GRAY + "(" + fmtMs(remaining) + " restante)");
+        player.sendMessage(messages.format("spawn.pvp-timer-resumed", "remaining", fmtMs(remaining)));
     }
 
     // ── helpers ────────────────────────────────────────────────────────────

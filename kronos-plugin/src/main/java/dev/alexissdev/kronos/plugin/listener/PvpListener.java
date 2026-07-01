@@ -2,11 +2,11 @@ package dev.alexissdev.kronos.plugin.listener;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import dev.alexissdev.kronos.common.config.MessagesConfig;
 import dev.alexissdev.kronos.timers.TimerApplicationService;
 import dev.alexissdev.kronos.timers.domain.TimerType;
 import dev.alexissdev.kronos.factions.service.FactionService;
 import dev.alexissdev.kronos.players.service.PlayerService;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -20,13 +20,15 @@ public class PvpListener implements Listener {
     private final TimerApplicationService timerService;
     private final PlayerService playerService;
     private final FactionService factionService;
+    private final MessagesConfig messages;
 
     @Inject
     public PvpListener(TimerApplicationService timerService, PlayerService playerService,
-                       FactionService factionService) {
+                       FactionService factionService, MessagesConfig messages) {
         this.timerService = timerService;
         this.playerService = playerService;
         this.factionService = factionService;
+        this.messages = messages;
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -38,13 +40,13 @@ public class PvpListener implements Listener {
 
         if (timerService.hasActiveTimerSync(victim.getUniqueId(), TimerType.PVP_TIMER)) {
             event.setCancelled(true);
-            attacker.sendMessage(ChatColor.RED + victim.getName() + " tiene PvP Timer activo.");
+            attacker.sendMessage(messages.format("pvp.target-has-pvp-timer", "player", victim.getName()));
             return;
         }
 
         if (timerService.hasActiveTimerSync(attacker.getUniqueId(), TimerType.PVP_TIMER)) {
             event.setCancelled(true);
-            attacker.sendMessage(ChatColor.RED + "No puedes atacar con PvP Timer activo.");
+            attacker.sendMessage(messages.get("pvp.attacker-has-pvp-timer"));
             return;
         }
 
