@@ -218,6 +218,26 @@ pvptimer:
   help-give: "&e/pvptimer give <jugador> &7- Dar PvP Timer"
   help-remove: "&e/pvptimer remove <jugador> &7- Quitar PvP Timer"
 
+scoreboard:
+  separator:  "§8§m                       §r"
+  faction:    "§7Facción: §e{faction}"
+  no-faction: "§7Facción: §7Ninguna"
+  dtk:        "§7DTK: §e{dtk}"
+  kills:      "§7Kills: §a{kills}"
+  deaths:     "§7Deaths: §c{deaths}"
+  balance:    "§7Balance: §a${balance}"
+  koth-name:  "§6KOTH §e{name}"
+  koth-loc:   " §7Loc: §a{x}§7, §a{z}"
+  koth-cap:   " §7Cap: §f{time}"
+  footer:     "§fplay.kronos.net"
+  timer:
+    combat:     "§cCombat: §f{time}"
+    pvp:        "§6PvP Timer: §f{time}"
+    enderpearl: "§bEnderpearl: §f{time}"
+    home:       "§aCasa: §f{time}"
+    logout:     "§cDesconexión: §f{time}"
+    class:      "§dClase: §f{time}"
+
 tablist:
   leader:    "&4[{faction}] &f{player}"
   co_leader: "&c[{faction}] &f{player}"

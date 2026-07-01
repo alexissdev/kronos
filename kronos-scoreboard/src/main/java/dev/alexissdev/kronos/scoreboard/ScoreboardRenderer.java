@@ -1,8 +1,9 @@
 package dev.alexissdev.kronos.scoreboard;
 
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import dev.alexissdev.kronos.common.config.MessagesConfig;
 import dev.alexissdev.kronos.timers.domain.TimerType;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
@@ -12,70 +13,72 @@ import java.util.List;
 @Singleton
 final class ScoreboardRenderer {
 
-    private static final String SEP = "§8§m               §r";
+    private final MessagesConfig messages;
+
+    @Inject
+    ScoreboardRenderer(MessagesConfig messages) {
+        this.messages = messages;
+    }
 
     List<String> render(Player player, PlayerBoardData data, Collection<KothEntry> koths) {
         List<String> lines = new ArrayList<>();
+        String sep = messages.get("scoreboard.separator");
 
-        lines.add(SEP);
-        lines.add("§fOnline: §e" + Bukkit.getOnlinePlayers().size());
-        lines.add(SEP);
+        lines.add(sep);
 
         String faction = data.getFactionName();
         if (faction != null) {
-            lines.add("§7Faction: §e" + faction);
-            lines.add("§7DTK: §e" + data.getDtkRemaining());
+            lines.add(messages.format("scoreboard.faction", "faction", faction));
+            lines.add(messages.format("scoreboard.dtk", "dtk", String.valueOf(data.getDtkRemaining())));
         } else {
-            lines.add("§7Facción:");
+            lines.add(messages.get("scoreboard.no-faction"));
         }
 
-        lines.add("§7Kills: §a" + data.getKills());
-        lines.add("§7Deaths: §c" + data.getDeaths());
-        lines.add("§7Balance: §a$" + fmtBalance(data.getBalance()));
+        lines.add(messages.format("scoreboard.kills",   "kills",   String.valueOf(data.getKills())));
+        lines.add(messages.format("scoreboard.deaths",  "deaths",  String.valueOf(data.getDeaths())));
+        lines.add(messages.format("scoreboard.balance", "balance", fmtBalance(data.getBalance())));
 
-        // Active KOTHs — if the player is capturing this KOTH show countdown, otherwise show total time
         if (!koths.isEmpty()) {
-            lines.add(SEP);
+            lines.add(sep);
             for (KothEntry koth : koths) {
                 long captureMs = koth.name.equals(data.getCapturingKothName())
                         ? data.getCaptureRemainingMs() : 0;
-                lines.add("§6KOTH §e" + koth.name);
-                lines.add(" §7Loc: §a" + koth.centerX + "§7, §a" + koth.centerZ);
-                lines.add(captureMs > 0
-                        ? " §7Cap: §f" + fmtMs(captureMs)
-                        : " §7Cap: §f" + fmtMs((long) koth.captureTimeSeconds * 1000L));
+                lines.add(messages.format("scoreboard.koth-name", "name", koth.name));
+                lines.add(messages.format("scoreboard.koth-loc",
+                        "x", String.valueOf(koth.centerX),
+                        "z", String.valueOf(koth.centerZ)));
+                lines.add(messages.format("scoreboard.koth-cap", "time",
+                        fmtMs(captureMs > 0 ? captureMs : (long) koth.captureTimeSeconds * 1000L)));
             }
         }
 
-        // Per-player timers
         List<String> timerLines = buildTimerLines(data);
         if (!timerLines.isEmpty()) {
-            lines.add(SEP);
+            lines.add(sep);
             lines.addAll(timerLines);
         }
 
-        lines.add(SEP);
-        lines.add("§fplay.kronos.net");
+        lines.add(sep);
+        lines.add(messages.get("scoreboard.footer"));
 
         return lines;
     }
 
     private List<String> buildTimerLines(PlayerBoardData data) {
         List<String> lines = new ArrayList<>();
-        addTimer(lines, data, TimerType.COMBAT_TAG,     "§cCombat");
-        addTimer(lines, data, TimerType.PVP_TIMER,      "§6PvP Timer");
-        addTimer(lines, data, TimerType.ENDERPEARL,     "§bEnderpearl");
-        addTimer(lines, data, TimerType.HOME,           "§aCasa");
-        addTimer(lines, data, TimerType.LOGOUT,         "§cDesconexión");
-        addTimer(lines, data, TimerType.CLASS_COOLDOWN, "§dClase");
+        addTimer(lines, data, TimerType.COMBAT_TAG,     "scoreboard.timer.combat");
+        addTimer(lines, data, TimerType.PVP_TIMER,      "scoreboard.timer.pvp");
+        addTimer(lines, data, TimerType.ENDERPEARL,     "scoreboard.timer.enderpearl");
+        addTimer(lines, data, TimerType.HOME,           "scoreboard.timer.home");
+        addTimer(lines, data, TimerType.LOGOUT,         "scoreboard.timer.logout");
+        addTimer(lines, data, TimerType.CLASS_COOLDOWN, "scoreboard.timer.class");
         return lines;
     }
 
-    private static void addTimer(List<String> out, PlayerBoardData data,
-                                  TimerType type, String label) {
+    private void addTimer(List<String> out, PlayerBoardData data, TimerType type, String key) {
         long ms = data.getRemainingMs(type);
         if (ms > 0) {
-            out.add(label + ": §f" + fmtMs(ms));
+            out.add(messages.format(key, "time", fmtMs(ms)));
         }
     }
 
