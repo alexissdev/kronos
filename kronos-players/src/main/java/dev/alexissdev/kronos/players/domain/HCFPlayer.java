@@ -9,6 +9,7 @@ public final class HCFPlayer {
     private int kills;
     private int deaths;
     private int lives;
+    private boolean pvpTimerGiven;
     private KitType activeKit;
     private String savedInventoryJson;
 
@@ -18,11 +19,12 @@ public final class HCFPlayer {
         this.kills = 0;
         this.deaths = 0;
         this.lives = 3;
+        this.pvpTimerGiven = false;
         this.activeKit = KitType.DIAMOND;
     }
 
     public HCFPlayer(UUID uuid, String name, int kills, int deaths,
-                     KitType activeKit, String savedInventoryJson, int lives) {
+                     KitType activeKit, String savedInventoryJson, int lives, boolean pvpTimerGiven) {
         this.uuid = uuid;
         this.name = name;
         this.kills = kills;
@@ -30,6 +32,7 @@ public final class HCFPlayer {
         this.activeKit = activeKit;
         this.savedInventoryJson = savedInventoryJson;
         this.lives = lives;
+        this.pvpTimerGiven = pvpTimerGiven;
     }
 
     public void incrementKills() { kills++; }
@@ -42,6 +45,9 @@ public final class HCFPlayer {
     }
 
     public void setLives(int lives) { this.lives = lives; }
+
+    public boolean isPvpTimerGiven()            { return pvpTimerGiven; }
+    public void setPvpTimerGiven(boolean v)     { this.pvpTimerGiven = v; }
 
     public UUID getUuid() { return uuid; }
 

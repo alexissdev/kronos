@@ -64,7 +64,8 @@ public class MongoPlayerRepository implements PlayerRepository {
                 doc.getInteger("deaths", 0),
                 kit,
                 doc.getString("savedInventoryJson"),
-                doc.getInteger("lives", 3)
+                doc.getInteger("lives", 3),
+                doc.getBoolean("pvpTimerGiven", false)
         );
     }
 
@@ -75,6 +76,7 @@ public class MongoPlayerRepository implements PlayerRepository {
                 .append("kills", p.getKills())
                 .append("deaths", p.getDeaths())
                 .append("lives", p.getLives())
+                .append("pvpTimerGiven", p.isPvpTimerGiven())
                 .append("activeKit", p.getActiveKit().name())
                 .append("savedInventoryJson", p.getSavedInventoryJson());
     }
