@@ -7,7 +7,9 @@ import com.google.inject.Singleton;
 import dev.alexissdev.kronos.api.event.KothCaptureEvent;
 import dev.alexissdev.kronos.api.event.KothStartEvent;
 import dev.alexissdev.kronos.common.config.MessagesConfig;
+import dev.alexissdev.kronos.koth.domain.KothZone;
 import dev.alexissdev.kronos.koth.event.KothCapturedDomainEvent;
+import dev.alexissdev.kronos.koth.event.KothEndedDomainEvent;
 import dev.alexissdev.kronos.koth.event.KothStartedDomainEvent;
 import dev.alexissdev.kronos.koth.service.KothService;
 import org.bukkit.Bukkit;
@@ -16,9 +18,11 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -30,47 +34,38 @@ public class KothListener implements Listener {
     private final EventBus eventBus;
     private final MessagesConfig messages;
 
-    private final ConcurrentHashMap<UUID, Long> captureProgress = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<UUID, String> currentKothCapturing = new ConcurrentHashMap<>();
+    // In-memory cache — updated via domain events, no DB hit on every move
+    private final ConcurrentHashMap<String, KothZone> activeKothCache = new ConcurrentHashMap<>();
+
+    // Per-player outer zone tracking (for enter/leave messages)
+    private final ConcurrentHashMap<UUID, String> playerOuterZone = new ConcurrentHashMap<>();
+
+    // Per-player capture state: kothName → capture start timestamp
+    private final ConcurrentHashMap<UUID, String>  capturingKoth  = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, Long>    captureStart   = new ConcurrentHashMap<>();
 
     @Inject
     public KothListener(KothService kothService, Plugin plugin, EventBus eventBus, MessagesConfig messages) {
         this.kothService = kothService;
-        this.plugin = plugin;
-        this.eventBus = eventBus;
-        this.messages = messages;
+        this.plugin      = plugin;
+        this.eventBus    = eventBus;
+        this.messages    = messages;
         this.eventBus.register(this);
+
+        // Pre-populate cache with any already-active KOTHs
+        kothService.getActiveKoths().thenAccept(zones ->
+                zones.forEach(z -> activeKothCache.put(z.getName(), z)));
+
         startCaptureTask();
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onPlayerMove(PlayerMoveEvent event) {
-        if (!hasMoved(event)) return;
-        Player player = event.getPlayer();
-
-        kothService.getActiveKoths().thenAccept(koths -> {
-            boolean inAnyKoth = koths.stream().anyMatch(z ->
-                    z.containsLocation(event.getTo().getWorld().getName(),
-                            event.getTo().getX(), event.getTo().getZ()));
-
-            if (!inAnyKoth) {
-                captureProgress.remove(player.getUniqueId());
-                currentKothCapturing.remove(player.getUniqueId());
-            } else {
-                koths.stream()
-                        .filter(z -> z.containsLocation(event.getTo().getWorld().getName(),
-                                event.getTo().getX(), event.getTo().getZ()))
-                        .findFirst()
-                        .ifPresent(z -> {
-                            currentKothCapturing.put(player.getUniqueId(), z.getName());
-                            captureProgress.putIfAbsent(player.getUniqueId(), System.currentTimeMillis());
-                        });
-            }
-        });
-    }
+    // ── Domain events → update cache ──────────────────────────────────────
 
     @Subscribe
     public void onKothStarted(KothStartedDomainEvent event) {
+        kothService.getKoth(event.getKothName()).thenAccept(opt ->
+                opt.ifPresent(z -> activeKothCache.put(z.getName(), z)));
+
         Bukkit.getScheduler().runTask(plugin, () -> {
             KothStartEvent bukkitEvent = new KothStartEvent(event.getKothName());
             Bukkit.getPluginManager().callEvent(bukkitEvent);
@@ -82,6 +77,9 @@ public class KothListener implements Listener {
 
     @Subscribe
     public void onKothCaptured(KothCapturedDomainEvent event) {
+        activeKothCache.remove(event.getKothName());
+        evictPlayersFromKoth(event.getKothName());
+
         Bukkit.getScheduler().runTask(plugin, () -> {
             KothCaptureEvent bukkitEvent = new KothCaptureEvent(event.getKothName(), event.getCaptorUuid());
             Bukkit.getPluginManager().callEvent(bukkitEvent);
@@ -92,36 +90,107 @@ public class KothListener implements Listener {
         });
     }
 
+    @Subscribe
+    public void onKothEnded(KothEndedDomainEvent event) {
+        activeKothCache.remove(event.getKothName());
+        evictPlayersFromKoth(event.getKothName());
+    }
+
+    // ── Player movement ───────────────────────────────────────────────────
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onPlayerMove(PlayerMoveEvent event) {
+        if (!hasCrossedBlock(event)) return;
+        if (activeKothCache.isEmpty()) return;
+
+        Player player = event.getPlayer();
+        UUID   uuid   = player.getUniqueId();
+        String world  = event.getTo().getWorld().getName();
+        double x      = event.getTo().getX();
+        double z      = event.getTo().getZ();
+
+        // -- Outer zone: enter/leave messages --
+        KothZone newOuter = null;
+        for (KothZone kz : activeKothCache.values()) {
+            if (kz.containsLocation(world, x, z)) { newOuter = kz; break; }
+        }
+        String prevOuterName = playerOuterZone.get(uuid);
+        String newOuterName  = newOuter != null ? newOuter.getName() : null;
+
+        if (!Objects.equals(prevOuterName, newOuterName)) {
+            if (newOuterName != null) {
+                player.sendMessage(messages.format("koth.entered-zone", "name", newOuterName));
+                playerOuterZone.put(uuid, newOuterName);
+            } else {
+                player.sendMessage(messages.format("koth.left-zone", "name", prevOuterName));
+                playerOuterZone.remove(uuid);
+            }
+        }
+
+        // -- Capture zone: start/stop capture timer --
+        KothZone captureZone = null;
+        for (KothZone kz : activeKothCache.values()) {
+            if (kz.isInCaptureZone(world, x, z)) { captureZone = kz; break; }
+        }
+
+        if (captureZone != null) {
+            capturingKoth.put(uuid, captureZone.getName());
+            captureStart.putIfAbsent(uuid, System.currentTimeMillis());
+        } else {
+            capturingKoth.remove(uuid);
+            captureStart.remove(uuid);
+        }
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        UUID uuid = event.getPlayer().getUniqueId();
+        playerOuterZone.remove(uuid);
+        capturingKoth.remove(uuid);
+        captureStart.remove(uuid);
+    }
+
+    // ── Capture tick ──────────────────────────────────────────────────────
+
     private void startCaptureTask() {
         Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, () -> {
-            for (Map.Entry<UUID, String> entry : new ConcurrentHashMap<>(currentKothCapturing).entrySet()) {
-                UUID playerUuid = entry.getKey();
-                String kothName = entry.getValue();
-                long startTime = captureProgress.getOrDefault(playerUuid, System.currentTimeMillis());
-                long elapsed = System.currentTimeMillis() - startTime;
+            for (Map.Entry<UUID, String> entry : new ConcurrentHashMap<>(capturingKoth).entrySet()) {
+                UUID   playerUuid = entry.getKey();
+                String kothName   = entry.getValue();
 
-                kothService.getKoth(kothName).thenAccept(opt -> opt.ifPresent(zone -> {
-                    if (!zone.isActive()) {
-                        captureProgress.remove(playerUuid);
-                        currentKothCapturing.remove(playerUuid);
-                        return;
-                    }
-                    long requiredMs = (long) zone.getCaptureTimeSeconds() * 1000L;
-                    if (elapsed >= requiredMs) {
-                        captureProgress.remove(playerUuid);
-                        currentKothCapturing.remove(playerUuid);
-                        kothService.captureKoth(kothName, playerUuid)
-                                .exceptionally(ex -> {
-                                    plugin.getLogger().warning("Error al capturar KOTH " + kothName + ": " + ex.getMessage());
-                                    return null;
-                                });
-                    }
-                }));
+                KothZone zone = activeKothCache.get(kothName);
+                if (zone == null || !zone.isActive()) {
+                    capturingKoth.remove(playerUuid);
+                    captureStart.remove(playerUuid);
+                    continue;
+                }
+
+                long startTime  = captureStart.getOrDefault(playerUuid, System.currentTimeMillis());
+                long elapsed    = System.currentTimeMillis() - startTime;
+                long requiredMs = (long) zone.getCaptureTimeSeconds() * 1000L;
+
+                if (elapsed >= requiredMs) {
+                    capturingKoth.remove(playerUuid);
+                    captureStart.remove(playerUuid);
+                    kothService.captureKoth(kothName, playerUuid)
+                            .exceptionally(ex -> {
+                                plugin.getLogger().warning("Error al capturar KOTH " + kothName + ": " + ex.getMessage());
+                                return null;
+                            });
+                }
             }
         }, 20L, 20L);
     }
 
-    private boolean hasMoved(PlayerMoveEvent event) {
+    // ── Helpers ───────────────────────────────────────────────────────────
+
+    private void evictPlayersFromKoth(String kothName) {
+        capturingKoth.entrySet().removeIf(e -> kothName.equals(e.getValue()));
+        captureStart.entrySet().removeIf(e -> capturingKoth.get(e.getKey()) == null);
+        playerOuterZone.entrySet().removeIf(e -> kothName.equals(e.getValue()));
+    }
+
+    private boolean hasCrossedBlock(PlayerMoveEvent event) {
         return event.getFrom().getBlockX() != event.getTo().getBlockX()
                 || event.getFrom().getBlockZ() != event.getTo().getBlockZ();
     }
