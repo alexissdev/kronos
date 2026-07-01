@@ -20,6 +20,7 @@ deathban:
   banned-screen: "&4&lDEATHBAN\n\n&cFuiste deathbaneado.\n&7Tiempo restante: &f{time}\n\n&7Vuelve cuando expire."
   kick-message: "&4&lPerdiste todas tus vidas!\n\n&cHas sido deathbaneado por &f{time}&c.\n&7Podrás reconectarte cuando expire."
   lives-remaining: "&cPerdiste una vida. &7Vidas restantes: &f{lives}"
+  broadcast: "&4&l[DEATHBAN] &f{player} &7fue deathbaneado por &f{time}&7."
 
 pvp:
   target-has-pvp-timer: "&c{player} tiene PvP Timer activo."

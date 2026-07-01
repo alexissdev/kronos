@@ -151,12 +151,18 @@ public class PvpListener implements Listener {
                 })
                 .thenAccept(remainingLives -> {
                     if (remainingLives <= 0) {
+                        String duration = formatSeconds(deathbanDurationSeconds);
+                        String broadcastMsg = messages.format("deathban.broadcast",
+                                "player", victimName, "time", duration);
                         deathbanRepository.setDeathban(victimUuid, deathbanDurationSeconds).thenRun(() ->
                                 Bukkit.getScheduler().runTask(plugin, () -> {
+                                    for (Player online : Bukkit.getOnlinePlayers()) {
+                                        online.sendMessage(broadcastMsg);
+                                    }
                                     Player p = Bukkit.getPlayer(victimUuid);
                                     if (p != null) {
                                         p.kickPlayer(messages.format("deathban.kick-message",
-                                                "time", formatSeconds(deathbanDurationSeconds)));
+                                                "time", duration));
                                     }
                                 }));
                     } else {
