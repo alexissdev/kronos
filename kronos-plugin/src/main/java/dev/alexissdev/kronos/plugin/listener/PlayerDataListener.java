@@ -3,6 +3,7 @@ package dev.alexissdev.kronos.plugin.listener;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import dev.alexissdev.kronos.common.config.MessagesConfig;
+import dev.alexissdev.kronos.players.domain.HCFPlayer;
 import dev.alexissdev.kronos.players.service.PlayerService;
 import dev.alexissdev.kronos.plugin.tablist.TabListManager;
 import dev.alexissdev.kronos.timers.TimerApplicationService;
@@ -21,7 +22,7 @@ import java.util.concurrent.CompletableFuture;
 @Singleton
 public class PlayerDataListener implements Listener {
 
-    private static final long PVP_TIMER_DURATION_MS = 60 * 60 * 1000L;
+    private static final long PVP_TIMER_DURATION_MS   = 60 * 60 * 1000L;
     private static final long LOGOUT_TIMER_DURATION_MS = 30_000L;
 
     private final PlayerService playerService;
@@ -45,55 +46,58 @@ public class PlayerDataListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onJoin(PlayerJoinEvent event) {
-        playerService.getOrCreate(event.getPlayer().getUniqueId(), event.getPlayer().getName())
-                .exceptionally(ex -> {
-                    plugin.getLogger().warning("Error al cargar datos de "
-                            + event.getPlayer().getName() + ": " + ex.getMessage());
-                    return null;
-                });
-
         tabListManager.refresh(event.getPlayer());
 
-        // Delay by one tick so ScoreboardManager.createBoard() has already run (MONITOR priority)
+        // Delay by one tick so ScoreboardManager.createBoard() (MONITOR) has already run
         // before loadTimersIntoCache fires PlayerTimerStartedDomainEvent.
-        Bukkit.getScheduler().runTask(plugin, () ->
-                timerService.loadTimersIntoCache(event.getPlayer().getUniqueId())
-                        .thenCompose(ignored -> {
-                            UUID uuid = event.getPlayer().getUniqueId();
-                            if (!timerService.hasActiveTimerSync(uuid, TimerType.PVP_TIMER)) {
-                                return timerService.startPvpTimer(uuid, PVP_TIMER_DURATION_MS);
-                            }
-                            return CompletableFuture.completedFuture(null);
-                        })
-                        .thenRun(() -> {
-                            UUID uuid = event.getPlayer().getUniqueId();
-                            if (timerService.hasActiveTimerSync(uuid, TimerType.LOGOUT)) {
-                                timerService.cancelTimer(uuid, TimerType.LOGOUT);
-                                Bukkit.getScheduler().runTask(plugin, () -> {
-                                    if (event.getPlayer().isOnline()) {
-                                        event.getPlayer().setHealth(0);
-                                        event.getPlayer().sendMessage(messages.get("timers.logout-death"));
-                                    }
-                                });
-                            }
-                        })
-                        .exceptionally(ex -> {
-                            plugin.getLogger().warning("Error en carga de timers para "
-                                    + event.getPlayer().getName() + ": " + ex.getMessage());
-                            return null;
-                        }));
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            UUID uuid = event.getPlayer().getUniqueId();
+            String name = event.getPlayer().getName();
+
+            playerService.getOrCreate(uuid, name)
+                    .thenCompose(player ->
+                            timerService.loadTimersIntoCache(uuid)
+                                    .thenCompose(ignored -> giveFirstJoinPvpTimer(uuid, player))
+                                    .thenRun(() -> checkLogoutTimer(event, uuid)))
+                    .exceptionally(ex -> {
+                        plugin.getLogger().warning("Error en carga de datos para "
+                                + name + ": " + ex.getMessage());
+                        return null;
+                    });
+        });
+    }
+
+    private CompletableFuture<Void> giveFirstJoinPvpTimer(UUID uuid, HCFPlayer player) {
+        // Only auto-give PvP timer on first join and not when a logout kill is pending
+        if (!player.isPvpTimerGiven()
+                && !timerService.hasActiveTimerSync(uuid, TimerType.PVP_TIMER)
+                && !timerService.hasActiveTimerSync(uuid, TimerType.LOGOUT)) {
+            player.setPvpTimerGiven(true);
+            playerService.savePlayer(player);
+            return timerService.startPvpTimer(uuid, PVP_TIMER_DURATION_MS);
+        }
+        return CompletableFuture.completedFuture(null);
+    }
+
+    private void checkLogoutTimer(PlayerJoinEvent event, UUID uuid) {
+        if (timerService.hasActiveTimerSync(uuid, TimerType.LOGOUT)) {
+            timerService.cancelTimer(uuid, TimerType.LOGOUT);
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (event.getPlayer().isOnline()) {
+                    event.getPlayer().setHealth(0);
+                    event.getPlayer().sendMessage(messages.get("timers.logout-death"));
+                }
+            });
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent event) {
         UUID uuid = event.getPlayer().getUniqueId();
-        timerService.hasActiveTimer(uuid, TimerType.COMBAT_TAG)
-                .thenAccept(hasCombatTag -> {
-                    if (hasCombatTag) {
-                        timerService.startLogoutTimer(uuid, LOGOUT_TIMER_DURATION_MS);
-                    }
-                    // Clear in-memory cache so next login starts fresh from Redis
-                    timerService.clearCache(uuid);
-                });
+        // Use sync cache check — combat tag may not be in Redis yet if tagged just before disconnect
+        if (timerService.hasActiveTimerSync(uuid, TimerType.COMBAT_TAG)) {
+            timerService.startLogoutTimer(uuid, LOGOUT_TIMER_DURATION_MS);
+        }
+        timerService.clearCache(uuid);
     }
 }
