@@ -24,6 +24,8 @@ deathban:
 pvp:
   target-has-pvp-timer: "&c{player} tiene PvP Timer activo."
   attacker-has-pvp-timer: "&cNo puedes atacar con PvP Timer activo."
+  death-killed: "&7{victim_tag}&f{victim} &7fue eliminado por {killer_tag}&c{killer}"
+  death-natural: "&7{victim_tag}&f{victim} &7murió"
 
 spawn:
   blocked-combat-tag: "&cNo puedes entrar al spawn estando en &lCombat Tag&c!"
@@ -118,6 +120,10 @@ faction:
     top-entry: "&e{rank}. &f{name} &7- &e{kills} kills"
     ally-set: "&aAlianza establecida."
     enemy-set: "&cRelación de enemigos establecida."
+    renamed: "&aFacción renombrada a &e{name}&a."
+    relation-removed: "&aRelación con &e{name} &aeliminada."
+    help-rename: "&e/f rename <nombre> &7- Renombrar facción"
+    help-neutral: "&e/f neutral <faccion> &7- Eliminar relación con facción"
     amount-invalid: "&cCantidad inválida."
     deposited: "&aDepositaste &e${amount} &aa la facción."
     withdrawn: "&aRetiraste &e${amount} &ade la facción."
@@ -184,10 +190,14 @@ hcf:
   give-money-sender: "&aDiste &e${amount} &aa &e{player}"
   give-money-target: "&aRecibiste &e${amount} &adel staff."
   set-money-wip: "&eSetear balance: (WIP)"
+  give-key-sender: "&aDiste una llave &e{type} &aa &e{player}&a."
+  give-key-target: "&aRecibiste una llave de crate &e{type}&a."
+  give-key-invalid-type: "&cTipo inválido. Usa: KOTH, VOTE, RANK, EVENT"
   help-header: "&6&lComandos Administrativos HCF:"
   help-reload: "&e/hcf reload &7- Recargar messages.yml"
   help-give-money: "&e/hcf give-money <jugador> <$> &7- Dar dinero"
   help-set-money: "&e/hcf set-money <jugador> <$> &7- Establecer balance"
+  help-give-key: "&e/hcf give-key <jugador> <tipo> &7- Dar llave de crate"
 
 tablist:
   leader:    "&4[{faction}] &f{player}"

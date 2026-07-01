@@ -12,6 +12,7 @@ faction:
   max-enemies: 10
   default-dtk: 20
   max-claims-per-faction: 50
+  max-members: 15
 
 timers:
   combat-tag-seconds: 30

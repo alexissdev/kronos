@@ -2,6 +2,8 @@ package dev.alexissdev.kronos.plugin.command;
 
 import dev.alexissdev.kronos.common.command.BaseCommand;
 import dev.alexissdev.kronos.common.config.MessagesConfig;
+import dev.alexissdev.kronos.common.domain.CrateType;
+import dev.alexissdev.kronos.plugin.listener.CrateListener;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -11,6 +13,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 
 import java.io.File;
@@ -37,9 +40,10 @@ public class HCFCommand extends BaseCommand {
         if (args.length == 0) { sendHelp(sender); return; }
 
         switch (args[0].toLowerCase()) {
-            case "reload":     handleReload(sender);       break;
+            case "reload":     handleReload(sender);          break;
             case "give-money": handleGiveMoney(sender, args); break;
             case "set-money":  handleSetMoney(sender, args);  break;
+            case "give-key":   handleGiveKey(sender, args);   break;
             default:           sendHelp(sender);
         }
     }
@@ -86,10 +90,30 @@ public class HCFCommand extends BaseCommand {
         sender.sendMessage(messages.get("hcf.set-money-wip"));
     }
 
+    private void handleGiveKey(CommandSender sender, String[] args) {
+        if (!requireArgs(sender, args, 3, "/hcf give-key <jugador> <tipo>")) return;
+        Player target = Bukkit.getPlayer(args[1]);
+        if (target == null) { sender.sendMessage(messages.get("hcf.player-not-found")); return; }
+
+        CrateType type;
+        try {
+            type = CrateType.valueOf(args[2].toUpperCase());
+        } catch (IllegalArgumentException e) {
+            sender.sendMessage(messages.get("hcf.give-key-invalid-type"));
+            return;
+        }
+
+        ItemStack key = CrateListener.createKey(type);
+        target.getInventory().addItem(key);
+        sender.sendMessage(messages.format("hcf.give-key-sender", "type", type.name(), "player", target.getName()));
+        target.sendMessage(messages.format("hcf.give-key-target", "type", type.name()));
+    }
+
     private void sendHelp(CommandSender sender) {
         sender.sendMessage(messages.get("hcf.help-header"));
         sender.sendMessage(messages.get("hcf.help-reload"));
         sender.sendMessage(messages.get("hcf.help-give-money"));
         sender.sendMessage(messages.get("hcf.help-set-money"));
+        sender.sendMessage(messages.get("hcf.help-give-key"));
     }
 }

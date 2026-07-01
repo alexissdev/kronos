@@ -3,6 +3,7 @@ package dev.alexissdev.kronos.factions;
 import com.google.common.eventbus.EventBus;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import dev.alexissdev.kronos.factions.domain.Faction;
 import dev.alexissdev.kronos.factions.domain.FactionMember;
 import dev.alexissdev.kronos.factions.domain.FactionRole;
@@ -31,17 +32,20 @@ public class FactionApplicationService implements FactionService {
     private final PlayerRepository playerRepository;
     private final EconomyService economyService;
     private final EventBus eventBus;
+    private final int maxMembers;
     private final Map<UUID, String> pendingInvites = new java.util.concurrent.ConcurrentHashMap<>();
 
     @Inject
     public FactionApplicationService(FactionRepository factionRepository,
                                      PlayerRepository playerRepository,
                                      EconomyService economyService,
-                                     EventBus eventBus) {
+                                     EventBus eventBus,
+                                     @Named("faction.max-members") int maxMembers) {
         this.factionRepository = factionRepository;
         this.playerRepository = playerRepository;
         this.economyService = economyService;
         this.eventBus = eventBus;
+        this.maxMembers = maxMembers;
     }
 
     @Override
@@ -93,6 +97,9 @@ public class FactionApplicationService implements FactionService {
             if (faction.hasMember(inviteeUuid)) {
                 throw new HCFException("Ese jugador ya es miembro de tu facción");
             }
+            if (faction.getMembers().size() >= maxMembers) {
+                throw new HCFException("La facción está llena (" + maxMembers + " miembros máximo)");
+            }
             return factionRepository.findByMember(inviteeUuid).thenAccept(existing -> {
                 if (existing.isPresent()) {
                     throw new HCFException("Ese jugador ya pertenece a otra facción");
@@ -110,6 +117,9 @@ public class FactionApplicationService implements FactionService {
         }
         return factionRepository.findById(factionId).thenCompose(opt -> {
             Faction faction = opt.orElseThrow(() -> new FactionNotFoundException(factionId));
+            if (faction.getMembers().size() >= maxMembers) {
+                throw new HCFException("La facción está llena (" + maxMembers + " miembros máximo)");
+            }
             faction.addMember(new FactionMember(playerUuid, FactionRole.MEMBER, Instant.now()));
             return factionRepository.save(faction).thenRun(() -> {
                 pendingInvites.remove(playerUuid);

@@ -11,6 +11,7 @@ import dev.alexissdev.kronos.economy.command.MoneyCommand;
 import dev.alexissdev.kronos.koth.command.KothCommand;
 import dev.alexissdev.kronos.koth.listener.KothWandListener;
 import dev.alexissdev.kronos.plugin.chat.ChatListener;
+import dev.alexissdev.kronos.plugin.listener.CrateListener;
 import dev.alexissdev.kronos.plugin.listener.DeathbanListener;
 import dev.alexissdev.kronos.plugin.listener.KothListener;
 import dev.alexissdev.kronos.plugin.command.FactionCommand;
@@ -92,6 +93,7 @@ public class PluginEnableHandler {
         pm.registerEvents(injector.getInstance(ScoreboardListener.class), plugin);
         pm.registerEvents(injector.getInstance(KothWandListener.class), plugin);
         pm.registerEvents(injector.getInstance(SpawnListener.class), plugin);
+        pm.registerEvents(injector.getInstance(CrateListener.class), plugin);
         pm.registerEvents(injector.getInstance(SpawnWandListener.class), plugin);
     }
 

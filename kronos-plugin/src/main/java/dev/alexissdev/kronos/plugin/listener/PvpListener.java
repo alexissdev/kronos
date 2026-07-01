@@ -10,9 +10,11 @@ import dev.alexissdev.kronos.timers.TimerApplicationService;
 import dev.alexissdev.kronos.timers.domain.TimerType;
 import dev.alexissdev.kronos.factions.service.FactionService;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.EnderPearl;
 import org.bukkit.entity.Player;
+import dev.alexissdev.kronos.factions.domain.Faction;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -111,6 +113,29 @@ public class PvpListener implements Listener {
         timerService.cancelTimer(victimUuid, TimerType.COMBAT_TAG);
         timerService.cancelTimer(victimUuid, TimerType.PVP_TIMER);
         timerService.cancelTimer(victimUuid, TimerType.HOME);
+
+        // Override death message with faction-aware format
+        event.setDeathMessage(null);
+        final String victimName = victim.getName();
+        final UUID killerUuid = killer != null ? killer.getUniqueId() : null;
+        final String killerName = killer != null ? killer.getName() : null;
+
+        java.util.concurrent.CompletableFuture<java.util.Optional<Faction>> vFactionFuture =
+                factionService.getByPlayer(victimUuid);
+        java.util.concurrent.CompletableFuture<java.util.Optional<Faction>> kFactionFuture =
+                killerUuid != null ? factionService.getByPlayer(killerUuid)
+                        : java.util.concurrent.CompletableFuture.completedFuture(java.util.Optional.empty());
+
+        vFactionFuture.thenCombine(kFactionFuture, (vFact, kFact) -> {
+            String vTag = vFact.map(f -> ChatColor.GRAY + "[" + ChatColor.YELLOW + f.getName() + ChatColor.GRAY + "] ").orElse("");
+            String kTag = kFact.map(f -> ChatColor.GRAY + "[" + ChatColor.YELLOW + f.getName() + ChatColor.GRAY + "] ").orElse("");
+            if (killerName != null) {
+                return messages.format("pvp.death-killed",
+                        "victim_tag", vTag, "victim", victimName,
+                        "killer_tag", kTag, "killer", killerName);
+            }
+            return messages.format("pvp.death-natural", "victim_tag", vTag, "victim", victimName);
+        }).thenAccept(msg -> Bukkit.getOnlinePlayers().forEach(p -> p.sendMessage(msg)));
 
         if (killer != null) {
             playerService.recordKill(killer.getUniqueId(), victimUuid);

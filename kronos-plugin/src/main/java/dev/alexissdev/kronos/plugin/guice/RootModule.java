@@ -16,6 +16,7 @@ import dev.alexissdev.kronos.koth.KothModule;
 import dev.alexissdev.kronos.players.PlayersModule;
 import dev.alexissdev.kronos.plugin.command.FactionCommand;
 import dev.alexissdev.kronos.plugin.chat.ChatManager;
+import dev.alexissdev.kronos.plugin.listener.CrateListener;
 import dev.alexissdev.kronos.plugin.listener.DeathbanListener;
 import dev.alexissdev.kronos.plugin.listener.FactionEventListener;
 import dev.alexissdev.kronos.plugin.listener.PlayerDataListener;
@@ -51,6 +52,7 @@ public class RootModule extends AbstractModule {
         bind(FactionCommand.class).in(Singleton.class);
         bind(KothListener.class).in(Singleton.class);
         bind(DeathbanListener.class).in(Singleton.class);
+        bind(CrateListener.class).in(Singleton.class);
         bind(TabListManager.class).in(Singleton.class);
 
         bindConfig();
@@ -81,6 +83,7 @@ public class RootModule extends AbstractModule {
         bindLong("hcf.deathban-seconds",   config.getInt("hcf.deathban-hours",                    24) * 3600L);
         bindLong("enderpearl.cooldown-ms", config.getInt("timers.enderpearl-cooldown-seconds",    15) * 1000L);
         bindLong("home.delay-ms",          config.getInt("timers.home-delay-seconds",              5) * 1000L);
+        bindInt ("faction.max-members",    config.getInt("faction.max-members",                   15));
     }
 
     private void bindString(String key, String value) {

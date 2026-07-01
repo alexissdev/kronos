@@ -82,6 +82,8 @@ public class FactionCommand extends BaseCommand {
             case "overclaim": handleOverclaim(player); break;
             case "sethome": handleSetHome(player); break;
             case "home": handleHome(player); break;
+            case "rename": handleRename(player, args); break;
+            case "neutral": handleNeutral(player, args); break;
             default: sendHelp(player);
         }
     }
@@ -457,6 +459,39 @@ public class FactionCommand extends BaseCommand {
         });
     }
 
+    private void handleRename(Player player, String[] args) {
+        if (!requireArgs(player, args, 2, "/f rename <nombre>")) return;
+        final String newName = args[1];
+        factionService.getByPlayer(player.getUniqueId()).thenCompose(opt -> {
+            if (opt.isEmpty()) throw new HCFException("No estás en una facción");
+            return factionService.renameFaction(opt.get().getId(), newName, player.getUniqueId());
+        }).thenRun(() -> Bukkit.getScheduler().runTask(plugin,
+                () -> player.sendMessage(messages.format("faction.cmd.renamed", "name", newName))))
+                .exceptionally(ex -> {
+                    Bukkit.getScheduler().runTask(plugin,
+                            () -> player.sendMessage(messages.format("faction.cmd.error", "error", rootMsg(ex))));
+                    return null;
+                });
+    }
+
+    private void handleNeutral(Player player, String[] args) {
+        if (!requireArgs(player, args, 2, "/f neutral <faccion>")) return;
+        final String targetName = args[1];
+        factionService.getByPlayer(player.getUniqueId()).thenCompose(optA -> {
+            if (optA.isEmpty()) throw new HCFException("No estás en una facción");
+            return factionService.getByName(targetName).thenCompose(optB -> {
+                if (optB.isEmpty()) throw new HCFException("Facción no encontrada");
+                return factionService.removeRelation(optA.get().getId(), optB.get().getId(), player.getUniqueId());
+            });
+        }).thenRun(() -> Bukkit.getScheduler().runTask(plugin,
+                () -> player.sendMessage(messages.format("faction.cmd.relation-removed", "name", targetName))))
+                .exceptionally(ex -> {
+                    Bukkit.getScheduler().runTask(plugin,
+                            () -> player.sendMessage(messages.format("faction.cmd.error", "error", rootMsg(ex))));
+                    return null;
+                });
+    }
+
     private void sendHelp(Player player) {
         player.sendMessage(messages.get("faction.cmd.help-header"));
         player.sendMessage(messages.get("faction.cmd.help-create"));
@@ -477,6 +512,8 @@ public class FactionCommand extends BaseCommand {
         player.sendMessage(messages.get("faction.cmd.help-map"));
         player.sendMessage(messages.get("faction.cmd.help-sethome"));
         player.sendMessage(messages.get("faction.cmd.help-home"));
+        player.sendMessage(messages.get("faction.cmd.help-rename"));
+        player.sendMessage(messages.get("faction.cmd.help-neutral"));
     }
 
     private static String rootMsg(Throwable ex) {
