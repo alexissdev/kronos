@@ -33,21 +33,18 @@ final class ScoreboardRenderer {
         lines.add("§7Deaths: §c" + data.getDeaths());
         lines.add("§7Balance: §a$" + fmtBalance(data.getBalance()));
 
-        // Active KOTHs (global, same for every player)
+        // Active KOTHs — if the player is capturing this KOTH show countdown, otherwise show total time
         if (!koths.isEmpty()) {
             lines.add(SEP);
             for (KothEntry koth : koths) {
+                long captureMs = koth.name.equals(data.getCapturingKothName())
+                        ? data.getCaptureRemainingMs() : 0;
                 lines.add("§6KOTH §e" + koth.name);
                 lines.add(" §7Loc: §a" + koth.centerX + "§7, §a" + koth.centerZ);
+                lines.add(captureMs > 0
+                        ? " §7Cap: §f" + fmtMs(captureMs)
+                        : " §7Cap: §f" + fmtMs((long) koth.captureTimeSeconds * 1000L));
             }
-        }
-
-        // Per-player KOTH capture countdown
-        long captureMs = data.getCaptureRemainingMs();
-        if (captureMs > 0) {
-            lines.add(SEP);
-            lines.add("§6Capturando §e" + data.getCapturingKothName());
-            lines.add(" §7Tiempo: §f" + fmtMs(captureMs));
         }
 
         // Per-player timers
