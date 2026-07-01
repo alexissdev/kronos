@@ -4,6 +4,7 @@ import com.google.common.eventbus.EventBus;
 import dev.alexissdev.kronos.core.domain.Timer;
 import dev.alexissdev.kronos.core.domain.TimerType;
 import dev.alexissdev.kronos.core.repository.TimerRepository;
+import dev.alexissdev.kronos.application.timer.TimerCache;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,13 +25,14 @@ import static org.mockito.Mockito.*;
 class TimerApplicationServiceTest {
 
     @Mock private TimerRepository timerRepository;
+    @Mock private TimerCache timerCache;
     @Mock private EventBus eventBus;
 
     private TimerApplicationService service;
 
     @BeforeEach
     void setUp() {
-        service = new TimerApplicationService(timerRepository, eventBus);
+        service = new TimerApplicationService(timerRepository, timerCache, eventBus);
     }
 
     @Test

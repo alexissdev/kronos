@@ -1,6 +1,6 @@
 plugins {
     java
-    id("com.gradleup.shadow") version "8.3.6" apply false
+    id("com.gradleup.shadow") version "8.3.5" apply false
     id("net.minecrell.plugin-yml.bukkit") version "0.6.0" apply false
 }
 
@@ -11,7 +11,6 @@ allprojects {
     repositories {
         mavenCentral()
         maven { url = uri("https://hub.spigotmc.org/nexus/content/repositories/snapshots/") }
-        maven { url = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/") }
         maven { url = uri("https://repo.md-5.net/content/repositories/snapshots/") }
         maven { url = uri("https://jitpack.io") }
     }
@@ -19,6 +18,10 @@ allprojects {
 
 subprojects {
     apply(plugin = "java")
+
+    configurations.all {
+        exclude(group = "net.md-5", module = "bungeecord-chat")
+    }
 
     configure<JavaPluginExtension> {
         sourceCompatibility = JavaVersion.VERSION_11

@@ -6,6 +6,7 @@ import dev.alexissdev.kronos.core.exception.FactionNotFoundException;
 import dev.alexissdev.kronos.core.exception.FactionPermissionException;
 import dev.alexissdev.kronos.core.repository.FactionRepository;
 import dev.alexissdev.kronos.core.repository.PlayerRepository;
+import dev.alexissdev.kronos.core.service.EconomyService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,13 +28,14 @@ class FactionApplicationServiceTest {
 
     @Mock private FactionRepository factionRepository;
     @Mock private PlayerRepository playerRepository;
+    @Mock private EconomyService economyService;
     @Mock private EventBus eventBus;
 
     private FactionApplicationService service;
 
     @BeforeEach
     void setUp() {
-        service = new FactionApplicationService(factionRepository, playerRepository, eventBus);
+        service = new FactionApplicationService(factionRepository, playerRepository, economyService, eventBus);
     }
 
     @Test

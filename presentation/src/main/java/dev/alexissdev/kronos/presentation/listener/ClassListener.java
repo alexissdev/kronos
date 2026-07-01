@@ -15,7 +15,8 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
-import org.bukkit.event.player.PlayerArmorChangeEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -56,17 +57,19 @@ public class ClassListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onArmorChange(PlayerArmorChangeEvent event) {
-        Player player = event.getPlayer();
-        KitType previous = playerKitCache.get(player.getUniqueId());
-        KitType detected = detectKitFromHelmet(event.getNewItem() != null ? event.getNewItem() : null,
-                event.getSlotType(), player);
+    public void onInventoryClick(InventoryClickEvent event) {
+        if (!(event.getWhoClicked() instanceof Player)) return;
+        Player player = (Player) event.getWhoClicked();
 
-        if (detected == previous) return;
+        ItemStack current = event.getCurrentItem();
+        ItemStack cursor = event.getCursor();
+        boolean helmetInvolved = event.getSlotType() == InventoryType.SlotType.ARMOR
+                || (current != null && isHelmetMaterial(current.getType()))
+                || (cursor != null && isHelmetMaterial(cursor.getType()));
 
-        playerKitCache.put(player.getUniqueId(), detected);
-        kitService.updateActiveKit(player.getUniqueId(), detected);
-        player.sendTitle("", ChatColor.GOLD + "Clase: " + detected.name(), 5, 30, 10);
+        if (!helmetInvolved) return;
+
+        plugin.getServer().getScheduler().runTask(plugin, () -> updateKit(player));
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -108,13 +111,27 @@ public class ClassListener implements Listener {
         activateAbility(player, kit);
     }
 
-    private KitType detectKitFromHelmet(ItemStack newItem,
-                                        PlayerArmorChangeEvent.SlotType slotType,
-                                        Player player) {
-        if (slotType != PlayerArmorChangeEvent.SlotType.HEAD) {
-            return detectKitFromHelmet(player.getInventory().getHelmet());
+    private void updateKit(Player player) {
+        if (!player.isOnline()) return;
+        KitType detected = detectKitFromHelmet(player.getInventory().getHelmet());
+        KitType previous = playerKitCache.get(player.getUniqueId());
+        if (detected == previous) return;
+        playerKitCache.put(player.getUniqueId(), detected);
+        kitService.updateActiveKit(player.getUniqueId(), detected);
+        player.sendTitle("", ChatColor.GOLD + "Clase: " + detected.name(), 5, 30, 10);
+    }
+
+    private boolean isHelmetMaterial(Material material) {
+        switch (material) {
+            case LEATHER_HELMET:
+            case GOLDEN_HELMET:
+            case CHAINMAIL_HELMET:
+            case IRON_HELMET:
+            case DIAMOND_HELMET:
+                return true;
+            default:
+                return false;
         }
-        return detectKitFromHelmet(newItem);
     }
 
     private KitType detectKitFromHelmet(ItemStack helmet) {

@@ -1,7 +1,6 @@
 .gradle/
 build/
 *.class
-!gradle-wrapper.jar
 .idea/
 *.iml
 *.iws

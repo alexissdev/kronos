@@ -1,7 +1,7 @@
 package dev.alexissdev.kronos.infrastructure.redis;
 
 import com.google.inject.Inject;
-import com.google.inject.Named;
+import com.google.inject.name.Named;
 import com.google.inject.Singleton;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;

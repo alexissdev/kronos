@@ -1,7 +1,7 @@
 package dev.alexissdev.kronos.infrastructure.mongo;
 
 import com.google.inject.Inject;
-import com.google.inject.Named;
+import com.google.inject.name.Named;
 import com.google.inject.Singleton;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
