@@ -54,31 +54,34 @@ public class PlayerDataListener implements Listener {
 
         tabListManager.refresh(event.getPlayer());
 
-        timerService.loadTimersIntoCache(event.getPlayer().getUniqueId())
-                .thenCompose(ignored -> {
-                    UUID uuid = event.getPlayer().getUniqueId();
-                    if (!timerService.hasActiveTimerSync(uuid, TimerType.PVP_TIMER)) {
-                        return timerService.startPvpTimer(uuid, PVP_TIMER_DURATION_MS);
-                    }
-                    return CompletableFuture.completedFuture(null);
-                })
-                .thenRun(() -> {
-                    UUID uuid = event.getPlayer().getUniqueId();
-                    if (timerService.hasActiveTimerSync(uuid, TimerType.LOGOUT)) {
-                        timerService.cancelTimer(uuid, TimerType.LOGOUT);
-                        Bukkit.getScheduler().runTask(plugin, () -> {
-                            if (event.getPlayer().isOnline()) {
-                                event.getPlayer().setHealth(0);
-                                event.getPlayer().sendMessage(messages.get("timers.logout-death"));
+        // Delay by one tick so ScoreboardManager.createBoard() has already run (MONITOR priority)
+        // before loadTimersIntoCache fires PlayerTimerStartedDomainEvent.
+        Bukkit.getScheduler().runTask(plugin, () ->
+                timerService.loadTimersIntoCache(event.getPlayer().getUniqueId())
+                        .thenCompose(ignored -> {
+                            UUID uuid = event.getPlayer().getUniqueId();
+                            if (!timerService.hasActiveTimerSync(uuid, TimerType.PVP_TIMER)) {
+                                return timerService.startPvpTimer(uuid, PVP_TIMER_DURATION_MS);
                             }
-                        });
-                    }
-                })
-                .exceptionally(ex -> {
-                    plugin.getLogger().warning("Error en carga de timers para "
-                            + event.getPlayer().getName() + ": " + ex.getMessage());
-                    return null;
-                });
+                            return CompletableFuture.completedFuture(null);
+                        })
+                        .thenRun(() -> {
+                            UUID uuid = event.getPlayer().getUniqueId();
+                            if (timerService.hasActiveTimerSync(uuid, TimerType.LOGOUT)) {
+                                timerService.cancelTimer(uuid, TimerType.LOGOUT);
+                                Bukkit.getScheduler().runTask(plugin, () -> {
+                                    if (event.getPlayer().isOnline()) {
+                                        event.getPlayer().setHealth(0);
+                                        event.getPlayer().sendMessage(messages.get("timers.logout-death"));
+                                    }
+                                });
+                            }
+                        })
+                        .exceptionally(ex -> {
+                            plugin.getLogger().warning("Error en carga de timers para "
+                                    + event.getPlayer().getName() + ": " + ex.getMessage());
+                            return null;
+                        }));
     }
 
     @EventHandler(priority = EventPriority.MONITOR)

@@ -95,4 +95,17 @@ public class KothApplicationService implements KothService {
         return kothRepository.delete(name)
                 .thenRun(() -> eventBus.post(new KothDeletedDomainEvent(name)));
     }
+
+    public CompletableFuture<Void> deactivateAll() {
+        return kothRepository.findAll().thenCompose(zones -> {
+            List<CompletableFuture<KothZone>> futures = zones.stream()
+                    .filter(KothZone::isActive)
+                    .map(zone -> {
+                        zone.setActive(false);
+                        return kothRepository.save(zone);
+                    })
+                    .collect(Collectors.toList());
+            return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+        });
+    }
 }
