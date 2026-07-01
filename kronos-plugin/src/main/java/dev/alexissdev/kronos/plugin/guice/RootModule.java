@@ -15,11 +15,14 @@ import dev.alexissdev.kronos.factions.FactionsModule;
 import dev.alexissdev.kronos.koth.KothModule;
 import dev.alexissdev.kronos.players.PlayersModule;
 import dev.alexissdev.kronos.plugin.command.FactionCommand;
+import dev.alexissdev.kronos.plugin.chat.ChatManager;
+import dev.alexissdev.kronos.plugin.listener.DeathbanListener;
 import dev.alexissdev.kronos.plugin.listener.FactionEventListener;
 import dev.alexissdev.kronos.plugin.listener.PlayerDataListener;
 import dev.alexissdev.kronos.plugin.listener.PvpListener;
 import dev.alexissdev.kronos.plugin.listener.KothListener;
 import dev.alexissdev.kronos.plugin.listener.TimerListener;
+import dev.alexissdev.kronos.plugin.tablist.TabListManager;
 import dev.alexissdev.kronos.timers.TimersModule;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -40,15 +43,15 @@ public class RootModule extends AbstractModule {
         bind(org.bukkit.plugin.Plugin.class).toInstance(plugin);
         bind(MessagesConfig.class).toInstance(messagesConfig);
         bind(EventBus.class).in(Singleton.class);
-        bind(dev.alexissdev.kronos.plugin.chat.ChatManager.class).in(Singleton.class);
+        bind(ChatManager.class).in(Singleton.class);
         bind(PlayerDataListener.class).in(Singleton.class);
         bind(PvpListener.class).in(Singleton.class);
         bind(TimerListener.class).in(Singleton.class);
         bind(FactionEventListener.class).in(Singleton.class);
         bind(FactionCommand.class).in(Singleton.class);
         bind(KothListener.class).in(Singleton.class);
-        bind(dev.alexissdev.kronos.plugin.listener.DeathbanListener.class).in(Singleton.class);
-        bind(dev.alexissdev.kronos.plugin.tablist.TabListManager.class).in(Singleton.class);
+        bind(DeathbanListener.class).in(Singleton.class);
+        bind(TabListManager.class).in(Singleton.class);
 
         bindConfig();
 
