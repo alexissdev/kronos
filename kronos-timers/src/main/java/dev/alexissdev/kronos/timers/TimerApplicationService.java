@@ -134,14 +134,15 @@ public class TimerApplicationService implements TimerService<UUID> {
                                 return CompletableFuture.completedFuture(null);
                             }
                             // Redis miss — fall back to MongoDB
-                            return mongoBackup.find(playerUuid, type).thenAccept(mongoOpt -> {
+                            return mongoBackup.find(playerUuid, type).thenCompose(mongoOpt -> {
                                 if (mongoOpt.isPresent() && !mongoOpt.get().isExpired()) {
                                     Timer t = mongoOpt.get();
                                     timerCache.markActive(playerUuid, type);
-                                    timerRepository.saveTimer(t);  // restore to Redis
-                                    eventBus.post(new PlayerTimerStartedDomainEvent(
-                                            playerUuid, type, t.getRemainingMillis()));
+                                    return timerRepository.saveTimer(t).thenRun(() ->
+                                            eventBus.post(new PlayerTimerStartedDomainEvent(
+                                                    playerUuid, type, t.getRemainingMillis())));
                                 }
+                                return CompletableFuture.completedFuture(null);
                             });
                         }))
                 .collect(Collectors.toList());

@@ -209,8 +209,10 @@ hcf:
 pvptimer:
   give-sender: "&aDiste PvP Timer a &e{player}&a."
   give-target: "&aRecibiste PvP Timer. Dura &e1 hora&a."
+  already-has: "&c{player} ya tiene PvP Timer activo."
   remove-sender: "&eQuitaste el PvP Timer a &f{player}&e."
   remove-target: "&cTu PvP Timer fue eliminado por el staff."
+  does-not-have: "&c{player} no tiene PvP Timer activo."
   error: "&cError: {error}"
   help-header: "&6&lComandos de PvP Timer:"
   help-give: "&e/pvptimer give <jugador> &7- Dar PvP Timer"

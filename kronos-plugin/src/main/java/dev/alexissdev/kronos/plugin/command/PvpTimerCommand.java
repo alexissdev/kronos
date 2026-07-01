@@ -44,11 +44,19 @@ public class PvpTimerCommand extends BaseCommand {
         Player target = Bukkit.getPlayer(args[1]);
         if (target == null) { sender.sendMessage(messages.get("hcf.player-not-found")); return; }
 
-        timerService.startPvpTimer(target.getUniqueId(), PVP_TIMER_DURATION_MS)
-                .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
-                    sender.sendMessage(messages.format("pvptimer.give-sender", "player", target.getName()));
-                    target.sendMessage(messages.get("pvptimer.give-target"));
-                }))
+        timerService.hasActiveTimer(target.getUniqueId(), TimerType.PVP_TIMER)
+                .thenCompose(hasTimer -> {
+                    if (hasTimer) {
+                        Bukkit.getScheduler().runTask(plugin, () ->
+                                sender.sendMessage(messages.format("pvptimer.already-has", "player", target.getName())));
+                        return java.util.concurrent.CompletableFuture.completedFuture(null);
+                    }
+                    return timerService.startPvpTimer(target.getUniqueId(), PVP_TIMER_DURATION_MS)
+                            .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
+                                sender.sendMessage(messages.format("pvptimer.give-sender", "player", target.getName()));
+                                target.sendMessage(messages.get("pvptimer.give-target"));
+                            }));
+                })
                 .exceptionally(ex -> {
                     Bukkit.getScheduler().runTask(plugin, () ->
                             sender.sendMessage(messages.format("pvptimer.error", "error", ex.getMessage())));
@@ -61,11 +69,19 @@ public class PvpTimerCommand extends BaseCommand {
         Player target = Bukkit.getPlayer(args[1]);
         if (target == null) { sender.sendMessage(messages.get("hcf.player-not-found")); return; }
 
-        timerService.cancelTimer(target.getUniqueId(), TimerType.PVP_TIMER)
-                .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
-                    sender.sendMessage(messages.format("pvptimer.remove-sender", "player", target.getName()));
-                    target.sendMessage(messages.get("pvptimer.remove-target"));
-                }))
+        timerService.hasActiveTimer(target.getUniqueId(), TimerType.PVP_TIMER)
+                .thenCompose(hasTimer -> {
+                    if (!hasTimer) {
+                        Bukkit.getScheduler().runTask(plugin, () ->
+                                sender.sendMessage(messages.format("pvptimer.does-not-have", "player", target.getName())));
+                        return java.util.concurrent.CompletableFuture.completedFuture(null);
+                    }
+                    return timerService.cancelTimer(target.getUniqueId(), TimerType.PVP_TIMER)
+                            .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
+                                sender.sendMessage(messages.format("pvptimer.remove-sender", "player", target.getName()));
+                                target.sendMessage(messages.get("pvptimer.remove-target"));
+                            }));
+                })
                 .exceptionally(ex -> {
                     Bukkit.getScheduler().runTask(plugin, () ->
                             sender.sendMessage(messages.format("pvptimer.error", "error", ex.getMessage())));

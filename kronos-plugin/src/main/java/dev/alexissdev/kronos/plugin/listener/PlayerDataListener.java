@@ -55,19 +55,17 @@ public class PlayerDataListener implements Listener {
         tabListManager.refresh(event.getPlayer());
 
         timerService.loadTimersIntoCache(event.getPlayer().getUniqueId())
-                .thenCompose(ignored ->
-                        timerService.hasActiveTimer(event.getPlayer().getUniqueId(), TimerType.PVP_TIMER))
-                .thenCompose(hasPvpTimer -> {
-                    if (!hasPvpTimer) {
-                        return timerService.startPvpTimer(event.getPlayer().getUniqueId(), PVP_TIMER_DURATION_MS);
+                .thenCompose(ignored -> {
+                    UUID uuid = event.getPlayer().getUniqueId();
+                    if (!timerService.hasActiveTimerSync(uuid, TimerType.PVP_TIMER)) {
+                        return timerService.startPvpTimer(uuid, PVP_TIMER_DURATION_MS);
                     }
                     return CompletableFuture.completedFuture(null);
                 })
-                .thenCompose(ignored ->
-                        timerService.hasActiveTimer(event.getPlayer().getUniqueId(), TimerType.LOGOUT))
-                .thenAccept(hasLogoutTimer -> {
-                    if (hasLogoutTimer) {
-                        timerService.cancelTimer(event.getPlayer().getUniqueId(), TimerType.LOGOUT);
+                .thenRun(() -> {
+                    UUID uuid = event.getPlayer().getUniqueId();
+                    if (timerService.hasActiveTimerSync(uuid, TimerType.LOGOUT)) {
+                        timerService.cancelTimer(uuid, TimerType.LOGOUT);
                         Bukkit.getScheduler().runTask(plugin, () -> {
                             if (event.getPlayer().isOnline()) {
                                 event.getPlayer().setHealth(0);
