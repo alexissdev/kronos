@@ -43,7 +43,7 @@ public class SpawnWandListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
-        ItemStack hand = player.getInventory().getItemInMainHand();
+        ItemStack hand = player.getInventory().getItemInHand();
 
         if (!creationService.isWand(hand)) return;
 

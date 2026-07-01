@@ -15,7 +15,7 @@ dependencies {
     implementation(project(":kronos-api"))
     implementation(project(":kronos-scoreboard"))
     implementation(project(":kronos-spawn"))
-    compileOnly("org.spigotmc:spigot-api:1.13.2-R0.1-SNAPSHOT")
+    compileOnly("org.spigotmc:spigot-api:1.8.8-R0.1-SNAPSHOT")
     compileOnly("com.github.MilkBowl:VaultAPI:1.7")
     implementation("com.google.inject:guice:5.1.0")
     implementation("org.mongodb:mongodb-driver-sync:4.11.1")
@@ -28,8 +28,7 @@ bukkit {
     main = "dev.alexissdev.kronos.plugin.HCFPlugin"
     name = "KronosHCF"
     version = "${project.version}"
-    apiVersion = "1.13"
-    description = "Plugin HCF completo para Spigot 1.13.2"
+    description = "Plugin HCF completo para Spigot 1.8.8"
     authors = listOf("alexissdev")
     depend = listOf("Vault")
     softDepend = listOf("PlaceholderAPI", "Apolo")

@@ -118,13 +118,13 @@ public class ClassListener implements Listener {
         if (detected == previous) return;
         playerKitCache.put(player.getUniqueId(), detected);
         kitService.updateActiveKit(player.getUniqueId(), detected);
-        player.sendTitle("", ChatColor.GOLD + "Clase: " + detected.name(), 5, 30, 10);
+        player.sendMessage(ChatColor.GOLD + "Clase activa: " + detected.name());
     }
 
     private boolean isHelmetMaterial(Material material) {
         switch (material) {
             case LEATHER_HELMET:
-            case GOLDEN_HELMET:
+            case GOLD_HELMET:
             case CHAINMAIL_HELMET:
             case IRON_HELMET:
             case DIAMOND_HELMET:
@@ -138,7 +138,7 @@ public class ClassListener implements Listener {
         if (helmet == null || helmet.getType() == Material.AIR) return KitType.DIAMOND;
         switch (helmet.getType()) {
             case LEATHER_HELMET:   return KitType.ARCHER;
-            case GOLDEN_HELMET:    return KitType.BARD;
+            case GOLD_HELMET:      return KitType.BARD;
             case CHAINMAIL_HELMET: return KitType.ROGUE;
             case IRON_HELMET:      return KitType.MINER;
             case DIAMOND_HELMET:   return KitType.KNIGHT;
@@ -192,6 +192,6 @@ public class ClassListener implements Listener {
             default:
                 break;
         }
-        player.sendTitle("", ChatColor.GOLD + "¡Habilidad activada!", 5, 30, 10);
+        player.sendMessage(ChatColor.GOLD + "¡Habilidad activada!");
     }
 }

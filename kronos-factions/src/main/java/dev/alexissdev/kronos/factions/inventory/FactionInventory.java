@@ -83,7 +83,7 @@ public class FactionInventory {
     }
 
     private ItemStack createMemberItem(UUID uuid, FactionMember member) {
-        ItemStack skull = new ItemStack(Material.PLAYER_HEAD);
+        ItemStack skull = new ItemStack(Material.SKULL_ITEM, 1, (short) 3);
         SkullMeta meta = (SkullMeta) skull.getItemMeta();
         Player online = Bukkit.getPlayer(uuid);
         String name = online != null ? online.getName() : uuid.toString().substring(0, 8);
@@ -97,7 +97,7 @@ public class FactionInventory {
     }
 
     private ItemStack createBorder() {
-        ItemStack item = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
+        ItemStack item = new ItemStack(Material.STAINED_GLASS_PANE, 1, (short) 15);
         ItemMeta meta = item.getItemMeta();
         meta.setDisplayName(ChatColor.DARK_GRAY + " ");
         item.setItemMeta(meta);

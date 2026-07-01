@@ -11,6 +11,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.*;
 
@@ -35,7 +36,11 @@ public class CrateInventory {
     }
 
     private void fillBorderWithGlass(Inventory inv) {
-        ItemStack glass = createItem(Material.GRAY_STAINED_GLASS_PANE, ChatColor.DARK_GRAY + " ");
+        // data value 7 = gray in 1.8.8 stained glass pane
+        ItemStack glass = new ItemStack(Material.STAINED_GLASS_PANE, 1, (short) 7);
+        ItemMeta meta = glass.getItemMeta();
+        meta.setDisplayName(ChatColor.DARK_GRAY + " ");
+        glass.setItemMeta(meta);
         for (int i = 0; i < SIZE; i++) {
             inv.setItem(i, glass);
         }
@@ -43,27 +48,31 @@ public class CrateInventory {
 
     private void startSpinAnimation(Player player, Inventory inv, CrateType crateType) {
         player.openInventory(inv);
-        final int[] tick = {0};
         final int maxTicks = 30;
 
-        Bukkit.getScheduler().runTaskTimer(plugin, task -> {
-            if (!player.isOnline() || tick[0] >= maxTicks) {
-                task.cancel();
-                if (player.isOnline()) {
-                    ItemStack prize = selectPrize(crateType);
-                    inv.setItem(13, prize);
-                    Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                        player.closeInventory();
-                        player.getInventory().addItem(prize);
-                        player.sendMessage(ChatColor.GOLD + "¡Obtuviste: " +
-                                ChatColor.WHITE + prize.getItemMeta().getDisplayName() + ChatColor.GOLD + "!");
-                    }, 40L);
+        new BukkitRunnable() {
+            private int tick = 0;
+
+            @Override
+            public void run() {
+                if (!player.isOnline() || tick >= maxTicks) {
+                    cancel();
+                    if (player.isOnline()) {
+                        ItemStack prize = selectPrize(crateType);
+                        inv.setItem(13, prize);
+                        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                            player.closeInventory();
+                            player.getInventory().addItem(prize);
+                            player.sendMessage(ChatColor.GOLD + "¡Obtuviste: " +
+                                    ChatColor.WHITE + prize.getItemMeta().getDisplayName() + ChatColor.GOLD + "!");
+                        }, 40L);
+                    }
+                    return;
                 }
-                return;
+                randomizeMiddleRow(inv, crateType);
+                tick++;
             }
-            randomizeMiddleRow(inv, crateType);
-            tick[0]++;
-        }, 5L, 3L);
+        }.runTaskTimer(plugin, 5L, 3L);
     }
 
     private void randomizeMiddleRow(Inventory inv, CrateType crateType) {
@@ -85,7 +94,7 @@ public class CrateInventory {
                 prizes.add(createItem(Material.DIAMOND_SWORD, ChatColor.AQUA + "Espada KOTH"));
                 prizes.add(createItem(Material.GOLDEN_APPLE, ChatColor.GOLD + "Manzana Dorada"));
                 prizes.add(createItem(Material.DIAMOND, ChatColor.AQUA + "x5 Diamantes"));
-                prizes.add(createItem(Material.EXPERIENCE_BOTTLE, ChatColor.GREEN + "XP Bottle"));
+                prizes.add(createItem(Material.EXP_BOTTLE, ChatColor.GREEN + "XP Bottle"));
                 break;
             case VOTE:
                 prizes.add(createItem(Material.IRON_INGOT, ChatColor.GRAY + "x10 Hierro"));
@@ -98,9 +107,9 @@ public class CrateInventory {
                 prizes.add(createItem(Material.DIAMOND_CHESTPLATE, ChatColor.AQUA + "Pechera Diamante"));
                 break;
             case EVENT:
-                prizes.add(createItem(Material.TOTEM_OF_UNDYING, ChatColor.YELLOW + "Tótem de la Vida"));
+                prizes.add(createItem(Material.NETHER_STAR, ChatColor.YELLOW + "Estrella del Nether"));
                 prizes.add(createItem(Material.ENCHANTED_BOOK, ChatColor.LIGHT_PURPLE + "Libro Encantado"));
-                prizes.add(createItem(Material.ELYTRA, ChatColor.WHITE + "Elytras"));
+                prizes.add(createItem(Material.IRON_CHESTPLATE, ChatColor.WHITE + "Pechera de Hierro"));
                 break;
         }
         return prizes;
