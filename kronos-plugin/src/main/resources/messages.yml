@@ -229,6 +229,15 @@ pvptimer:
   help-give: "&e/pvptimer give <jugador> &7- Dar PvP Timer"
   help-remove: "&e/pvptimer remove <jugador> &7- Quitar PvP Timer"
 
+sotw:
+  started:    "&a&l[SOTW] &fStart of the World activo por &e{hours} hora(s)&f. ¡El PvP está desactivado!"
+  ended:      "&c&l[SOTW] &fEl período SOTW ha terminado. &c¡El PvP está activo!"
+  pvp-blocked: "&cEl PvP está desactivado durante el SOTW."
+
+eotw:
+  started:    "&6&l[EOTW] &fEnd of the World en &e{hours} hora(s)&f. ¡Prepárate!"
+  ended:      "&6&l[EOTW] &fEl período EOTW ha terminado."
+
 stats:
   header:    "&6&lEstadísticas de &e{player}&6:"
   faction:   "  &7Facción: &e{faction}"
@@ -257,6 +266,8 @@ scoreboard:
   koth-loc:   " &7Loc: &a{x}&7, &a{z}"
   koth-cap:   " &7Cap: &f{time}"
   footer:     "&fplay.kronos.net"
+  sotw:       "&a&lSOTW: &f{time}"
+  eotw:       "&6&lEOTW: &f{time}"
   timer:
     combat:     "&cCombat: &f{time}"
     pvp:        "&6PvP Timer: &f{time}"

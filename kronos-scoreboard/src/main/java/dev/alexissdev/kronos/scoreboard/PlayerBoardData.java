@@ -25,6 +25,10 @@ final class PlayerBoardData {
     private volatile String capturingKothName;
     private volatile long   captureExpiresAt;
 
+    // Global SOTW/EOTW countdown (same value for all players, updated each tick)
+    private volatile long sotwRemainingMs = 0L;
+    private volatile long eotwRemainingMs = 0L;
+
     // ── stats ─────────────────────────────────────────────────────────────
 
     int getKills()        { return kills; }
@@ -73,4 +77,11 @@ final class PlayerBoardData {
         if (capturingKothName == null) return 0L;
         return Math.max(0L, captureExpiresAt - System.currentTimeMillis());
     }
+
+    // ── SOTW / EOTW ───────────────────────────────────────────────────────
+
+    void setSotwRemainingMs(long ms) { this.sotwRemainingMs = ms; }
+    void setEotwRemainingMs(long ms) { this.eotwRemainingMs = ms; }
+    long getSotwRemainingMs()        { return sotwRemainingMs; }
+    long getEotwRemainingMs()        { return eotwRemainingMs; }
 }

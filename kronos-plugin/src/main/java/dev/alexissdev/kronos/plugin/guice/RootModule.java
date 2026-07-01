@@ -6,6 +6,8 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 import dev.alexissdev.kronos.api.guice.ApiModule;
 import dev.alexissdev.kronos.common.config.MessagesConfig;
+import dev.alexissdev.kronos.common.domain.SotwService;
+import dev.alexissdev.kronos.plugin.sotw.SotwManager;
 import dev.alexissdev.kronos.scoreboard.ScoreboardModule;
 import dev.alexissdev.kronos.spawn.SpawnModule;
 import dev.alexissdev.kronos.classes.ClassesModule;
@@ -45,6 +47,7 @@ public class RootModule extends AbstractModule {
         bind(MessagesConfig.class).toInstance(messagesConfig);
         bind(EventBus.class).in(Singleton.class);
         bind(ChatManager.class).in(Singleton.class);
+        bind(SotwService.class).to(SotwManager.class).in(Singleton.class);
         bind(PlayerDataListener.class).in(Singleton.class);
         bind(PvpListener.class).in(Singleton.class);
         bind(TimerListener.class).in(Singleton.class);

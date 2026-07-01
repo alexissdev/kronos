@@ -13,6 +13,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -24,6 +25,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -43,6 +45,31 @@ public class ClassListener implements Listener {
         this.kitService = kitService;
         this.timerService = timerService;
         this.plugin = plugin;
+        scheduleBardAura();
+    }
+
+    private void scheduleBardAura() {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                for (Map.Entry<UUID, KitType> entry : playerKitCache.entrySet()) {
+                    if (entry.getValue() != KitType.BARD) continue;
+                    org.bukkit.entity.Player bard = plugin.getServer().getPlayer(entry.getKey());
+                    if (bard == null || !bard.isOnline()) continue;
+                    PotionEffect speed = new PotionEffect(PotionEffectType.SPEED, 60, 1, false, false);
+                    PotionEffect regen = new PotionEffect(PotionEffectType.REGENERATION, 60, 0, false, false);
+                    bard.getNearbyEntities(15, 15, 15).stream()
+                            .filter(e -> e instanceof org.bukkit.entity.Player)
+                            .map(e -> (org.bukkit.entity.Player) e)
+                            .forEach(p -> {
+                                p.addPotionEffect(speed, true);
+                                p.addPotionEffect(regen, true);
+                            });
+                    bard.addPotionEffect(speed, true);
+                    bard.addPotionEffect(regen, true);
+                }
+            }
+        }.runTaskTimer(plugin, 40L, 40L);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -93,6 +120,13 @@ public class ClassListener implements Listener {
 
         KitType kit = playerKitCache.getOrDefault(attacker.getUniqueId(), KitType.DIAMOND);
         applyPassiveEffect(attacker, victim, kit);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBlockBreak(BlockBreakEvent event) {
+        Player player = event.getPlayer();
+        if (playerKitCache.getOrDefault(player.getUniqueId(), KitType.DIAMOND) != KitType.MINER) return;
+        player.addPotionEffect(new PotionEffect(PotionEffectType.FAST_DIGGING, 80, 1, false, false), true);
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)

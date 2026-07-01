@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import dev.alexissdev.kronos.common.config.MessagesConfig;
+import dev.alexissdev.kronos.common.domain.SotwService;
 import dev.alexissdev.kronos.players.repository.DeathbanRepository;
 import dev.alexissdev.kronos.players.service.PlayerService;
 import dev.alexissdev.kronos.timers.TimerApplicationService;
@@ -36,6 +37,7 @@ public class PvpListener implements Listener {
     private final DeathbanRepository deathbanRepository;
     private final MessagesConfig messages;
     private final Plugin plugin;
+    private final SotwService sotwService;
     private final long deathbanDurationSeconds;
     private final long enderpearlCooldownMs;
     private final long gappleCooldownMs;
@@ -47,6 +49,7 @@ public class PvpListener implements Listener {
                        DeathbanRepository deathbanRepository,
                        MessagesConfig messages,
                        Plugin plugin,
+                       SotwService sotwService,
                        @Named("hcf.deathban-seconds")   long deathbanDurationSeconds,
                        @Named("enderpearl.cooldown-ms") long enderpearlCooldownMs,
                        @Named("gapple.cooldown-ms")     long gappleCooldownMs) {
@@ -56,6 +59,7 @@ public class PvpListener implements Listener {
         this.deathbanRepository = deathbanRepository;
         this.messages = messages;
         this.plugin = plugin;
+        this.sotwService = sotwService;
         this.deathbanDurationSeconds = deathbanDurationSeconds;
         this.enderpearlCooldownMs = enderpearlCooldownMs;
         this.gappleCooldownMs = gappleCooldownMs;
@@ -67,6 +71,12 @@ public class PvpListener implements Listener {
 
         Player victim   = (Player) event.getEntity();
         Player attacker = (Player) event.getDamager();
+
+        if (sotwService.isSotwActive()) {
+            event.setCancelled(true);
+            attacker.sendMessage(messages.get("sotw.pvp-blocked"));
+            return;
+        }
 
         if (timerService.hasActiveTimerSync(victim.getUniqueId(), TimerType.PVP_TIMER)) {
             event.setCancelled(true);

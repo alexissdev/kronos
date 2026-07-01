@@ -4,6 +4,7 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import dev.alexissdev.kronos.common.domain.SotwService;
 import dev.alexissdev.kronos.economy.service.EconomyService;
 import dev.alexissdev.kronos.factions.service.FactionService;
 import dev.alexissdev.kronos.koth.event.KothCapturedDomainEvent;
@@ -36,6 +37,7 @@ public class ScoreboardManager {
     private final PlayerService playerService;
     private final FactionService factionService;
     private final EconomyService economyService;
+    private final SotwService sotwService;
 
     @Inject
     public ScoreboardManager(EventBus eventBus,
@@ -43,12 +45,14 @@ public class ScoreboardManager {
                              JavaPlugin plugin,
                              PlayerService playerService,
                              FactionService factionService,
-                             EconomyService economyService) {
+                             EconomyService economyService,
+                             SotwService sotwService) {
         this.renderer       = renderer;
         this.plugin         = plugin;
         this.playerService  = playerService;
         this.factionService = factionService;
         this.economyService = economyService;
+        this.sotwService    = sotwService;
         eventBus.register(this);
     }
 
@@ -70,7 +74,14 @@ public class ScoreboardManager {
 
     /** Called every second from the main thread — redraws all boards (timer countdown). */
     public void tickAll() {
+        long sotwMs = sotwService.getSotwRemainingMs();
+        long eotwMs = sotwService.getEotwRemainingMs();
         for (Player player : Bukkit.getOnlinePlayers()) {
+            PlayerBoardData data = cache.get(player.getUniqueId());
+            if (data != null) {
+                data.setSotwRemainingMs(sotwMs);
+                data.setEotwRemainingMs(eotwMs);
+            }
             redraw(player.getUniqueId());
         }
     }

@@ -58,6 +58,14 @@ final class ScoreboardRenderer {
             lines.addAll(timerLines);
         }
 
+        long sotwMs = data.getSotwRemainingMs();
+        long eotwMs = data.getEotwRemainingMs();
+        if (sotwMs > 0 || eotwMs > 0) {
+            lines.add(sep);
+            if (sotwMs > 0) lines.add(messages.format("scoreboard.sotw", "time", fmtMs(sotwMs)));
+            if (eotwMs > 0) lines.add(messages.format("scoreboard.eotw", "time", fmtMs(eotwMs)));
+        }
+
         lines.add(sep);
         lines.add(messages.get("scoreboard.footer"));
 
