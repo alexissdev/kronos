@@ -108,6 +108,13 @@ faction:
     disbanded: "&7[Facción] &f{name} &7fue disuelta."
   member:
     left: "&e{player} fue {reason} de la facción."
+  strike:
+    added:    "&c&l[STRIKE] &fLa facción &e{name} &frecibió un strike &7({strikes}/{max})&f: &7{reason}"
+    disbanded: "&c&l[STRIKE] &fLa facción &e{name} &ffue disuelta por acumular todos los strikes. &7Razón: {reason}"
+  frozen:      "&c&l[ADMIN] &fLa facción &e{name} &ffue congelada."
+  unfrozen:    "&a&l[ADMIN] &fLa facción &e{name} &ffue descongelada."
+  frozen-self: "&c&lATENCIÓN: &fTu facción fue &ccongelada &fpor un administrador."
+  unfrozen-self: "&a&lATENCIÓN: &fTu facción fue &adescongelada &fpor un administrador."
   cmd:
     created: "&aFacción &e{name} &acreada con éxito!"
     disbanded: "&aTu facción ha sido disuelta."

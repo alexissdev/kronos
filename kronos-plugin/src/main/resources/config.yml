@@ -13,6 +13,7 @@ faction:
   default-dtk: 20
   max-claims-per-faction: 50
   max-members: 15
+  reinvite-cooldown-hours: 24
 
 timers:
   combat-tag-seconds: 30

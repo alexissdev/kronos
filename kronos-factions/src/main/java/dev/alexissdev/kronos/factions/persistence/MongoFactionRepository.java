@@ -130,7 +130,9 @@ public class MongoFactionRepository implements FactionRepository {
                 doc.getInteger("deaths", 0),
                 doc.getDouble("balance") != null ? doc.getDouble("balance") : 0.0,
                 createdAtMs != null ? Instant.ofEpochMilli(createdAtMs) : Instant.now(),
-                members, allies, enemies
+                members, allies, enemies,
+                doc.getInteger("strikes", 0),
+                Boolean.TRUE.equals(doc.getBoolean("frozen", false))
         );
 
         Document homeDoc = doc.get("home", Document.class);
@@ -171,6 +173,8 @@ public class MongoFactionRepository implements FactionRepository {
                 .append("members", membersDoc)
                 .append("allies", new ArrayList<>(f.getAllies()))
                 .append("enemies", new ArrayList<>(f.getEnemies()))
+                .append("strikes", f.getStrikes())
+                .append("frozen", f.isFrozen())
                 .append("home", f.getHome() == null ? null : new Document()
                         .append("world", f.getHome().getWorld())
                         .append("x", f.getHome().getX())

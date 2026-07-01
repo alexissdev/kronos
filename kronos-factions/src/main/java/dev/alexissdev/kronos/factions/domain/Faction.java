@@ -5,6 +5,8 @@ import java.util.*;
 
 public final class Faction {
 
+    private static final int MAX_STRIKES = 3;
+
     private final String id;
     private String name;
     private UUID leaderId;
@@ -18,6 +20,8 @@ public final class Faction {
     private final int maxDtk;
     private final Instant createdAt;
     private FactionHome home;
+    private int strikes;
+    private boolean frozen;
 
     public Faction(String id, String name, UUID leaderId, int maxDtk, Instant createdAt) {
         this.id = id;
@@ -31,12 +35,15 @@ public final class Faction {
         this.balance = 0.0;
         this.kills = 0;
         this.deaths = 0;
+        this.strikes = 0;
+        this.frozen = false;
         this.createdAt = createdAt;
     }
 
     public Faction(String id, String name, UUID leaderId, int maxDtk, int dtkRemaining,
                    int kills, int deaths, double balance, Instant createdAt,
-                   Map<UUID, FactionMember> members, Set<String> allies, Set<String> enemies) {
+                   Map<UUID, FactionMember> members, Set<String> allies, Set<String> enemies,
+                   int strikes, boolean frozen) {
         this.id = id;
         this.name = name;
         this.leaderId = leaderId;
@@ -49,6 +56,8 @@ public final class Faction {
         this.members = members;
         this.allies = allies;
         this.enemies = enemies;
+        this.strikes = strikes;
+        this.frozen = frozen;
     }
 
     public void addMember(FactionMember member) {
@@ -97,6 +106,10 @@ public final class Faction {
 
     public void withdraw(double amount) { balance -= amount; }
 
+    public void addStrike() { strikes++; }
+
+    public boolean isAtMaxStrikes() { return strikes >= MAX_STRIKES; }
+
     public String getId() { return id; }
 
     public String getName() { return name; }
@@ -130,4 +143,12 @@ public final class Faction {
     public void setHome(FactionHome home) { this.home = home; }
 
     public void clearHome() { this.home = null; }
+
+    public int getStrikes() { return strikes; }
+
+    public int getMaxStrikes() { return MAX_STRIKES; }
+
+    public boolean isFrozen() { return frozen; }
+
+    public void setFrozen(boolean frozen) { this.frozen = frozen; }
 }

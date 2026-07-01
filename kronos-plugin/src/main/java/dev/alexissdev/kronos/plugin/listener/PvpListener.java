@@ -154,6 +154,15 @@ public class PvpListener implements Listener {
         vFactionFuture.thenCombine(kFactionFuture, (vFact, kFact) -> {
             String vTag = vFact.map(f -> ChatColor.GRAY + "[" + ChatColor.YELLOW + f.getName() + ChatColor.GRAY + "] ").orElse("");
             String kTag = kFact.map(f -> ChatColor.GRAY + "[" + ChatColor.YELLOW + f.getName() + ChatColor.GRAY + "] ").orElse("");
+
+            // Decrement DTK only when killed by a player from a different faction
+            vFact.ifPresent(victimFaction -> {
+                boolean sameTeam = kFact.map(kf -> kf.getId().equals(victimFaction.getId())).orElse(false);
+                if (!sameTeam && killerUuid != null) {
+                    factionService.notifyMemberDeath(victimFaction.getId(), victimUuid);
+                }
+            });
+
             if (killerName != null) {
                 return messages.format("pvp.death-killed",
                         "victim_tag", vTag, "victim", victimName,
@@ -161,10 +170,6 @@ public class PvpListener implements Listener {
             }
             return messages.format("pvp.death-natural", "victim_tag", vTag, "victim", victimName);
         }).thenAccept(msg -> Bukkit.getOnlinePlayers().forEach(p -> p.sendMessage(msg)));
-
-        factionService.getByPlayer(victimUuid)
-                .thenAccept(opt -> opt.ifPresent(f ->
-                        factionService.notifyMemberDeath(f.getId(), victimUuid)));
 
         playerService.decrementLives(victimUuid)
                 .thenCompose(remainingLives -> {

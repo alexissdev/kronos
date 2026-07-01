@@ -50,4 +50,10 @@ public interface FactionService {
     CompletableFuture<Void> setFactionHome(String factionId, UUID actorUuid, FactionHome home);
 
     CompletableFuture<Void> clearFactionHome(String factionId, UUID actorUuid);
+
+    CompletableFuture<Void> addStrike(String factionId, String reason, UUID actorUuid);
+
+    CompletableFuture<Void> freezeFaction(String factionId, UUID actorUuid);
+
+    CompletableFuture<Void> unfreezeFaction(String factionId, UUID actorUuid);
 }

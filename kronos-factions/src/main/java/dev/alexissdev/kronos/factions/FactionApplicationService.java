@@ -33,19 +33,24 @@ public class FactionApplicationService implements FactionService {
     private final EconomyService economyService;
     private final EventBus eventBus;
     private final int maxMembers;
-    private final Map<UUID, String> pendingInvites = new java.util.concurrent.ConcurrentHashMap<>();
+    private final long reinviteCooldownMs;
+    private final Map<UUID, String> pendingInvites          = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Map<UUID, Long>   leftFactionTimestamps   = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Map<UUID, String> leftFactionIds          = new java.util.concurrent.ConcurrentHashMap<>();
 
     @Inject
     public FactionApplicationService(FactionRepository factionRepository,
                                      PlayerRepository playerRepository,
                                      EconomyService economyService,
                                      EventBus eventBus,
-                                     @Named("faction.max-members") int maxMembers) {
+                                     @Named("faction.max-members") int maxMembers,
+                                     @Named("faction.reinvite-cooldown-ms") long reinviteCooldownMs) {
         this.factionRepository = factionRepository;
         this.playerRepository = playerRepository;
         this.economyService = economyService;
         this.eventBus = eventBus;
         this.maxMembers = maxMembers;
+        this.reinviteCooldownMs = reinviteCooldownMs;
     }
 
     @Override
@@ -94,11 +99,22 @@ public class FactionApplicationService implements FactionService {
         return factionRepository.findById(factionId).thenCompose(opt -> {
             Faction faction = opt.orElseThrow(() -> new FactionNotFoundException(factionId));
             requireRole(faction, actorUuid, FactionRole.CAPTAIN);
+            if (faction.isFrozen()) {
+                throw new HCFException("Tu facción está congelada, no puedes invitar jugadores");
+            }
             if (faction.hasMember(inviteeUuid)) {
                 throw new HCFException("Ese jugador ya es miembro de tu facción");
             }
             if (faction.getMembers().size() >= maxMembers) {
                 throw new HCFException("La facción está llena (" + maxMembers + " miembros máximo)");
+            }
+            Long leftAt = leftFactionTimestamps.get(inviteeUuid);
+            if (leftAt != null && factionId.equals(leftFactionIds.get(inviteeUuid))) {
+                long elapsed = System.currentTimeMillis() - leftAt;
+                if (elapsed < reinviteCooldownMs) {
+                    long remainingSecs = (reinviteCooldownMs - elapsed) / 1000;
+                    throw new HCFException("Ese jugador debe esperar " + remainingSecs + "s antes de ser re-invitado");
+                }
             }
             return factionRepository.findByMember(inviteeUuid).thenAccept(existing -> {
                 if (existing.isPresent()) {
@@ -142,6 +158,8 @@ public class FactionApplicationService implements FactionService {
                 requireRole(faction, actorUuid, FactionRole.CO_LEADER);
             }
             faction.removeMember(targetUuid);
+            leftFactionTimestamps.put(targetUuid, System.currentTimeMillis());
+            leftFactionIds.put(targetUuid, factionId);
             return factionRepository.save(faction).thenRun(() ->
                     eventBus.post(new PlayerLeftFactionDomainEvent(targetUuid, factionId, true)));
         });
@@ -154,9 +172,12 @@ public class FactionApplicationService implements FactionService {
             if (faction.getLeaderId().equals(playerUuid)) {
                 throw new HCFException("Leader must disband the faction or transfer leadership first");
             }
+            String factionId = faction.getId();
             faction.removeMember(playerUuid);
+            leftFactionTimestamps.put(playerUuid, System.currentTimeMillis());
+            leftFactionIds.put(playerUuid, factionId);
             return factionRepository.save(faction).thenRun(() ->
-                    eventBus.post(new PlayerLeftFactionDomainEvent(playerUuid, faction.getId(), false)));
+                    eventBus.post(new PlayerLeftFactionDomainEvent(playerUuid, factionId, false)));
         });
     }
 
@@ -236,6 +257,9 @@ public class FactionApplicationService implements FactionService {
                 new HCFException("La cantidad debe ser mayor a 0"));
         return factionRepository.findById(factionId).thenCompose(opt -> {
             Faction faction = opt.orElseThrow(() -> new FactionNotFoundException(factionId));
+            if (faction.isFrozen()) {
+                throw new HCFException("Tu facción está congelada, no puedes depositar");
+            }
             return economyService.withdraw(playerUuid, amount).thenCompose(v -> {
                 faction.deposit(amount);
                 return factionRepository.save(faction).thenApply(f -> null);
@@ -313,6 +337,37 @@ public class FactionApplicationService implements FactionService {
             Faction faction = opt.orElseThrow(() -> new FactionNotFoundException(factionId));
             requireRole(faction, actorUuid, FactionRole.CAPTAIN);
             faction.clearHome();
+            return factionRepository.save(faction).thenApply(f -> null);
+        });
+    }
+
+    @Override
+    public CompletableFuture<Void> addStrike(String factionId, String reason, UUID actorUuid) {
+        return factionRepository.findById(factionId).thenCompose(opt -> {
+            Faction faction = opt.orElseThrow(() -> new FactionNotFoundException(factionId));
+            faction.addStrike();
+            if (faction.isAtMaxStrikes()) {
+                return factionRepository.delete(factionId).thenRun(() ->
+                        eventBus.post(new FactionDisbandedDomainEvent(factionId, faction.getName(), actorUuid)));
+            }
+            return factionRepository.save(faction).thenApply(f -> null);
+        });
+    }
+
+    @Override
+    public CompletableFuture<Void> freezeFaction(String factionId, UUID actorUuid) {
+        return factionRepository.findById(factionId).thenCompose(opt -> {
+            Faction faction = opt.orElseThrow(() -> new FactionNotFoundException(factionId));
+            faction.setFrozen(true);
+            return factionRepository.save(faction).thenApply(f -> null);
+        });
+    }
+
+    @Override
+    public CompletableFuture<Void> unfreezeFaction(String factionId, UUID actorUuid) {
+        return factionRepository.findById(factionId).thenCompose(opt -> {
+            Faction faction = opt.orElseThrow(() -> new FactionNotFoundException(factionId));
+            faction.setFrozen(false);
             return factionRepository.save(faction).thenApply(f -> null);
         });
     }

@@ -84,6 +84,9 @@ public class FactionCommand extends BaseCommand {
             case "home": handleHome(player); break;
             case "rename": handleRename(player, args); break;
             case "neutral": handleNeutral(player, args); break;
+            case "strike":   handleStrike(player, args);   break;
+            case "freeze":   handleFreeze(player, args);   break;
+            case "unfreeze": handleUnfreeze(player, args); break;
             default: sendHelp(player);
         }
     }
@@ -514,6 +517,95 @@ public class FactionCommand extends BaseCommand {
         player.sendMessage(messages.get("faction.cmd.help-home"));
         player.sendMessage(messages.get("faction.cmd.help-rename"));
         player.sendMessage(messages.get("faction.cmd.help-neutral"));
+    }
+
+    private void handleStrike(Player player, String[] args) {
+        if (!player.hasPermission("hcf.admin")) {
+            player.sendMessage(messages.get("hcf.no-permission"));
+            return;
+        }
+        if (!requireArgs(player, args, 3, "/f strike <faccion> <razon>")) return;
+        String factionName = args[1];
+        String reason = String.join(" ", java.util.Arrays.copyOfRange(args, 2, args.length));
+
+        factionService.getByName(factionName).thenCompose(opt -> {
+            dev.alexissdev.kronos.factions.domain.Faction faction =
+                    opt.orElseThrow(() -> new HCFException("Facción no encontrada: " + factionName));
+            int newStrikes = faction.getStrikes() + 1;
+            boolean willDisband = newStrikes >= faction.getMaxStrikes();
+            return factionService.addStrike(faction.getId(), reason, player.getUniqueId())
+                    .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
+                        if (willDisband) {
+                            for (org.bukkit.entity.Player online : Bukkit.getOnlinePlayers()) {
+                                online.sendMessage(messages.format("faction.strike.disbanded",
+                                        "name", factionName, "reason", reason));
+                            }
+                        } else {
+                            for (org.bukkit.entity.Player online : Bukkit.getOnlinePlayers()) {
+                                online.sendMessage(messages.format("faction.strike.added",
+                                        "name", factionName, "strikes", String.valueOf(newStrikes),
+                                        "max", String.valueOf(faction.getMaxStrikes()), "reason", reason));
+                            }
+                        }
+                    }));
+        }).exceptionally(ex -> {
+            Bukkit.getScheduler().runTask(plugin,
+                    () -> player.sendMessage(messages.format("faction.cmd.error", "error", rootMsg(ex))));
+            return null;
+        });
+    }
+
+    private void handleFreeze(Player player, String[] args) {
+        if (!player.hasPermission("hcf.admin")) {
+            player.sendMessage(messages.get("hcf.no-permission"));
+            return;
+        }
+        if (!requireArgs(player, args, 2, "/f freeze <faccion>")) return;
+        String factionName = args[1];
+
+        factionService.getByName(factionName).thenCompose(opt -> {
+            dev.alexissdev.kronos.factions.domain.Faction faction =
+                    opt.orElseThrow(() -> new HCFException("Facción no encontrada: " + factionName));
+            return factionService.freezeFaction(faction.getId(), player.getUniqueId())
+                    .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
+                        player.sendMessage(messages.format("faction.frozen", "name", factionName));
+                        notifyOnlineFactionMembers(faction, messages.get("faction.frozen-self"));
+                    }));
+        }).exceptionally(ex -> {
+            Bukkit.getScheduler().runTask(plugin,
+                    () -> player.sendMessage(messages.format("faction.cmd.error", "error", rootMsg(ex))));
+            return null;
+        });
+    }
+
+    private void handleUnfreeze(Player player, String[] args) {
+        if (!player.hasPermission("hcf.admin")) {
+            player.sendMessage(messages.get("hcf.no-permission"));
+            return;
+        }
+        if (!requireArgs(player, args, 2, "/f unfreeze <faccion>")) return;
+        String factionName = args[1];
+
+        factionService.getByName(factionName).thenCompose(opt -> {
+            dev.alexissdev.kronos.factions.domain.Faction faction =
+                    opt.orElseThrow(() -> new HCFException("Facción no encontrada: " + factionName));
+            return factionService.unfreezeFaction(faction.getId(), player.getUniqueId())
+                    .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
+                        player.sendMessage(messages.format("faction.unfrozen", "name", factionName));
+                        notifyOnlineFactionMembers(faction, messages.get("faction.unfrozen-self"));
+                    }));
+        }).exceptionally(ex -> {
+            Bukkit.getScheduler().runTask(plugin,
+                    () -> player.sendMessage(messages.format("faction.cmd.error", "error", rootMsg(ex))));
+            return null;
+        });
+    }
+
+    private void notifyOnlineFactionMembers(dev.alexissdev.kronos.factions.domain.Faction faction, String msg) {
+        for (dev.alexissdev.kronos.factions.domain.FactionMember m : faction.getMembers().values()) {
+            org.bukkit.entity.Player p = Bukkit.getPlayer(m.getUuid());
+            if (p != null) p.sendMessage(msg);
+        }
     }
 
     private static String rootMsg(Throwable ex) {

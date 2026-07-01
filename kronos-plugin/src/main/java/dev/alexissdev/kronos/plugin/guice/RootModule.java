@@ -84,7 +84,8 @@ public class RootModule extends AbstractModule {
         bindLong("enderpearl.cooldown-ms", config.getInt("timers.enderpearl-cooldown-seconds",    15) * 1000L);
         bindLong("gapple.cooldown-ms",     config.getInt("timers.gapple-cooldown-seconds",        30) * 1000L);
         bindLong("home.delay-ms",          config.getInt("timers.home-delay-seconds",              5) * 1000L);
-        bindInt ("faction.max-members",    config.getInt("faction.max-members",                   15));
+        bindInt ("faction.max-members",       config.getInt("faction.max-members",                   15));
+        bindLong("faction.reinvite-cooldown-ms", config.getInt("faction.reinvite-cooldown-hours",   24) * 3600L * 1000L);
     }
 
     private void bindString(String key, String value) {
