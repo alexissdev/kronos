@@ -4,6 +4,7 @@ public enum TimerType {
     COMBAT_TAG,
     PVP_TIMER,
     ENDERPEARL,
+    GAPPLE,
     HOME,
     CLASS_COOLDOWN,
     LOGOUT

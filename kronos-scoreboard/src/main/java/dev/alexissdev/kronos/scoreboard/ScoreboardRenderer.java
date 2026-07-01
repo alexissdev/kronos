@@ -69,6 +69,7 @@ final class ScoreboardRenderer {
         addTimer(lines, data, TimerType.COMBAT_TAG,     "scoreboard.timer.combat");
         addTimer(lines, data, TimerType.PVP_TIMER,      "scoreboard.timer.pvp");
         addTimer(lines, data, TimerType.ENDERPEARL,     "scoreboard.timer.enderpearl");
+        addTimer(lines, data, TimerType.GAPPLE,         "scoreboard.timer.gapple");
         addTimer(lines, data, TimerType.HOME,           "scoreboard.timer.home");
         addTimer(lines, data, TimerType.LOGOUT,         "scoreboard.timer.logout");
         addTimer(lines, data, TimerType.CLASS_COOLDOWN, "scoreboard.timer.class");

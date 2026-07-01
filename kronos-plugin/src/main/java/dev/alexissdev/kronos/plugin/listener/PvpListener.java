@@ -21,6 +21,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
+import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 
@@ -37,6 +38,7 @@ public class PvpListener implements Listener {
     private final Plugin plugin;
     private final long deathbanDurationSeconds;
     private final long enderpearlCooldownMs;
+    private final long gappleCooldownMs;
 
     @Inject
     public PvpListener(TimerApplicationService timerService,
@@ -46,7 +48,8 @@ public class PvpListener implements Listener {
                        MessagesConfig messages,
                        Plugin plugin,
                        @Named("hcf.deathban-seconds")   long deathbanDurationSeconds,
-                       @Named("enderpearl.cooldown-ms") long enderpearlCooldownMs) {
+                       @Named("enderpearl.cooldown-ms") long enderpearlCooldownMs,
+                       @Named("gapple.cooldown-ms")     long gappleCooldownMs) {
         this.timerService = timerService;
         this.playerService = playerService;
         this.factionService = factionService;
@@ -55,6 +58,7 @@ public class PvpListener implements Listener {
         this.plugin = plugin;
         this.deathbanDurationSeconds = deathbanDurationSeconds;
         this.enderpearlCooldownMs = enderpearlCooldownMs;
+        this.gappleCooldownMs = gappleCooldownMs;
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -101,7 +105,28 @@ public class PvpListener implements Listener {
             return;
         }
 
-        timerService.startEnderpearlCooldown(uuid, enderpearlCooldownMs);
+        if (timerService.hasActiveTimerSync(uuid, TimerType.COMBAT_TAG)) {
+            timerService.startEnderpearlCooldown(uuid, enderpearlCooldownMs);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onGappleConsume(PlayerItemConsumeEvent event) {
+        ItemStack item = event.getItem();
+        if (item.getType() != Material.GOLDEN_APPLE) return;
+
+        Player player = event.getPlayer();
+        UUID uuid = player.getUniqueId();
+
+        if (timerService.hasActiveTimerSync(uuid, TimerType.GAPPLE)) {
+            event.setCancelled(true);
+            timerService.getRemainingMillis(uuid, TimerType.GAPPLE).thenAccept(opt ->
+                    opt.ifPresent(ms -> player.sendMessage(
+                            messages.format("timers.gapple.on-cooldown", "remaining", formatMs(ms)))));
+            return;
+        }
+
+        timerService.startGappleCooldown(uuid, gappleCooldownMs);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)

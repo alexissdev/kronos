@@ -113,6 +113,10 @@ public class TimerApplicationService implements TimerService<UUID> {
         return startTimer(playerUuid, TimerType.ENDERPEARL, durationMillis);
     }
 
+    public CompletableFuture<Void> startGappleCooldown(UUID playerUuid, long durationMillis) {
+        return startTimer(playerUuid, TimerType.GAPPLE, durationMillis);
+    }
+
     public CompletableFuture<Void> startLogoutTimer(UUID playerUuid, long durationMillis) {
         return startTimer(playerUuid, TimerType.LOGOUT, durationMillis);
     }

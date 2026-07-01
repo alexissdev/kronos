@@ -15,6 +15,9 @@ timers:
   enderpearl:
     expired: "&aPuedes usar enderpearl de nuevo."
     on-cooldown: "&cEnderpearl en cooldown &7({remaining} restantes)"
+  gapple:
+    expired: "&aPuedes comer manzana de oro de nuevo."
+    on-cooldown: "&cGapple en cooldown &7({remaining} restantes)"
 
 deathban:
   banned-screen: "&4&lDEATHBAN\n\n&cFuiste deathbaneado.\n&7Tiempo restante: &f{time}\n\n&7Vuelve cuando expire."
@@ -251,6 +254,7 @@ scoreboard:
     combat:     "&cCombat: &f{time}"
     pvp:        "&6PvP Timer: &f{time}"
     enderpearl: "&bEnderpearl: &f{time}"
+    gapple:     "&6Gapple: &f{time}"
     home:       "&aCasa: &f{time}"
     logout:     "&cDesconexión: &f{time}"
     class:      "&dClase: &f{time}"

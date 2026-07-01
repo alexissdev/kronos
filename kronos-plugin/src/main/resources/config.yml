@@ -18,6 +18,7 @@ timers:
   combat-tag-seconds: 30
   pvp-timer-minutes: 30
   enderpearl-cooldown-seconds: 15
+  gapple-cooldown-seconds: 30
   home-delay-seconds: 5
   logout-timer-seconds: 30
 
