@@ -10,5 +10,6 @@ include(
     ":kronos-koth",
     ":kronos-classes",
     ":kronos-api",
+    ":kronos-scoreboard",
     ":kronos-plugin"
 )

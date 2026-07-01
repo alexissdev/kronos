@@ -13,6 +13,7 @@ dependencies {
     implementation(project(":kronos-koth"))
     implementation(project(":kronos-classes"))
     implementation(project(":kronos-api"))
+    implementation(project(":kronos-scoreboard"))
     compileOnly("org.spigotmc:spigot-api:1.13.2-R0.1-SNAPSHOT")
     compileOnly("com.github.MilkBowl:VaultAPI:1.7")
     implementation("com.google.inject:guice:5.1.0")

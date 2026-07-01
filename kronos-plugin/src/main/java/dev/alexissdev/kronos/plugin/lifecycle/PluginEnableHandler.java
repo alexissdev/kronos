@@ -17,6 +17,9 @@ import dev.alexissdev.kronos.plugin.listener.FactionEventListener;
 import dev.alexissdev.kronos.plugin.listener.PlayerDataListener;
 import dev.alexissdev.kronos.plugin.listener.PvpListener;
 import dev.alexissdev.kronos.plugin.listener.TimerListener;
+import dev.alexissdev.kronos.scoreboard.ScoreboardListener;
+import dev.alexissdev.kronos.scoreboard.ScoreboardManager;
+import dev.alexissdev.kronos.scoreboard.ScoreboardTask;
 import dev.alexissdev.kronos.timers.TimerApplicationService;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.ServicePriority;
@@ -41,6 +44,12 @@ public class PluginEnableHandler {
 
         injector.getInstance(ClaimListener.class).preloadCache();
         injector.getInstance(TimerApplicationService.class).scheduleExpiryChecks(plugin);
+        injector.getInstance(ScoreboardTask.class); // schedules periodic tasks
+
+        ScoreboardManager scoreboardManager = injector.getInstance(ScoreboardManager.class);
+        for (org.bukkit.entity.Player online : Bukkit.getOnlinePlayers()) {
+            scoreboardManager.createBoard(online);
+        }
 
         plugin.getLogger().info("KronosHCF habilitado correctamente.");
     }
@@ -71,6 +80,7 @@ public class PluginEnableHandler {
         pm.registerEvents(injector.getInstance(TimerListener.class), plugin);
         pm.registerEvents(injector.getInstance(KothListener.class), plugin);
         pm.registerEvents(injector.getInstance(FactionEventListener.class), plugin);
+        pm.registerEvents(injector.getInstance(ScoreboardListener.class), plugin);
     }
 
     private void registerApiService() {

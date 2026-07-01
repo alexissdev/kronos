@@ -5,6 +5,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 import dev.alexissdev.kronos.api.guice.ApiModule;
+import dev.alexissdev.kronos.scoreboard.ScoreboardModule;
 import dev.alexissdev.kronos.classes.ClassesModule;
 import dev.alexissdev.kronos.claims.ClaimsModule;
 import dev.alexissdev.kronos.economy.EconomyModule;
@@ -52,6 +53,7 @@ public class RootModule extends AbstractModule {
         install(new KothModule());
         install(new ClassesModule());
         install(new ApiModule());
+        install(new ScoreboardModule());
     }
 
     private void bindConfig() {

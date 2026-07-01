@@ -7,6 +7,7 @@ import dev.alexissdev.kronos.timers.domain.Timer;
 import dev.alexissdev.kronos.timers.domain.TimerType;
 import dev.alexissdev.kronos.timers.event.PlayerCombatTaggedDomainEvent;
 import dev.alexissdev.kronos.timers.event.PlayerTimerExpiredDomainEvent;
+import dev.alexissdev.kronos.timers.event.PlayerTimerStartedDomainEvent;
 import dev.alexissdev.kronos.timers.repository.TimerRepository;
 import dev.alexissdev.kronos.timers.service.TimerService;
 import org.bukkit.Bukkit;
@@ -44,6 +45,7 @@ public class TimerApplicationService implements TimerService<UUID> {
         Instant expiresAt = Instant.now().plusMillis(durationMillis);
         Timer timer = new Timer(playerUuid, type, expiresAt);
         timerCache.markActive(playerUuid, type);
+        eventBus.post(new PlayerTimerStartedDomainEvent(playerUuid, type, durationMillis));
         return timerRepository.saveTimer(timer).whenComplete((v, ex) -> {
             if (ex != null) timerCache.markInactive(playerUuid, type);
         });
