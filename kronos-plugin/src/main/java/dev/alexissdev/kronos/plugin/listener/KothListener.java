@@ -32,7 +32,6 @@ public class KothListener implements Listener {
 
     private final KothService kothService;
     private final Plugin plugin;
-    private final EventBus eventBus;
     private final MessagesConfig messages;
 
     // All registered KOTHs — used for zone enter/leave messages regardless of active state
@@ -51,9 +50,8 @@ public class KothListener implements Listener {
     public KothListener(KothService kothService, Plugin plugin, EventBus eventBus, MessagesConfig messages) {
         this.kothService = kothService;
         this.plugin      = plugin;
-        this.eventBus    = eventBus;
         this.messages    = messages;
-        this.eventBus.register(this);
+        eventBus.register(this);
 
         kothService.getAllKoths().thenAccept(zones -> {
             for (KothZone z : zones) {

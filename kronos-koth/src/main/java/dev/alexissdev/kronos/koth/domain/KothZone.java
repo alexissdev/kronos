@@ -43,13 +43,15 @@ public final class KothZone {
     }
 
     public boolean containsLocation(String world, double x, double z) {
-        return this.world.equals(world) && x >= minX && x <= maxX && z >= minZ && z <= maxZ;
+        return this.world.equals(world)
+                && x >= minX && x < maxX + 1
+                && z >= minZ && z < maxZ + 1;
     }
 
     public boolean isInCaptureZone(String world, double x, double z) {
         return this.world.equals(world)
-                && x >= captureMinX && x <= captureMaxX
-                && z >= captureMinZ && z <= captureMaxZ;
+                && x >= captureMinX && x < captureMaxX + 1
+                && z >= captureMinZ && z < captureMaxZ + 1;
     }
 
     public String getName()            { return name; }
