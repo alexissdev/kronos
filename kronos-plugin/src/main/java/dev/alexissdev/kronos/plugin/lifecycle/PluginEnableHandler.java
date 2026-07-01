@@ -9,6 +9,7 @@ import dev.alexissdev.kronos.claims.listener.ClaimListener;
 import dev.alexissdev.kronos.classes.listener.ClassListener;
 import dev.alexissdev.kronos.economy.command.MoneyCommand;
 import dev.alexissdev.kronos.koth.command.KothCommand;
+import dev.alexissdev.kronos.koth.listener.KothWandListener;
 import dev.alexissdev.kronos.plugin.listener.KothListener;
 import dev.alexissdev.kronos.players.command.StaffCommand;
 import dev.alexissdev.kronos.plugin.command.FactionCommand;
@@ -81,6 +82,7 @@ public class PluginEnableHandler {
         pm.registerEvents(injector.getInstance(KothListener.class), plugin);
         pm.registerEvents(injector.getInstance(FactionEventListener.class), plugin);
         pm.registerEvents(injector.getInstance(ScoreboardListener.class), plugin);
+        pm.registerEvents(injector.getInstance(KothWandListener.class), plugin);
     }
 
     private void registerApiService() {

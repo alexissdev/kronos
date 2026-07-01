@@ -1,15 +1,14 @@
 package dev.alexissdev.kronos.koth.persistence;
 
-import dev.alexissdev.kronos.common.database.MongoConnectionFactory;
-
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import dev.alexissdev.kronos.common.domain.CrateType;
-import dev.alexissdev.kronos.koth.domain.KothZone;
-import dev.alexissdev.kronos.koth.repository.KothRepository;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.ReplaceOptions;
+import dev.alexissdev.kronos.common.database.MongoConnectionFactory;
+import dev.alexissdev.kronos.common.domain.CrateType;
+import dev.alexissdev.kronos.koth.domain.KothZone;
+import dev.alexissdev.kronos.koth.repository.KothRepository;
 import org.bson.Document;
 
 import java.util.ArrayList;
@@ -30,7 +29,7 @@ public class MongoKothRepository implements KothRepository {
     @Inject
     public MongoKothRepository(MongoConnectionFactory factory) {
         this.collection = factory.getDatabase().getCollection(COLLECTION);
-        this.executor = Executors.newCachedThreadPool();
+        this.executor   = Executors.newCachedThreadPool();
     }
 
     @Override
@@ -56,8 +55,7 @@ public class MongoKothRepository implements KothRepository {
             collection.replaceOne(
                     Filters.eq("_id", zone.getName()),
                     toDocument(zone),
-                    new ReplaceOptions().upsert(true)
-            );
+                    new ReplaceOptions().upsert(true));
             return zone;
         }, executor);
     }
@@ -69,24 +67,24 @@ public class MongoKothRepository implements KothRepository {
     }
 
     private KothZone toZone(Document doc) {
-        Integer minX = doc.getInteger("minX");
-        Integer minZ = doc.getInteger("minZ");
-        Integer maxX = doc.getInteger("maxX");
-        Integer maxZ = doc.getInteger("maxZ");
-        String crateTypeStr = doc.getString("rewardCrateType");
-        CrateType crateType;
-        try {
-            crateType = crateTypeStr != null ? CrateType.valueOf(crateTypeStr) : CrateType.KOTH;
-        } catch (IllegalArgumentException e) {
-            crateType = CrateType.KOTH;
-        }
+        int minX = doc.getInteger("minX", 0);
+        int minZ = doc.getInteger("minZ", 0);
+        int maxX = doc.getInteger("maxX", 0);
+        int maxZ = doc.getInteger("maxZ", 0);
+
+        // Fall back to claim zone if capture zone was not stored (legacy data)
+        int capMinX = doc.getInteger("captureMinX", minX);
+        int capMinZ = doc.getInteger("captureMinZ", minZ);
+        int capMaxX = doc.getInteger("captureMaxX", maxX);
+        int capMaxZ = doc.getInteger("captureMaxZ", maxZ);
+
+        CrateType crateType = parseCrateType(doc.getString("rewardCrateType"));
+
         KothZone zone = new KothZone(
                 doc.getString("_id"),
                 doc.getString("world"),
-                minX != null ? minX : 0,
-                minZ != null ? minZ : 0,
-                maxX != null ? maxX : 0,
-                maxZ != null ? maxZ : 0,
+                minX, minZ, maxX, maxZ,
+                capMinX, capMinZ, capMaxX, capMaxZ,
                 doc.getInteger("captureTimeSeconds", 300),
                 crateType
         );
@@ -96,14 +94,24 @@ public class MongoKothRepository implements KothRepository {
 
     private Document toDocument(KothZone z) {
         return new Document()
-                .append("_id", z.getName())
-                .append("world", z.getWorld())
-                .append("minX", z.getMinX())
-                .append("minZ", z.getMinZ())
-                .append("maxX", z.getMaxX())
-                .append("maxZ", z.getMaxZ())
-                .append("captureTimeSeconds", z.getCaptureTimeSeconds())
-                .append("rewardCrateType", z.getRewardCrateType().name())
-                .append("active", z.isActive());
+                .append("_id",               z.getName())
+                .append("world",             z.getWorld())
+                .append("minX",              z.getMinX())
+                .append("minZ",              z.getMinZ())
+                .append("maxX",              z.getMaxX())
+                .append("maxZ",              z.getMaxZ())
+                .append("captureMinX",       z.getCaptureMinX())
+                .append("captureMinZ",       z.getCaptureMinZ())
+                .append("captureMaxX",       z.getCaptureMaxX())
+                .append("captureMaxZ",       z.getCaptureMaxZ())
+                .append("captureTimeSeconds",z.getCaptureTimeSeconds())
+                .append("rewardCrateType",   z.getRewardCrateType().name())
+                .append("active",            z.isActive());
+    }
+
+    private static CrateType parseCrateType(String value) {
+        if (value == null) return CrateType.KOTH;
+        try { return CrateType.valueOf(value); }
+        catch (IllegalArgumentException e) { return CrateType.KOTH; }
     }
 }

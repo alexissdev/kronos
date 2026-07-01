@@ -34,8 +34,8 @@ public class KothApplicationService implements KothService {
         return kothRepository.findByName(name).thenCompose(opt -> {
             KothZone zone = opt.orElseThrow(() -> new KothNotFoundException(name));
             zone.setActive(true);
-            int cx = (zone.getMinX() + zone.getMaxX()) / 2;
-            int cz = (zone.getMinZ() + zone.getMaxZ()) / 2;
+            int cx = (zone.getCaptureMinX() + zone.getCaptureMaxX()) / 2;
+            int cz = (zone.getCaptureMinZ() + zone.getCaptureMaxZ()) / 2;
             return kothRepository.save(zone).thenRun(() ->
                     eventBus.post(new KothStartedDomainEvent(
                             name, cx, cz, zone.getCaptureTimeSeconds())));
