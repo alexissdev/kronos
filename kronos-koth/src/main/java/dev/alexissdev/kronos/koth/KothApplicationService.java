@@ -5,6 +5,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import dev.alexissdev.kronos.koth.domain.KothZone;
 import dev.alexissdev.kronos.koth.event.KothCapturedDomainEvent;
+import dev.alexissdev.kronos.koth.event.KothEndedDomainEvent;
 import dev.alexissdev.kronos.koth.event.KothStartedDomainEvent;
 import dev.alexissdev.kronos.koth.exception.KothNotFoundException;
 import dev.alexissdev.kronos.koth.repository.KothRepository;
@@ -33,8 +34,11 @@ public class KothApplicationService implements KothService {
         return kothRepository.findByName(name).thenCompose(opt -> {
             KothZone zone = opt.orElseThrow(() -> new KothNotFoundException(name));
             zone.setActive(true);
+            int cx = (zone.getMinX() + zone.getMaxX()) / 2;
+            int cz = (zone.getMinZ() + zone.getMaxZ()) / 2;
             return kothRepository.save(zone).thenRun(() ->
-                    eventBus.post(new KothStartedDomainEvent(name)));
+                    eventBus.post(new KothStartedDomainEvent(
+                            name, cx, cz, zone.getCaptureTimeSeconds())));
         });
     }
 
@@ -43,7 +47,8 @@ public class KothApplicationService implements KothService {
         return kothRepository.findByName(name).thenCompose(opt -> {
             KothZone zone = opt.orElseThrow(() -> new KothNotFoundException(name));
             zone.setActive(false);
-            return kothRepository.save(zone).thenApply(z -> null);
+            return kothRepository.save(zone).thenRun(() ->
+                    eventBus.post(new KothEndedDomainEvent(name)));
         });
     }
 

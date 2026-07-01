@@ -6,6 +6,9 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import dev.alexissdev.kronos.economy.service.EconomyService;
 import dev.alexissdev.kronos.factions.service.FactionService;
+import dev.alexissdev.kronos.koth.event.KothCapturedDomainEvent;
+import dev.alexissdev.kronos.koth.event.KothEndedDomainEvent;
+import dev.alexissdev.kronos.koth.event.KothStartedDomainEvent;
 import dev.alexissdev.kronos.players.service.PlayerService;
 import dev.alexissdev.kronos.timers.event.PlayerTimerExpiredDomainEvent;
 import dev.alexissdev.kronos.timers.event.PlayerTimerStartedDomainEvent;
@@ -13,6 +16,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,8 +26,9 @@ public class ScoreboardManager {
 
     private static final String TITLE = "§e§lKRONOS HCF";
 
-    private final ConcurrentHashMap<UUID, PlayerBoard> boards = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<UUID, PlayerBoardData> cache  = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, PlayerBoard>     boards      = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, PlayerBoardData> cache       = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, KothEntry>     activeKoths = new ConcurrentHashMap<>();
 
     private final ScoreboardRenderer renderer;
     private final JavaPlugin plugin;
@@ -76,7 +81,7 @@ public class ScoreboardManager {
         }
     }
 
-    // ── EventBus ─────────────────────────────────────────────────────────
+    // ── EventBus: per-player timers ────────────────────────────────────────
 
     @Subscribe
     public void onTimerStarted(PlayerTimerStartedDomainEvent event) {
@@ -94,6 +99,28 @@ public class ScoreboardManager {
         Bukkit.getScheduler().runTask(plugin, () -> redraw(event.getPlayerUuid()));
     }
 
+    // ── EventBus: KOTH ─────────────────────────────────────────────────────
+
+    @Subscribe
+    public void onKothStarted(KothStartedDomainEvent event) {
+        activeKoths.put(event.getKothName(), new KothEntry(
+                event.getKothName(), event.getCenterX(),
+                event.getCenterZ(), event.getCaptureTimeSeconds()));
+        Bukkit.getScheduler().runTask(plugin, this::tickAll);
+    }
+
+    @Subscribe
+    public void onKothCaptured(KothCapturedDomainEvent event) {
+        activeKoths.remove(event.getKothName());
+        Bukkit.getScheduler().runTask(plugin, this::tickAll);
+    }
+
+    @Subscribe
+    public void onKothEnded(KothEndedDomainEvent event) {
+        activeKoths.remove(event.getKothName());
+        Bukkit.getScheduler().runTask(plugin, this::tickAll);
+    }
+
     // ── internals ─────────────────────────────────────────────────────────
 
     private void redraw(UUID uuid) {
@@ -102,7 +129,8 @@ public class ScoreboardManager {
         PlayerBoardData data = cache.get(uuid);
         if (player == null || board == null || data == null) return;
 
-        List<String> lines = renderer.render(player, data);
+        Collection<KothEntry> koths = activeKoths.values();
+        List<String> lines = renderer.render(player, data, koths);
         board.render(lines);
     }
 

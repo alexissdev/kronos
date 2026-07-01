@@ -6,6 +6,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 @Singleton
@@ -13,7 +14,7 @@ final class ScoreboardRenderer {
 
     private static final String SEP = "§8§m               §r";
 
-    List<String> render(Player player, PlayerBoardData data) {
+    List<String> render(Player player, PlayerBoardData data, Collection<KothEntry> koths) {
         List<String> lines = new ArrayList<>();
 
         lines.add(SEP);
@@ -31,6 +32,17 @@ final class ScoreboardRenderer {
         lines.add("§7Kills: §a" + data.getKills() + " §8│ §7Muertes: §c" + data.getDeaths());
         lines.add("§7Balance: §a$" + fmtBalance(data.getBalance()));
 
+        // Active KOTHs (global, same for every player)
+        if (!koths.isEmpty()) {
+            lines.add(SEP);
+            for (KothEntry koth : koths) {
+                lines.add("§6KOTH §e" + koth.name);
+                lines.add(" §7Cap: §f" + koth.captureTimeSeconds + "s");
+                lines.add(" §7Loc: §a" + koth.centerX + "§7, §a" + koth.centerZ);
+            }
+        }
+
+        // Per-player timers
         List<String> timerLines = buildTimerLines(data);
         if (!timerLines.isEmpty()) {
             lines.add(SEP);
