@@ -5,7 +5,6 @@ import com.google.inject.Singleton;
 import dev.alexissdev.kronos.timers.TimerApplicationService;
 import dev.alexissdev.kronos.timers.domain.TimerType;
 import dev.alexissdev.kronos.players.service.PlayerService;
-import dev.alexissdev.kronos.players.service.StaffService;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.event.EventHandler;
@@ -14,8 +13,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -26,15 +23,13 @@ public class PlayerDataListener implements Listener {
     private static final long LOGOUT_TIMER_DURATION_MS = 30_000L;
 
     private final PlayerService playerService;
-    private final StaffService staffService;
     private final TimerApplicationService timerService;
     private final Plugin plugin;
 
     @Inject
-    public PlayerDataListener(PlayerService playerService, StaffService staffService,
+    public PlayerDataListener(PlayerService playerService,
                               TimerApplicationService timerService, Plugin plugin) {
         this.playerService = playerService;
-        this.staffService = staffService;
         this.timerService = timerService;
         this.plugin = plugin;
     }
@@ -76,18 +71,6 @@ public class PlayerDataListener implements Listener {
                             + event.getPlayer().getName() + ": " + ex.getMessage());
                     return null;
                 });
-
-        staffService.isVanished(event.getPlayer().getUniqueId()).thenAccept(vanished -> {
-            if (vanished) {
-                Bukkit.getScheduler().runTask(plugin, () -> {
-                    event.getPlayer().addPotionEffect(
-                            new PotionEffect(PotionEffectType.INVISIBILITY, Integer.MAX_VALUE, 0, false, false));
-                    Bukkit.getOnlinePlayers().forEach(p -> {
-                        if (!p.hasPermission("hcf.staff")) p.hidePlayer(plugin, event.getPlayer());
-                    });
-                });
-            }
-        });
     }
 
     @EventHandler(priority = EventPriority.MONITOR)

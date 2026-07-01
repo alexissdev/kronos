@@ -51,11 +51,6 @@ bukkit {
             usage = "/money [jugador|pay|top]"
             aliases = listOf("balance", "bal")
         }
-        register("staff") {
-            description = "Modo staff"
-            usage = "/staff [vanish|freeze|unfreeze]"
-            permission = "hcf.staff"
-        }
         register("hcf") {
             description = "Comandos administrativos HCF"
             usage = "/hcf <reload|give-money|set-money>"
@@ -71,10 +66,6 @@ bukkit {
     permissions {
         register("hcf.admin") {
             description = "Acceso completo a comandos administrativos de HCF"
-            default = net.minecrell.pluginyml.bukkit.BukkitPluginDescription.Permission.Default.OP
-        }
-        register("hcf.staff") {
-            description = "Acceso a modo staff"
             default = net.minecrell.pluginyml.bukkit.BukkitPluginDescription.Permission.Default.OP
         }
         register("hcf.koth.admin") {

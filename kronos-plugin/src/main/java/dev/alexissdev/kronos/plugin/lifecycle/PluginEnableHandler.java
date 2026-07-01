@@ -11,7 +11,6 @@ import dev.alexissdev.kronos.economy.command.MoneyCommand;
 import dev.alexissdev.kronos.koth.command.KothCommand;
 import dev.alexissdev.kronos.koth.listener.KothWandListener;
 import dev.alexissdev.kronos.plugin.listener.KothListener;
-import dev.alexissdev.kronos.players.command.StaffCommand;
 import dev.alexissdev.kronos.plugin.command.FactionCommand;
 import dev.alexissdev.kronos.plugin.command.HCFCommand;
 import dev.alexissdev.kronos.plugin.listener.FactionEventListener;
@@ -66,7 +65,6 @@ public class PluginEnableHandler {
         registerCommand("koth",    injector.getInstance(KothCommand.class));
         registerCommand("money",   injector.getInstance(MoneyCommand.class));
         registerCommand("balance", injector.getInstance(MoneyCommand.class));
-        registerCommand("staff",   injector.getInstance(StaffCommand.class));
         registerCommand("hcf",     injector.getInstance(HCFCommand.class));
         registerCommand("spawn",   injector.getInstance(SpawnCommand.class));
     }
