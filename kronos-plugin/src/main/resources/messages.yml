@@ -14,6 +14,12 @@ timers:
     expired: "&cTu PvP Timer expiró. ¡Ya puedes ser atacado!"
   enderpearl:
     expired: "&aPuedes usar enderpearl de nuevo."
+    on-cooldown: "&cEnderpearl en cooldown &7({remaining} restantes)"
+
+deathban:
+  banned-screen: "&4&lDEATHBAN\n\n&cFuiste deathbaneado.\n&7Tiempo restante: &f{time}\n\n&7Vuelve cuando expire."
+  kick-message: "&4&lPerdiste todas tus vidas!\n\n&cHas sido deathbaneado por &f{time}&c.\n&7Podrás reconectarte cuando expire."
+  lives-remaining: "&cPerdiste una vida. &7Vidas restantes: &f{lives}"
 
 pvp:
   target-has-pvp-timer: "&c{player} tiene PvP Timer activo."
@@ -136,7 +142,16 @@ faction:
     help-claim: "&e/f claim &7- Reclamar chunk actual"
     help-unclaim: "&e/f unclaim &7- Desreclamar chunk actual"
     help-overclaim: "&e/f overclaim &7- Overclaim territorio enemigo"
-    help-map: "&e/f map &7- Mapa de claims"
+    help-map: "&e/f map     &7- Mapa de claims"
+    help-sethome: "&e/f sethome &7- Establecer home de facción"
+    help-home: "&e/f home    &7- Teleportarse al home de la facción"
+    home-set: "&aFaction Home establecido correctamente."
+    home-not-set: "&cTu facción no tiene home configurado."
+    home-teleporting: "&aTeletransportando al Faction Home en &e{seconds}s&a..."
+    home-arrived: "&a¡Teleportado al Faction Home!"
+    home-cancelled: "&cTeletransporte cancelado por daño."
+    home-in-combat: "&cNo puedes teleportarte mientras estás en &lCombat Tag&c."
+    home-already-teleporting: "&cYa tienes un teletransporte en progreso."
 
 economy:
   balance-self: "&6Tu balance: &e${amount}"

@@ -47,6 +47,7 @@ public class RootModule extends AbstractModule {
         bind(FactionEventListener.class).in(Singleton.class);
         bind(FactionCommand.class).in(Singleton.class);
         bind(KothListener.class).in(Singleton.class);
+        bind(dev.alexissdev.kronos.plugin.listener.DeathbanListener.class).in(Singleton.class);
 
         bindConfig();
 
@@ -71,6 +72,11 @@ public class RootModule extends AbstractModule {
         bindString("redis.host",     config.getString("database.redis.host",     "localhost"));
         bindInt   ("redis.port",     config.getInt   ("database.redis.port",     6379));
         bindString("redis.password", config.getString("database.redis.password", ""));
+
+        bindInt ("hcf.lives",              config.getInt("hcf.lives",                              3));
+        bindLong("hcf.deathban-seconds",   config.getInt("hcf.deathban-hours",                    24) * 3600L);
+        bindLong("enderpearl.cooldown-ms", config.getInt("timers.enderpearl-cooldown-seconds",    15) * 1000L);
+        bindLong("home.delay-ms",          config.getInt("timers.home-delay-seconds",              5) * 1000L);
     }
 
     private void bindString(String key, String value) {
@@ -79,5 +85,9 @@ public class RootModule extends AbstractModule {
 
     private void bindInt(String key, int value) {
         bind(Integer.class).annotatedWith(Names.named(key)).toInstance(value);
+    }
+
+    private void bindLong(String key, long value) {
+        bind(Long.class).annotatedWith(Names.named(key)).toInstance(value);
     }
 }

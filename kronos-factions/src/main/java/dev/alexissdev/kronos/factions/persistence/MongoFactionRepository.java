@@ -5,6 +5,7 @@ import dev.alexissdev.kronos.common.database.MongoConnectionFactory;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import dev.alexissdev.kronos.factions.domain.Faction;
+import dev.alexissdev.kronos.factions.domain.FactionHome;
 import dev.alexissdev.kronos.factions.domain.FactionMember;
 import dev.alexissdev.kronos.factions.domain.FactionRole;
 import dev.alexissdev.kronos.factions.repository.FactionRepository;
@@ -119,7 +120,7 @@ public class MongoFactionRepository implements FactionRepository {
 
         Long createdAtMs = doc.getLong("createdAt");
 
-        return new Faction(
+        Faction faction = new Faction(
                 doc.getString("_id"),
                 doc.getString("name"),
                 leaderId,
@@ -131,6 +132,21 @@ public class MongoFactionRepository implements FactionRepository {
                 createdAtMs != null ? Instant.ofEpochMilli(createdAtMs) : Instant.now(),
                 members, allies, enemies
         );
+
+        Document homeDoc = doc.get("home", Document.class);
+        if (homeDoc != null) {
+            Double hy = homeDoc.getDouble("y");
+            faction.setHome(new FactionHome(
+                    homeDoc.getString("world"),
+                    homeDoc.getDouble("x") != null ? homeDoc.getDouble("x") : 0,
+                    hy != null ? hy : 64,
+                    homeDoc.getDouble("z") != null ? homeDoc.getDouble("z") : 0,
+                    homeDoc.getDouble("yaw") != null ? homeDoc.getDouble("yaw").floatValue() : 0f,
+                    homeDoc.getDouble("pitch") != null ? homeDoc.getDouble("pitch").floatValue() : 0f
+            ));
+        }
+
+        return faction;
     }
 
     private Document toDocument(Faction f) {
@@ -154,6 +170,13 @@ public class MongoFactionRepository implements FactionRepository {
                 .append("createdAt", f.getCreatedAt().toEpochMilli())
                 .append("members", membersDoc)
                 .append("allies", new ArrayList<>(f.getAllies()))
-                .append("enemies", new ArrayList<>(f.getEnemies()));
+                .append("enemies", new ArrayList<>(f.getEnemies()))
+                .append("home", f.getHome() == null ? null : new Document()
+                        .append("world", f.getHome().getWorld())
+                        .append("x", f.getHome().getX())
+                        .append("y", f.getHome().getY())
+                        .append("z", f.getHome().getZ())
+                        .append("yaw", (double) f.getHome().getYaw())
+                        .append("pitch", (double) f.getHome().getPitch()));
     }
 }

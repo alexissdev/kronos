@@ -1,6 +1,7 @@
 package dev.alexissdev.kronos.factions.service;
 
 import dev.alexissdev.kronos.factions.domain.Faction;
+import dev.alexissdev.kronos.factions.domain.FactionHome;
 import dev.alexissdev.kronos.factions.domain.FactionRole;
 
 import java.util.List;
@@ -45,4 +46,8 @@ public interface FactionService {
     CompletableFuture<List<Faction>> getTopFactions(int limit);
 
     CompletableFuture<Void> notifyMemberDeath(String factionId, UUID deadMemberUuid);
+
+    CompletableFuture<Void> setFactionHome(String factionId, UUID actorUuid, FactionHome home);
+
+    CompletableFuture<Void> clearFactionHome(String factionId, UUID actorUuid);
 }

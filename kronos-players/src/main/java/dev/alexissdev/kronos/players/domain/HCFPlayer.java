@@ -8,6 +8,7 @@ public final class HCFPlayer {
     private String name;
     private int kills;
     private int deaths;
+    private int lives;
     private KitType activeKit;
     private String savedInventoryJson;
 
@@ -16,22 +17,31 @@ public final class HCFPlayer {
         this.name = name;
         this.kills = 0;
         this.deaths = 0;
+        this.lives = 3;
         this.activeKit = KitType.DIAMOND;
     }
 
     public HCFPlayer(UUID uuid, String name, int kills, int deaths,
-                     KitType activeKit, String savedInventoryJson) {
+                     KitType activeKit, String savedInventoryJson, int lives) {
         this.uuid = uuid;
         this.name = name;
         this.kills = kills;
         this.deaths = deaths;
         this.activeKit = activeKit;
         this.savedInventoryJson = savedInventoryJson;
+        this.lives = lives;
     }
 
     public void incrementKills() { kills++; }
 
     public void incrementDeaths() { deaths++; }
+
+    public int decrementLives() {
+        if (lives > 0) lives--;
+        return lives;
+    }
+
+    public void setLives(int lives) { this.lives = lives; }
 
     public UUID getUuid() { return uuid; }
 
@@ -42,6 +52,8 @@ public final class HCFPlayer {
     public int getKills() { return kills; }
 
     public int getDeaths() { return deaths; }
+
+    public int getLives() { return lives; }
 
     public KitType getActiveKit() { return activeKit; }
 

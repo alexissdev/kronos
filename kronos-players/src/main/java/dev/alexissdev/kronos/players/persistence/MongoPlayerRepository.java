@@ -63,7 +63,8 @@ public class MongoPlayerRepository implements PlayerRepository {
                 doc.getInteger("kills", 0),
                 doc.getInteger("deaths", 0),
                 kit,
-                doc.getString("savedInventoryJson")
+                doc.getString("savedInventoryJson"),
+                doc.getInteger("lives", 3)
         );
     }
 
@@ -73,6 +74,7 @@ public class MongoPlayerRepository implements PlayerRepository {
                 .append("name", p.getName())
                 .append("kills", p.getKills())
                 .append("deaths", p.getDeaths())
+                .append("lives", p.getLives())
                 .append("activeKit", p.getActiveKit().name())
                 .append("savedInventoryJson", p.getSavedInventoryJson());
     }

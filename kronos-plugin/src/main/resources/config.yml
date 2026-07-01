@@ -20,6 +20,10 @@ timers:
   home-delay-seconds: 5
   logout-timer-seconds: 30
 
+hcf:
+  lives: 3
+  deathban-hours: 24
+
 koth:
   default-capture-time-seconds: 300
 

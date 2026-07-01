@@ -15,4 +15,6 @@ public interface PlayerService {
     CompletableFuture<Void> savePlayer(HCFPlayer player);
 
     CompletableFuture<Void> recordKill(UUID killerUuid, UUID victimUuid);
+
+    CompletableFuture<Integer> decrementLives(UUID uuid);
 }

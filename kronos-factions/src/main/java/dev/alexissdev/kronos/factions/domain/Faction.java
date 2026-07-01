@@ -17,6 +17,7 @@ public final class Faction {
     private int dtkRemaining;
     private final int maxDtk;
     private final Instant createdAt;
+    private FactionHome home;
 
     public Faction(String id, String name, UUID leaderId, int maxDtk, Instant createdAt) {
         this.id = id;
@@ -123,4 +124,10 @@ public final class Faction {
     public int getMaxDtk() { return maxDtk; }
 
     public Instant getCreatedAt() { return createdAt; }
+
+    public FactionHome getHome() { return home; }
+
+    public void setHome(FactionHome home) { this.home = home; }
+
+    public void clearHome() { this.home = null; }
 }

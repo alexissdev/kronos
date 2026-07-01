@@ -286,6 +286,26 @@ public class FactionApplicationService implements FactionService {
         });
     }
 
+    @Override
+    public CompletableFuture<Void> setFactionHome(String factionId, UUID actorUuid, dev.alexissdev.kronos.factions.domain.FactionHome home) {
+        return factionRepository.findById(factionId).thenCompose(opt -> {
+            Faction faction = opt.orElseThrow(() -> new FactionNotFoundException(factionId));
+            requireRole(faction, actorUuid, FactionRole.CAPTAIN);
+            faction.setHome(home);
+            return factionRepository.save(faction).thenApply(f -> null);
+        });
+    }
+
+    @Override
+    public CompletableFuture<Void> clearFactionHome(String factionId, UUID actorUuid) {
+        return factionRepository.findById(factionId).thenCompose(opt -> {
+            Faction faction = opt.orElseThrow(() -> new FactionNotFoundException(factionId));
+            requireRole(faction, actorUuid, FactionRole.CAPTAIN);
+            faction.clearHome();
+            return factionRepository.save(faction).thenApply(f -> null);
+        });
+    }
+
     private void requireRole(Faction faction, UUID actorUuid, FactionRole required) {
         FactionMember actor = faction.getMember(actorUuid)
                 .orElseThrow(() -> new HCFException("You are not in this faction"));

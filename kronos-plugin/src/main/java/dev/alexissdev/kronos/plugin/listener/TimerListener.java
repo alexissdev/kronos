@@ -7,9 +7,13 @@ import com.google.inject.Singleton;
 import dev.alexissdev.kronos.api.event.PlayerCombatTagEvent;
 import dev.alexissdev.kronos.api.event.PlayerTimerExpireEvent;
 import dev.alexissdev.kronos.common.config.MessagesConfig;
+import dev.alexissdev.kronos.factions.domain.FactionHome;
+import dev.alexissdev.kronos.factions.service.FactionService;
 import dev.alexissdev.kronos.timers.event.PlayerCombatTaggedDomainEvent;
 import dev.alexissdev.kronos.timers.event.PlayerTimerExpiredDomainEvent;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
@@ -20,12 +24,15 @@ public class TimerListener implements Listener {
     private final Plugin plugin;
     private final EventBus eventBus;
     private final MessagesConfig messages;
+    private final FactionService factionService;
 
     @Inject
-    public TimerListener(Plugin plugin, EventBus eventBus, MessagesConfig messages) {
+    public TimerListener(Plugin plugin, EventBus eventBus, MessagesConfig messages,
+                         FactionService factionService) {
         this.plugin = plugin;
         this.eventBus = eventBus;
         this.messages = messages;
+        this.factionService = factionService;
         this.eventBus.register(this);
     }
 
@@ -46,6 +53,14 @@ public class TimerListener implements Listener {
 
     @Subscribe
     public void onTimerExpired(PlayerTimerExpiredDomainEvent domainEvent) {
+        switch (domainEvent.getTimerType()) {
+            case HOME:
+                handleHomeExpiry(domainEvent.getPlayerUuid());
+                return;
+            default:
+                break;
+        }
+
         Bukkit.getScheduler().runTask(plugin, () -> {
             PlayerTimerExpireEvent bukkitEvent = new PlayerTimerExpireEvent(
                     domainEvent.getPlayerUuid(), domainEvent.getTimerType());
@@ -67,6 +82,24 @@ public class TimerListener implements Listener {
                 default:
                     break;
             }
+        });
+    }
+
+    private void handleHomeExpiry(java.util.UUID playerUuid) {
+        factionService.getByPlayer(playerUuid).thenAccept(opt -> {
+            if (!opt.isPresent()) return;
+            FactionHome home = opt.get().getHome();
+            if (home == null) return;
+            Player player = Bukkit.getPlayer(playerUuid);
+            if (player == null) return;
+            World world = Bukkit.getWorld(home.getWorld());
+            if (world == null) return;
+            Location loc = new Location(world, home.getX(), home.getY(), home.getZ(),
+                    home.getYaw(), home.getPitch());
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                player.teleport(loc);
+                player.sendMessage(messages.get("faction.cmd.home-arrived"));
+            });
         });
     }
 }

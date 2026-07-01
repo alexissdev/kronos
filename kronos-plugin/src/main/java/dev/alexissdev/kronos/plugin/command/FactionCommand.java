@@ -7,13 +7,18 @@ import dev.alexissdev.kronos.plugin.chat.ChatMode;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import dev.alexissdev.kronos.claims.domain.Claim;
 import dev.alexissdev.kronos.factions.domain.Faction;
+import dev.alexissdev.kronos.factions.domain.FactionHome;
 import dev.alexissdev.kronos.common.exception.HCFException;
 import dev.alexissdev.kronos.claims.service.ClaimService;
 import dev.alexissdev.kronos.factions.service.FactionService;
+import dev.alexissdev.kronos.timers.TimerApplicationService;
+import dev.alexissdev.kronos.timers.domain.TimerType;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -29,19 +34,25 @@ public class FactionCommand extends BaseCommand {
 
     private final FactionService factionService;
     private final ClaimService claimService;
+    private final TimerApplicationService timerService;
     private final Plugin plugin;
     private final MessagesConfig messages;
     private final ChatManager chatManager;
+    private final long homeDelayMs;
 
     @Inject
     public FactionCommand(FactionService factionService, ClaimService claimService,
-                          Plugin plugin, MessagesConfig messages, ChatManager chatManager) {
+                          TimerApplicationService timerService,
+                          Plugin plugin, MessagesConfig messages, ChatManager chatManager,
+                          @Named("home.delay-ms") long homeDelayMs) {
         super(null);
         this.factionService = factionService;
         this.claimService = claimService;
+        this.timerService = timerService;
         this.plugin = plugin;
         this.messages = messages;
         this.chatManager = chatManager;
+        this.homeDelayMs = homeDelayMs;
     }
 
     @Override
@@ -69,6 +80,8 @@ public class FactionCommand extends BaseCommand {
             case "claim": handleClaim(player); break;
             case "unclaim": handleUnclaim(player); break;
             case "overclaim": handleOverclaim(player); break;
+            case "sethome": handleSetHome(player); break;
+            case "home": handleHome(player); break;
             default: sendHelp(player);
         }
     }
@@ -401,6 +414,49 @@ public class FactionCommand extends BaseCommand {
         return lines;
     }
 
+    private void handleSetHome(Player player) {
+        factionService.getByPlayer(player.getUniqueId()).thenCompose(opt -> {
+            if (opt.isEmpty()) throw new HCFException("No estás en una facción");
+            Location loc = player.getLocation();
+            FactionHome home = new FactionHome(
+                    loc.getWorld().getName(), loc.getX(), loc.getY(), loc.getZ(),
+                    loc.getYaw(), loc.getPitch());
+            return factionService.setFactionHome(opt.get().getId(), player.getUniqueId(), home);
+        }).thenRun(() -> Bukkit.getScheduler().runTask(plugin,
+                () -> player.sendMessage(messages.get("faction.cmd.home-set"))))
+                .exceptionally(ex -> {
+                    Bukkit.getScheduler().runTask(plugin,
+                            () -> player.sendMessage(messages.format("faction.cmd.error", "error", rootMsg(ex))));
+                    return null;
+                });
+    }
+
+    private void handleHome(Player player) {
+        if (timerService.hasActiveTimerSync(player.getUniqueId(), TimerType.COMBAT_TAG)) {
+            player.sendMessage(messages.get("faction.cmd.home-in-combat"));
+            return;
+        }
+        if (timerService.hasActiveTimerSync(player.getUniqueId(), TimerType.HOME)) {
+            player.sendMessage(messages.get("faction.cmd.home-already-teleporting"));
+            return;
+        }
+        factionService.getByPlayer(player.getUniqueId()).thenAccept(opt -> {
+            if (opt.isEmpty()) {
+                player.sendMessage(messages.get("faction.cmd.not-in-faction"));
+                return;
+            }
+            if (opt.get().getHome() == null) {
+                player.sendMessage(messages.get("faction.cmd.home-not-set"));
+                return;
+            }
+            long delaySecs = homeDelayMs / 1000;
+            timerService.startHomeTimer(player.getUniqueId(), homeDelayMs);
+            Bukkit.getScheduler().runTask(plugin, () ->
+                    player.sendMessage(messages.format("faction.cmd.home-teleporting",
+                            "seconds", delaySecs)));
+        });
+    }
+
     private void sendHelp(Player player) {
         player.sendMessage(messages.get("faction.cmd.help-header"));
         player.sendMessage(messages.get("faction.cmd.help-create"));
@@ -419,6 +475,8 @@ public class FactionCommand extends BaseCommand {
         player.sendMessage(messages.get("faction.cmd.help-unclaim"));
         player.sendMessage(messages.get("faction.cmd.help-overclaim"));
         player.sendMessage(messages.get("faction.cmd.help-map"));
+        player.sendMessage(messages.get("faction.cmd.help-sethome"));
+        player.sendMessage(messages.get("faction.cmd.help-home"));
     }
 
     private static String rootMsg(Throwable ex) {
