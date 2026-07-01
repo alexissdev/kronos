@@ -59,7 +59,11 @@ public class TimerApplicationService implements TimerService<UUID> {
 
     @Override
     public CompletableFuture<Void> cancelTimer(UUID playerUuid, TimerType type) {
+        boolean wasActive = timerCache.hasTimer(playerUuid, type);
         timerCache.markInactive(playerUuid, type);
+        if (wasActive) {
+            eventBus.post(new PlayerTimerExpiredDomainEvent(playerUuid, type));
+        }
         mongoBackup.delete(playerUuid, type);  // fire-and-forget
         return timerRepository.deleteTimer(playerUuid, type);
     }
