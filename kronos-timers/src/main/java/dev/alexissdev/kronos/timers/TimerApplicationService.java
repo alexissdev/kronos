@@ -8,6 +8,7 @@ import dev.alexissdev.kronos.timers.domain.TimerType;
 import dev.alexissdev.kronos.timers.event.PlayerCombatTaggedDomainEvent;
 import dev.alexissdev.kronos.timers.event.PlayerTimerExpiredDomainEvent;
 import dev.alexissdev.kronos.timers.event.PlayerTimerStartedDomainEvent;
+import dev.alexissdev.kronos.timers.persistence.MongoTimerBackupRepository;
 import dev.alexissdev.kronos.timers.repository.TimerRepository;
 import dev.alexissdev.kronos.timers.service.TimerService;
 import org.bukkit.Bukkit;
@@ -28,16 +29,19 @@ public class TimerApplicationService implements TimerService<UUID> {
     private static final long COMBAT_TAG_DURATION_MS = 30_000L;
 
     private final TimerRepository timerRepository;
+    private final MongoTimerBackupRepository mongoBackup;
     private final TimerCache timerCache;
     private final EventBus eventBus;
 
     @Inject
     public TimerApplicationService(TimerRepository timerRepository,
+                                   MongoTimerBackupRepository mongoBackup,
                                    TimerCache timerCache,
                                    EventBus eventBus) {
         this.timerRepository = timerRepository;
-        this.timerCache = timerCache;
-        this.eventBus = eventBus;
+        this.mongoBackup     = mongoBackup;
+        this.timerCache      = timerCache;
+        this.eventBus        = eventBus;
     }
 
     @Override
@@ -46,14 +50,17 @@ public class TimerApplicationService implements TimerService<UUID> {
         Timer timer = new Timer(playerUuid, type, expiresAt);
         timerCache.markActive(playerUuid, type);
         eventBus.post(new PlayerTimerStartedDomainEvent(playerUuid, type, durationMillis));
-        return timerRepository.saveTimer(timer).whenComplete((v, ex) -> {
-            if (ex != null) timerCache.markInactive(playerUuid, type);
-        });
+        return timerRepository.saveTimer(timer)
+                .thenRun(() -> mongoBackup.save(timer))  // fire-and-forget backup
+                .whenComplete((v, ex) -> {
+                    if (ex != null) timerCache.markInactive(playerUuid, type);
+                });
     }
 
     @Override
     public CompletableFuture<Void> cancelTimer(UUID playerUuid, TimerType type) {
         timerCache.markInactive(playerUuid, type);
+        mongoBackup.delete(playerUuid, type);  // fire-and-forget
         return timerRepository.deleteTimer(playerUuid, type);
     }
 
@@ -116,14 +123,27 @@ public class TimerApplicationService implements TimerService<UUID> {
 
     public CompletableFuture<Void> loadTimersIntoCache(UUID playerUuid) {
         List<CompletableFuture<Void>> futures = Arrays.stream(TimerType.values())
-                .map(type -> timerRepository.findTimer(playerUuid, type).thenAccept(opt -> {
-                    if (opt.isPresent() && !opt.get().isExpired()) {
-                        timerCache.markActive(playerUuid, type);
-                        // Notify scoreboard of existing timers with remaining time
-                        eventBus.post(new PlayerTimerStartedDomainEvent(
-                                playerUuid, type, opt.get().getRemainingMillis()));
-                    }
-                }))
+                .map(type -> timerRepository.findTimer(playerUuid, type)
+                        .thenCompose(redisOpt -> {
+                            if (redisOpt.isPresent() && !redisOpt.get().isExpired()) {
+                                // Found in Redis — use it directly
+                                Timer t = redisOpt.get();
+                                timerCache.markActive(playerUuid, type);
+                                eventBus.post(new PlayerTimerStartedDomainEvent(
+                                        playerUuid, type, t.getRemainingMillis()));
+                                return CompletableFuture.completedFuture(null);
+                            }
+                            // Redis miss — fall back to MongoDB
+                            return mongoBackup.find(playerUuid, type).thenAccept(mongoOpt -> {
+                                if (mongoOpt.isPresent() && !mongoOpt.get().isExpired()) {
+                                    Timer t = mongoOpt.get();
+                                    timerCache.markActive(playerUuid, type);
+                                    timerRepository.saveTimer(t);  // restore to Redis
+                                    eventBus.post(new PlayerTimerStartedDomainEvent(
+                                            playerUuid, type, t.getRemainingMillis()));
+                                }
+                            });
+                        }))
                 .collect(Collectors.toList());
         return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }

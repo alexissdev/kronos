@@ -5,6 +5,7 @@ dependencies {
     implementation("com.google.inject:guice:5.1.0")
     implementation("io.lettuce:lettuce-core:6.3.2.RELEASE")
     implementation("com.google.guava:guava:32.1.3-jre")
+    implementation("org.mongodb:mongodb-driver-sync:4.11.1")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
     testImplementation("org.mockito:mockito-core:5.6.0")
