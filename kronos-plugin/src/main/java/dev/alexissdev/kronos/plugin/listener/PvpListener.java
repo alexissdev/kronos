@@ -137,33 +137,37 @@ public class PvpListener implements Listener {
             return messages.format("pvp.death-natural", "victim_tag", vTag, "victim", victimName);
         }).thenAccept(msg -> Bukkit.getOnlinePlayers().forEach(p -> p.sendMessage(msg)));
 
-        if (killer != null) {
-            playerService.recordKill(killer.getUniqueId(), victimUuid);
-        }
-
         factionService.getByPlayer(victimUuid)
                 .thenAccept(opt -> opt.ifPresent(f ->
                         factionService.notifyMemberDeath(f.getId(), victimUuid)));
 
-        playerService.decrementLives(victimUuid).thenAccept(remainingLives -> {
-            if (remainingLives <= 0) {
-                deathbanRepository.setDeathban(victimUuid, deathbanDurationSeconds).thenRun(() ->
+        playerService.decrementLives(victimUuid)
+                .thenCompose(remainingLives -> {
+                    // Run recordKill AFTER decrement so saves don't overwrite each other
+                    java.util.concurrent.CompletableFuture<Void> killRecord = killerUuid != null
+                            ? playerService.recordKill(killerUuid, victimUuid)
+                            : java.util.concurrent.CompletableFuture.completedFuture(null);
+                    return killRecord.thenApply(v -> remainingLives);
+                })
+                .thenAccept(remainingLives -> {
+                    if (remainingLives <= 0) {
+                        deathbanRepository.setDeathban(victimUuid, deathbanDurationSeconds).thenRun(() ->
+                                Bukkit.getScheduler().runTask(plugin, () -> {
+                                    Player p = Bukkit.getPlayer(victimUuid);
+                                    if (p != null) {
+                                        p.kickPlayer(messages.format("deathban.kick-message",
+                                                "time", formatSeconds(deathbanDurationSeconds)));
+                                    }
+                                }));
+                    } else {
                         Bukkit.getScheduler().runTask(plugin, () -> {
                             Player p = Bukkit.getPlayer(victimUuid);
                             if (p != null) {
-                                p.kickPlayer(messages.format("deathban.kick-message",
-                                        "time", formatSeconds(deathbanDurationSeconds)));
+                                p.sendMessage(messages.format("deathban.lives-remaining", "lives", remainingLives));
                             }
-                        }));
-            } else {
-                Bukkit.getScheduler().runTask(plugin, () -> {
-                    Player p = Bukkit.getPlayer(victimUuid);
-                    if (p != null) {
-                        p.sendMessage(messages.format("deathban.lives-remaining", "lives", remainingLives));
+                        });
                     }
                 });
-            }
-        });
     }
 
     private void cancelHomeTeleport(Player player) {
