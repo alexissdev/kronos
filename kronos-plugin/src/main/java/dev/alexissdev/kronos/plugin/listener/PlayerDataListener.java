@@ -20,7 +20,7 @@ import java.util.concurrent.CompletableFuture;
 @Singleton
 public class PlayerDataListener implements Listener {
 
-    private static final long PVP_TIMER_DURATION_MS = 30 * 60 * 1000L;
+    private static final long PVP_TIMER_DURATION_MS = 60 * 60 * 1000L;
     private static final long LOGOUT_TIMER_DURATION_MS = 30_000L;
 
     private final PlayerService playerService;

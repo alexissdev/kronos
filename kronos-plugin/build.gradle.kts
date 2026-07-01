@@ -55,6 +55,11 @@ bukkit {
             usage = "/hcf <reload|give-money|set-money>"
             permission = "hcf.admin"
         }
+        register("pvptimer") {
+            description = "Gestionar PvP Timer de jugadores"
+            usage = "/pvptimer <give|remove> <jugador>"
+            permission = "hcf.admin"
+        }
         register("spawn") {
             description = "Gestión de la zona de spawn"
             usage = "/spawn <setzone|info|remove>"

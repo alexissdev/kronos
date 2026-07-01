@@ -202,6 +202,16 @@ hcf:
   help-set-money: "&e/hcf set-money <jugador> <$> &7- Establecer balance"
   help-give-key: "&e/hcf give-key <jugador> <tipo> &7- Dar llave de crate"
 
+pvptimer:
+  give-sender: "&aDiste PvP Timer a &e{player}&a."
+  give-target: "&aRecibiste PvP Timer. Dura &e1 hora&a."
+  remove-sender: "&eQuitaste el PvP Timer a &f{player}&e."
+  remove-target: "&cTu PvP Timer fue eliminado por el staff."
+  error: "&cError: {error}"
+  help-header: "&6&lComandos de PvP Timer:"
+  help-give: "&e/pvptimer give <jugador> &7- Dar PvP Timer"
+  help-remove: "&e/pvptimer remove <jugador> &7- Quitar PvP Timer"
+
 tablist:
   leader:    "&4[{faction}] &f{player}"
   co_leader: "&c[{faction}] &f{player}"

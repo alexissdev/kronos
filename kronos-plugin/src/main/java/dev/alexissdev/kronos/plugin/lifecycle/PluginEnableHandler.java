@@ -16,6 +16,7 @@ import dev.alexissdev.kronos.plugin.listener.DeathbanListener;
 import dev.alexissdev.kronos.plugin.listener.KothListener;
 import dev.alexissdev.kronos.plugin.command.FactionCommand;
 import dev.alexissdev.kronos.plugin.command.HCFCommand;
+import dev.alexissdev.kronos.plugin.command.PvpTimerCommand;
 import dev.alexissdev.kronos.plugin.listener.FactionEventListener;
 import dev.alexissdev.kronos.plugin.listener.PlayerDataListener;
 import dev.alexissdev.kronos.plugin.listener.PvpListener;
@@ -68,8 +69,9 @@ public class PluginEnableHandler {
         registerCommand("koth",    injector.getInstance(KothCommand.class));
         registerCommand("money",   injector.getInstance(MoneyCommand.class));
         registerCommand("balance", injector.getInstance(MoneyCommand.class));
-        registerCommand("hcf",     injector.getInstance(HCFCommand.class));
-        registerCommand("spawn",   injector.getInstance(SpawnCommand.class));
+        registerCommand("hcf",      injector.getInstance(HCFCommand.class));
+        registerCommand("pvptimer", injector.getInstance(PvpTimerCommand.class));
+        registerCommand("spawn",    injector.getInstance(SpawnCommand.class));
     }
 
     private void registerCommand(String name, org.bukkit.command.CommandExecutor executor) {
