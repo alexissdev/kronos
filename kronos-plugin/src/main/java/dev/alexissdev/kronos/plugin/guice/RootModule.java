@@ -3,10 +3,49 @@ package dev.alexissdev.kronos.plugin.guice;
 import com.google.common.eventbus.EventBus;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
+import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import dev.alexissdev.kronos.api.guice.ApiModule;
+import dev.alexissdev.kronos.common.command.SubCommand;
 import dev.alexissdev.kronos.common.config.MessagesConfig;
 import dev.alexissdev.kronos.common.domain.SotwService;
+import dev.alexissdev.kronos.plugin.command.crate.ListCrateSub;
+import dev.alexissdev.kronos.plugin.command.crate.RemoveCrateSub;
+import dev.alexissdev.kronos.plugin.command.crate.SetCrateSub;
+import dev.alexissdev.kronos.plugin.command.faction.AcceptFactionSub;
+import dev.alexissdev.kronos.plugin.command.faction.AllyFactionSub;
+import dev.alexissdev.kronos.plugin.command.faction.ChatFactionSub;
+import dev.alexissdev.kronos.plugin.command.faction.ClaimFactionSub;
+import dev.alexissdev.kronos.plugin.command.faction.CreateFactionSub;
+import dev.alexissdev.kronos.plugin.command.faction.DepositFactionSub;
+import dev.alexissdev.kronos.plugin.command.faction.DisbandFactionSub;
+import dev.alexissdev.kronos.plugin.command.faction.EnemyFactionSub;
+import dev.alexissdev.kronos.plugin.command.faction.FreezeFactionSub;
+import dev.alexissdev.kronos.plugin.command.faction.HomeFactionSub;
+import dev.alexissdev.kronos.plugin.command.faction.InfoFactionSub;
+import dev.alexissdev.kronos.plugin.command.faction.InviteFactionSub;
+import dev.alexissdev.kronos.plugin.command.faction.KickFactionSub;
+import dev.alexissdev.kronos.plugin.command.faction.LeaveFactionSub;
+import dev.alexissdev.kronos.plugin.command.faction.MapFactionSub;
+import dev.alexissdev.kronos.plugin.command.faction.NeutralFactionSub;
+import dev.alexissdev.kronos.plugin.command.faction.OverclaimFactionSub;
+import dev.alexissdev.kronos.plugin.command.faction.RenameFactionSub;
+import dev.alexissdev.kronos.plugin.command.faction.SetHomeFactionSub;
+import dev.alexissdev.kronos.plugin.command.faction.SetLeaderFactionSub;
+import dev.alexissdev.kronos.plugin.command.faction.StrikeFactionSub;
+import dev.alexissdev.kronos.plugin.command.faction.TopFactionSub;
+import dev.alexissdev.kronos.plugin.command.faction.UnclaimFactionSub;
+import dev.alexissdev.kronos.plugin.command.faction.UnfreezeFactionSub;
+import dev.alexissdev.kronos.plugin.command.faction.WithdrawFactionSub;
+import dev.alexissdev.kronos.plugin.command.hcf.EotwSub;
+import dev.alexissdev.kronos.plugin.command.hcf.GiveKeySub;
+import dev.alexissdev.kronos.plugin.command.hcf.GiveMoneySub;
+import dev.alexissdev.kronos.plugin.command.hcf.ReloadSub;
+import dev.alexissdev.kronos.plugin.command.hcf.SetMoneySub;
+import dev.alexissdev.kronos.plugin.command.hcf.SotwSub;
+import dev.alexissdev.kronos.plugin.command.hcf.UnbanSub;
+import dev.alexissdev.kronos.plugin.command.pvptimer.GivePvpTimerSub;
+import dev.alexissdev.kronos.plugin.command.pvptimer.RemovePvpTimerSub;
 import dev.alexissdev.kronos.plugin.sotw.SotwManager;
 import dev.alexissdev.kronos.scoreboard.ScoreboardModule;
 import dev.alexissdev.kronos.spawn.SpawnModule;
@@ -59,6 +98,11 @@ public class RootModule extends AbstractModule {
         bind(CrateListener.class).in(Singleton.class);
         bind(TabListManager.class).in(Singleton.class);
 
+        bindFactionSubCommands();
+        bindHcfSubCommands();
+        bindPvpTimerSubCommands();
+        bindCrateSubCommands();
+
         bindConfig();
 
         install(new DatabaseModule());
@@ -72,6 +116,59 @@ public class RootModule extends AbstractModule {
         install(new ApiModule());
         install(new ScoreboardModule());
         install(new SpawnModule());
+    }
+
+    private void bindFactionSubCommands() {
+        Multibinder<SubCommand> binder = Multibinder.newSetBinder(binder(), SubCommand.class, Names.named("faction"));
+        binder.addBinding().to(CreateFactionSub.class).in(Singleton.class);
+        binder.addBinding().to(DisbandFactionSub.class).in(Singleton.class);
+        binder.addBinding().to(InviteFactionSub.class).in(Singleton.class);
+        binder.addBinding().to(AcceptFactionSub.class).in(Singleton.class);
+        binder.addBinding().to(LeaveFactionSub.class).in(Singleton.class);
+        binder.addBinding().to(KickFactionSub.class).in(Singleton.class);
+        binder.addBinding().to(InfoFactionSub.class).in(Singleton.class);
+        binder.addBinding().to(ChatFactionSub.class).in(Singleton.class);
+        binder.addBinding().to(TopFactionSub.class).in(Singleton.class);
+        binder.addBinding().to(AllyFactionSub.class).in(Singleton.class);
+        binder.addBinding().to(EnemyFactionSub.class).in(Singleton.class);
+        binder.addBinding().to(NeutralFactionSub.class).in(Singleton.class);
+        binder.addBinding().to(DepositFactionSub.class).in(Singleton.class);
+        binder.addBinding().to(WithdrawFactionSub.class).in(Singleton.class);
+        binder.addBinding().to(ClaimFactionSub.class).in(Singleton.class);
+        binder.addBinding().to(UnclaimFactionSub.class).in(Singleton.class);
+        binder.addBinding().to(OverclaimFactionSub.class).in(Singleton.class);
+        binder.addBinding().to(MapFactionSub.class).in(Singleton.class);
+        binder.addBinding().to(SetHomeFactionSub.class).in(Singleton.class);
+        binder.addBinding().to(HomeFactionSub.class).in(Singleton.class);
+        binder.addBinding().to(RenameFactionSub.class).in(Singleton.class);
+        binder.addBinding().to(StrikeFactionSub.class).in(Singleton.class);
+        binder.addBinding().to(FreezeFactionSub.class).in(Singleton.class);
+        binder.addBinding().to(UnfreezeFactionSub.class).in(Singleton.class);
+        binder.addBinding().to(SetLeaderFactionSub.class).in(Singleton.class);
+    }
+
+    private void bindHcfSubCommands() {
+        Multibinder<SubCommand> binder = Multibinder.newSetBinder(binder(), SubCommand.class, Names.named("hcf"));
+        binder.addBinding().to(ReloadSub.class).in(Singleton.class);
+        binder.addBinding().to(GiveMoneySub.class).in(Singleton.class);
+        binder.addBinding().to(SetMoneySub.class).in(Singleton.class);
+        binder.addBinding().to(GiveKeySub.class).in(Singleton.class);
+        binder.addBinding().to(SotwSub.class).in(Singleton.class);
+        binder.addBinding().to(EotwSub.class).in(Singleton.class);
+        binder.addBinding().to(UnbanSub.class).in(Singleton.class);
+    }
+
+    private void bindPvpTimerSubCommands() {
+        Multibinder<SubCommand> binder = Multibinder.newSetBinder(binder(), SubCommand.class, Names.named("pvptimer"));
+        binder.addBinding().to(GivePvpTimerSub.class).in(Singleton.class);
+        binder.addBinding().to(RemovePvpTimerSub.class).in(Singleton.class);
+    }
+
+    private void bindCrateSubCommands() {
+        Multibinder<SubCommand> binder = Multibinder.newSetBinder(binder(), SubCommand.class, Names.named("crate"));
+        binder.addBinding().to(SetCrateSub.class).in(Singleton.class);
+        binder.addBinding().to(RemoveCrateSub.class).in(Singleton.class);
+        binder.addBinding().to(ListCrateSub.class).in(Singleton.class);
     }
 
     private void bindConfig() {
