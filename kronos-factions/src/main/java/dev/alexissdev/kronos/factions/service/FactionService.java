@@ -56,4 +56,6 @@ public interface FactionService {
     CompletableFuture<Void> freezeFaction(String factionId, UUID actorUuid);
 
     CompletableFuture<Void> unfreezeFaction(String factionId, UUID actorUuid);
+
+    CompletableFuture<Void> setLeader(String factionId, UUID newLeaderUuid, UUID actorUuid);
 }
