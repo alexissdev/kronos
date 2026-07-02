@@ -45,12 +45,14 @@ public class FactionCommand extends BaseCommand {
     private final MessagesConfig messages;
     private final ChatManager chatManager;
     private final long homeDelayMs;
+    private final int maxClaimsPerMember;
 
     @Inject
     public FactionCommand(FactionService factionService, ClaimService claimService,
                           TimerApplicationService timerService,
                           Plugin plugin, MessagesConfig messages, ChatManager chatManager,
-                          @Named("home.delay-ms") long homeDelayMs) {
+                          @Named("home.delay-ms") long homeDelayMs,
+                          @Named("faction.max-claims-per-member") int maxClaimsPerMember) {
         super(null);
         this.factionService = factionService;
         this.claimService = claimService;
@@ -59,10 +61,11 @@ public class FactionCommand extends BaseCommand {
         this.messages = messages;
         this.chatManager = chatManager;
         this.homeDelayMs = homeDelayMs;
+        this.maxClaimsPerMember = maxClaimsPerMember;
     }
 
     private static final List<String> F_SUBS = Arrays.asList(
-            "create", "disband", "invite", "accept", "leave", "kick", "info", "chat", "top",
+            "create", "disband", "invite", "accept", "join", "leave", "kick", "info", "chat", "top",
             "ally", "enemy", "neutral", "deposit", "withdraw", "map", "claim", "unclaim",
             "overclaim", "sethome", "home", "rename", "strike", "freeze", "unfreeze", "setleader");
 
@@ -94,8 +97,9 @@ public class FactionCommand extends BaseCommand {
             case "create": handleCreate(player, args); break;
             case "disband": handleDisband(player); break;
             case "invite": handleInvite(player, args); break;
-            case "accept": handleAccept(player, args); break;
-            case "leave": handleLeave(player); break;
+            case "accept":
+            case "join":   handleAccept(player, args); break;
+            case "leave":  handleLeave(player); break;
             case "kick": handleKick(player, args); break;
             case "info": handleInfo(player, args); break;
             case "chat": handleChat(player); break;
@@ -353,7 +357,15 @@ public class FactionCommand extends BaseCommand {
 
         factionService.getByPlayer(player.getUniqueId()).thenCompose(opt -> {
             if (opt.isEmpty()) throw new HCFException("No estás en una facción");
-            return claimService.claim(opt.get().getId(), player.getUniqueId(), world, cx, cz, cx, cz);
+            dev.alexissdev.kronos.factions.domain.Faction faction = opt.get();
+            int maxClaims = faction.getMembers().size() * maxClaimsPerMember;
+            return claimService.getFactionClaims(faction.getId()).thenCompose(existing -> {
+                if (existing.size() >= maxClaims) {
+                    throw new HCFException(messages.format("faction.cmd.claim-limit",
+                            "current", existing.size(), "max", maxClaims));
+                }
+                return claimService.claim(faction.getId(), player.getUniqueId(), world, cx, cz, cx, cz);
+            });
         }).thenAccept(claim -> Bukkit.getScheduler().runTask(plugin,
                 () -> player.sendMessage(messages.format("faction.cmd.claimed", "x", cx, "z", cz))))
                 .exceptionally(ex -> {

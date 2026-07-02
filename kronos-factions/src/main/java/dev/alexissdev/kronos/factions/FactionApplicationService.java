@@ -35,7 +35,9 @@ public class FactionApplicationService implements FactionService {
     private final EventBus eventBus;
     private final int maxMembers;
     private final long reinviteCooldownMs;
+    private final long inviteExpiryMs;
     private final Map<UUID, String> pendingInvites          = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Map<UUID, Long>   inviteTimestamps        = new java.util.concurrent.ConcurrentHashMap<>();
     private final Map<UUID, Long>   leftFactionTimestamps   = new java.util.concurrent.ConcurrentHashMap<>();
     private final Map<UUID, String> leftFactionIds          = new java.util.concurrent.ConcurrentHashMap<>();
 
@@ -45,13 +47,15 @@ public class FactionApplicationService implements FactionService {
                                      EconomyService economyService,
                                      EventBus eventBus,
                                      @Named("faction.max-members") int maxMembers,
-                                     @Named("faction.reinvite-cooldown-ms") long reinviteCooldownMs) {
+                                     @Named("faction.reinvite-cooldown-ms") long reinviteCooldownMs,
+                                     @Named("faction.invite-expiry-ms") long inviteExpiryMs) {
         this.factionRepository = factionRepository;
         this.playerRepository = playerRepository;
         this.economyService = economyService;
         this.eventBus = eventBus;
         this.maxMembers = maxMembers;
         this.reinviteCooldownMs = reinviteCooldownMs;
+        this.inviteExpiryMs = inviteExpiryMs;
     }
 
     @Override
@@ -122,6 +126,7 @@ public class FactionApplicationService implements FactionService {
                     throw new HCFException("Ese jugador ya pertenece a otra facción");
                 }
                 pendingInvites.put(inviteeUuid, factionId);
+                inviteTimestamps.put(inviteeUuid, System.currentTimeMillis());
             });
         });
     }
@@ -132,6 +137,12 @@ public class FactionApplicationService implements FactionService {
             return CompletableFuture.failedFuture(
                     new HCFException("No tienes invitación pendiente de esa facción"));
         }
+        Long invitedAt = inviteTimestamps.get(playerUuid);
+        if (invitedAt != null && System.currentTimeMillis() - invitedAt > inviteExpiryMs) {
+            pendingInvites.remove(playerUuid);
+            inviteTimestamps.remove(playerUuid);
+            return CompletableFuture.failedFuture(new HCFException("La invitación expiró"));
+        }
         return factionRepository.findById(factionId).thenCompose(opt -> {
             Faction faction = opt.orElseThrow(() -> new FactionNotFoundException(factionId));
             if (faction.getMembers().size() >= maxMembers) {
@@ -140,6 +151,7 @@ public class FactionApplicationService implements FactionService {
             faction.addMember(new FactionMember(playerUuid, FactionRole.MEMBER, Instant.now()));
             return factionRepository.save(faction).thenRun(() -> {
                 pendingInvites.remove(playerUuid);
+                inviteTimestamps.remove(playerUuid);
                 eventBus.post(new PlayerJoinedFactionDomainEvent(playerUuid, factionId));
             });
         });
