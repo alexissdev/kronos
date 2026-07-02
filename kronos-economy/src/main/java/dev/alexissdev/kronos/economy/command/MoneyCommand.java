@@ -31,6 +31,13 @@ public class MoneyCommand extends BaseCommand {
     }
 
     @Override
+    protected List<String> tabComplete(CommandSender sender, String[] args) {
+        if (args.length == 1) return subcommands(args, "pay", "top");
+        if (args.length == 2 && args[0].equalsIgnoreCase("pay")) return onlinePlayers(args[1]);
+        return Collections.emptyList();
+    }
+
+    @Override
     protected void execute(CommandSender sender, String[] args) {
         Player player = requirePlayer(sender);
         if (player == null) return;

@@ -12,6 +12,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
+import java.util.List;
+
 @Singleton
 public class KothCommand extends BaseCommand {
 
@@ -30,6 +32,22 @@ public class KothCommand extends BaseCommand {
         this.creationService = creationService;
         this.plugin          = plugin;
         this.messages        = messages;
+    }
+
+    @Override
+    protected List<String> tabComplete(CommandSender sender, String[] args) {
+        if (args.length == 1) return subcommands(args, "start", "end", "list", "create", "delete");
+        if (args.length == 2) {
+            switch (args[0].toLowerCase()) {
+                case "start": case "end": case "delete":
+                    return kothService.getAllKoths().thenApply(list -> {
+                        return filterPrefix(
+                                list.stream().map(k -> k.getName()).collect(java.util.stream.Collectors.toList()),
+                                args[1]);
+                    }).getNow(java.util.Collections.emptyList());
+            }
+        }
+        return java.util.Collections.emptyList();
     }
 
     @Override

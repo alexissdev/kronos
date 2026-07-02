@@ -11,6 +11,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -30,6 +31,12 @@ public class StatsCommand extends BaseCommand {
         this.factionService = factionService;
         this.messages = messages;
         this.plugin = plugin;
+    }
+
+    @Override
+    protected List<String> tabComplete(CommandSender sender, String[] args) {
+        if (args.length == 1) return onlinePlayers(args[0]);
+        return java.util.Collections.emptyList();
     }
 
     @Override

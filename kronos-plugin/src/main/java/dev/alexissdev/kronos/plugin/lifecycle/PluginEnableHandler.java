@@ -14,6 +14,7 @@ import dev.alexissdev.kronos.plugin.chat.ChatListener;
 import dev.alexissdev.kronos.plugin.listener.CrateListener;
 import dev.alexissdev.kronos.plugin.listener.DeathbanListener;
 import dev.alexissdev.kronos.plugin.listener.KothListener;
+import dev.alexissdev.kronos.plugin.command.BaltopCommand;
 import dev.alexissdev.kronos.plugin.command.FactionCommand;
 import dev.alexissdev.kronos.plugin.command.FixCommand;
 import dev.alexissdev.kronos.plugin.command.HCFCommand;
@@ -78,12 +79,16 @@ public class PluginEnableHandler {
         registerCommand("stats",    injector.getInstance(StatsCommand.class));
         registerCommand("near",     injector.getInstance(NearCommand.class));
         registerCommand("fix",      injector.getInstance(FixCommand.class));
+        registerCommand("baltop",   injector.getInstance(BaltopCommand.class));
     }
 
     private void registerCommand(String name, org.bukkit.command.CommandExecutor executor) {
         org.bukkit.command.PluginCommand cmd = plugin.getCommand(name);
         if (cmd != null) {
             cmd.setExecutor(executor);
+            if (executor instanceof org.bukkit.command.TabCompleter) {
+                cmd.setTabCompleter((org.bukkit.command.TabCompleter) executor);
+            }
         }
     }
 

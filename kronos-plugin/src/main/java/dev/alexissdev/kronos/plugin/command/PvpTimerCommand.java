@@ -11,6 +11,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
+import java.util.List;
+
 @Singleton
 public class PvpTimerCommand extends BaseCommand {
 
@@ -26,6 +28,13 @@ public class PvpTimerCommand extends BaseCommand {
         this.timerService = timerService;
         this.messages     = messages;
         this.plugin       = plugin;
+    }
+
+    @Override
+    protected List<String> tabComplete(CommandSender sender, String[] args) {
+        if (args.length == 1) return subcommands(args, "give", "remove");
+        if (args.length == 2) return onlinePlayers(args[1]);
+        return java.util.Collections.emptyList();
     }
 
     @Override
