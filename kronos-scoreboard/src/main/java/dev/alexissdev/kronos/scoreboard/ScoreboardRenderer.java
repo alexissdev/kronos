@@ -93,7 +93,11 @@ final class ScoreboardRenderer {
 
     private static String fmtMs(long ms) {
         long s = ms / 1000;
-        return String.format("%02d:%02d", s / 60, s % 60);
+        long h = s / 3600;
+        long m = (s % 3600) / 60;
+        long sec = s % 60;
+        if (h > 0) return String.format("%d:%02d:%02d", h, m, sec);
+        return String.format("%02d:%02d", m, sec);
     }
 
     private static String fmtBalance(double balance) {
