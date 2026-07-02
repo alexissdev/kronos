@@ -35,4 +35,11 @@ public class RedisDeathbanRepository implements DeathbanRepository {
                 .toCompletableFuture()
                 .thenApply(ttl -> ttl > 0 ? OptionalLong.of(ttl) : OptionalLong.empty());
     }
+
+    @Override
+    public CompletableFuture<Void> removeDeathban(UUID uuid) {
+        return redis.del(KEY_PREFIX + uuid)
+                .toCompletableFuture()
+                .thenApply(r -> null);
+    }
 }

@@ -9,4 +9,6 @@ public interface DeathbanRepository {
     CompletableFuture<Void> setDeathban(UUID uuid, long durationSeconds);
 
     CompletableFuture<OptionalLong> getRemainingSeconds(UUID uuid);
+
+    CompletableFuture<Void> removeDeathban(UUID uuid);
 }

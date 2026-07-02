@@ -4,6 +4,7 @@ import dev.alexissdev.kronos.common.command.BaseCommand;
 import dev.alexissdev.kronos.common.config.MessagesConfig;
 import dev.alexissdev.kronos.common.domain.CrateType;
 import dev.alexissdev.kronos.common.domain.SotwService;
+import dev.alexissdev.kronos.players.repository.DeathbanRepository;
 import dev.alexissdev.kronos.plugin.listener.CrateListener;
 
 import com.google.inject.Inject;
@@ -19,24 +20,44 @@ import org.bukkit.plugin.Plugin;
 
 import java.io.File;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Singleton
 public class HCFCommand extends BaseCommand {
 
     private final EconomyService economyService;
     private final SotwService sotwService;
+    private final DeathbanRepository deathbanRepository;
     private final Plugin plugin;
     private final MessagesConfig messages;
 
     @Inject
     public HCFCommand(EconomyService economyService, SotwService sotwService,
+                      DeathbanRepository deathbanRepository,
                       Plugin plugin, MessagesConfig messages) {
         super("hcf.admin");
         this.economyService = economyService;
         this.sotwService = sotwService;
+        this.deathbanRepository = deathbanRepository;
         this.plugin = plugin;
         this.messages = messages;
+    }
+
+    @Override
+    protected List<String> tabComplete(CommandSender sender, String[] args) {
+        if (args.length == 1)
+            return subcommands(args, "reload", "give-money", "set-money", "give-key", "sotw", "eotw", "unban");
+        if (args.length == 2) {
+            switch (args[0].toLowerCase()) {
+                case "give-money": case "set-money": case "give-key": case "unban":
+                    return onlinePlayers(args[1]);
+                case "sotw": case "eotw":
+                    return filterPrefix(java.util.Arrays.asList("start", "stop"), args[1]);
+            }
+        }
+        return java.util.Collections.emptyList();
     }
 
     @Override
@@ -50,6 +71,7 @@ public class HCFCommand extends BaseCommand {
             case "give-key":   handleGiveKey(sender, args);   break;
             case "sotw":       handleSotw(sender, args);      break;
             case "eotw":       handleEotw(sender, args);      break;
+            case "unban":      handleUnban(sender, args);     break;
             default:           sendHelp(sender);
         }
     }
@@ -167,6 +189,29 @@ public class HCFCommand extends BaseCommand {
         }
     }
 
+    private void handleUnban(CommandSender sender, String[] args) {
+        if (!requireArgs(sender, args, 2, "/hcf unban <jugador>")) return;
+        String targetName = args[1];
+        Player online = Bukkit.getPlayer(targetName);
+        UUID uuid = online != null ? online.getUniqueId()
+                : Bukkit.getOfflinePlayer(targetName).getUniqueId();
+
+        deathbanRepository.getRemainingSeconds(uuid).thenCompose(remaining -> {
+            if (remaining.isEmpty()) {
+                Bukkit.getScheduler().runTask(plugin, () ->
+                        sender.sendMessage(messages.format("hcf.unban-not-banned", "player", targetName)));
+                return java.util.concurrent.CompletableFuture.completedFuture(null);
+            }
+            return deathbanRepository.removeDeathban(uuid).thenRun(() ->
+                    Bukkit.getScheduler().runTask(plugin, () ->
+                            sender.sendMessage(messages.format("hcf.unban-success", "player", targetName))));
+        }).exceptionally(ex -> {
+            Bukkit.getScheduler().runTask(plugin, () ->
+                    sender.sendMessage(messages.format("hcf.error", "error", ex.getMessage())));
+            return null;
+        });
+    }
+
     private void sendHelp(CommandSender sender) {
         sender.sendMessage(messages.get("hcf.help-header"));
         sender.sendMessage(messages.get("hcf.help-reload"));
@@ -175,5 +220,6 @@ public class HCFCommand extends BaseCommand {
         sender.sendMessage(messages.get("hcf.help-give-key"));
         sender.sendMessage(color("&e/hcf sotw <start <horas>|stop> &7- Iniciar/detener SOTW"));
         sender.sendMessage(color("&e/hcf eotw <start <horas>|stop> &7- Iniciar/detener EOTW"));
+        sender.sendMessage(color("&e/hcf unban <jugador> &7- Quitar deathban a un jugador"));
     }
 }
