@@ -2,6 +2,7 @@ package dev.alexissdev.kronos.classes.listener;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import dev.alexissdev.kronos.factions.service.FactionService;
 import dev.alexissdev.kronos.players.domain.KitType;
 import dev.alexissdev.kronos.timers.domain.TimerType;
 import dev.alexissdev.kronos.classes.service.KitService;
@@ -27,23 +28,28 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 @Singleton
 public class ClassListener implements Listener {
 
     private final KitService kitService;
     private final TimerApplicationService timerService;
+    private final FactionService factionService;
     private final Plugin plugin;
 
     private final Map<UUID, KitType> playerKitCache = new ConcurrentHashMap<>();
 
     @Inject
-    public ClassListener(KitService kitService, TimerApplicationService timerService, Plugin plugin) {
+    public ClassListener(KitService kitService, TimerApplicationService timerService,
+                         FactionService factionService, Plugin plugin) {
         this.kitService = kitService;
         this.timerService = timerService;
+        this.factionService = factionService;
         this.plugin = plugin;
         scheduleBardAura();
     }
@@ -56,20 +62,35 @@ public class ClassListener implements Listener {
                     if (entry.getValue() != KitType.BARD) continue;
                     org.bukkit.entity.Player bard = plugin.getServer().getPlayer(entry.getKey());
                     if (bard == null || !bard.isOnline()) continue;
-                    PotionEffect speed = new PotionEffect(PotionEffectType.SPEED, 60, 1, false, false);
-                    PotionEffect regen = new PotionEffect(PotionEffectType.REGENERATION, 60, 0, false, false);
-                    bard.getNearbyEntities(15, 15, 15).stream()
-                            .filter(e -> e instanceof org.bukkit.entity.Player)
-                            .map(e -> (org.bukkit.entity.Player) e)
-                            .forEach(p -> {
-                                p.addPotionEffect(speed, true);
-                                p.addPotionEffect(regen, true);
-                            });
-                    bard.addPotionEffect(speed, true);
-                    bard.addPotionEffect(regen, true);
+
+                    List<Player> nearby = bard.getNearbyEntities(15, 15, 15).stream()
+                            .filter(e -> e instanceof Player)
+                            .map(e -> (Player) e)
+                            .collect(Collectors.toList());
+
+                    factionService.getByPlayer(bard.getUniqueId()).thenAccept(bardFactionOpt -> {
+                        java.util.Set<UUID> teammates = new java.util.HashSet<>();
+                        bardFactionOpt.ifPresent(f -> teammates.addAll(f.getMembers().keySet()));
+
+                        plugin.getServer().getScheduler().runTask(plugin, () -> {
+                            PotionEffect speed = new PotionEffect(PotionEffectType.SPEED, 60, 1, false, false);
+                            PotionEffect regen = new PotionEffect(PotionEffectType.REGENERATION, 60, 0, false, false);
+                            if (bard.isOnline()) {
+                                bard.addPotionEffect(speed, true);
+                                bard.addPotionEffect(regen, true);
+                            }
+                            for (Player near : nearby) {
+                                if (!near.isOnline()) continue;
+                                if (!teammates.isEmpty() && teammates.contains(near.getUniqueId())) {
+                                    near.addPotionEffect(speed, true);
+                                    near.addPotionEffect(regen, true);
+                                }
+                            }
+                        });
+                    });
                 }
             }
-        }.runTaskTimer(plugin, 40L, 40L);
+        }.runTaskTimerAsynchronously(plugin, 40L, 40L);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
