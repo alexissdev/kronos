@@ -7,6 +7,7 @@ import dev.alexissdev.kronos.common.config.MessagesConfig;
 import dev.alexissdev.kronos.common.domain.SotwService;
 import dev.alexissdev.kronos.players.repository.DeathbanRepository;
 import dev.alexissdev.kronos.players.service.PlayerService;
+import dev.alexissdev.kronos.spawn.SpawnApplicationService;
 import dev.alexissdev.kronos.timers.TimerApplicationService;
 import dev.alexissdev.kronos.timers.domain.TimerType;
 import dev.alexissdev.kronos.factions.service.FactionService;
@@ -35,6 +36,7 @@ public class PvpListener implements Listener {
     private final PlayerService playerService;
     private final FactionService factionService;
     private final DeathbanRepository deathbanRepository;
+    private final SpawnApplicationService spawnService;
     private final MessagesConfig messages;
     private final Plugin plugin;
     private final SotwService sotwService;
@@ -47,6 +49,7 @@ public class PvpListener implements Listener {
                        PlayerService playerService,
                        FactionService factionService,
                        DeathbanRepository deathbanRepository,
+                       SpawnApplicationService spawnService,
                        MessagesConfig messages,
                        Plugin plugin,
                        SotwService sotwService,
@@ -57,6 +60,7 @@ public class PvpListener implements Listener {
         this.playerService = playerService;
         this.factionService = factionService;
         this.deathbanRepository = deathbanRepository;
+        this.spawnService = spawnService;
         this.messages = messages;
         this.plugin = plugin;
         this.sotwService = sotwService;
@@ -75,6 +79,14 @@ public class PvpListener implements Listener {
         if (sotwService.isSotwActive()) {
             event.setCancelled(true);
             attacker.sendMessage(messages.get("sotw.pvp-blocked"));
+            return;
+        }
+
+        boolean victimInSpawn   = spawnService.getZone().map(z -> z.contains(victim.getLocation())).orElse(false);
+        boolean attackerInSpawn = spawnService.getZone().map(z -> z.contains(attacker.getLocation())).orElse(false);
+        if (victimInSpawn || attackerInSpawn) {
+            event.setCancelled(true);
+            attacker.sendMessage(messages.get("pvp.spawn-protected"));
             return;
         }
 
@@ -104,6 +116,14 @@ public class PvpListener implements Listener {
 
         Player player = (Player) event.getEntity().getShooter();
         UUID uuid = player.getUniqueId();
+
+        if (spawnService.getZone().map(z -> z.contains(player.getLocation())).orElse(false)) {
+            event.setCancelled(true);
+            Bukkit.getScheduler().runTask(plugin, () ->
+                    player.getInventory().addItem(new ItemStack(Material.ENDER_PEARL)));
+            player.sendMessage(messages.get("pvp.pearl-spawn-blocked"));
+            return;
+        }
 
         if (timerService.hasActiveTimerSync(uuid, TimerType.ENDERPEARL)) {
             event.setCancelled(true);

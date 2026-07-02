@@ -30,6 +30,8 @@ pvp:
   attacker-has-pvp-timer: "&cNo puedes atacar con PvP Timer activo."
   death-killed: "&7{victim_tag}&f{victim} &7fue eliminado por {killer_tag}&c{killer}"
   death-natural: "&7{victim_tag}&f{victim} &7murió"
+  spawn-protected: "&cNo puedes atacar en el spawn."
+  pearl-spawn-blocked: "&cNo puedes usar Enderpearl dentro del spawn."
 
 spawn:
   blocked-combat-tag: "&cNo puedes entrar al spawn estando en &lCombat Tag&c!"
@@ -107,6 +109,7 @@ koth:
 faction:
   broadcast:
     disbanded: "&7[Facción] &f{name} &7fue disuelta."
+  dtk-decremented: "&c[Facción] &fEl DTK bajó a &e{dtk}&f/&e{max}&f. Facción: &e{faction}"
   member:
     left: "&e{player} fue {reason} de la facción."
   strike:
@@ -130,12 +133,14 @@ faction:
     error: "&c{error}"
     info-sep: "&7&m--------------------"
     info-name: "&6Facción: &e{name}"
-    info-members: "&6Miembros: &e{count}"
     info-stats: "&6Kills: &e{kills} &6Deaths: &e{deaths}"
     info-dtk: "&6DTK: &e{remaining}/{max}"
     info-balance:  "&6Balance: &e${balance}"
     info-strikes:  "&6Strikes: &e{strikes}&6/&e{max}"
     info-frozen:   "&c&l[CONGELADA] &cEsta facción está congelada por un administrador."
+    info-role-members: "&6{role}: &f{members}"
+    setleader-success: "&aTransferiste el liderazgo a &e{player}&a."
+    setleader-target: "&e{player} &ate transfirió el liderazgo de la facción."
     chat-toggled: "&aChat de facción toggled. (WIP)"
     top-header: "&6&lTop Facciones:"
     top-entry: "&e{rank}. &f{name} &7- &e{kills} kills"
@@ -219,6 +224,9 @@ hcf:
   help-give-money: "&e/hcf give-money <jugador> <$> &7- Dar dinero"
   help-set-money: "&e/hcf set-money <jugador> <$> &7- Establecer balance"
   help-give-key: "&e/hcf give-key <jugador> <tipo> &7- Dar llave de crate"
+  unban-success: "&aEl deathban de &e{player} &afue eliminado."
+  unban-not-banned: "&c{player} no está deathbaneado actualmente."
+  error: "&cError: {error}"
 
 pvptimer:
   give-sender: "&aDiste PvP Timer a &e{player}&a."
