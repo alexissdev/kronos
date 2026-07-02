@@ -19,10 +19,13 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @Singleton
 public class HCFCommand extends BaseCommand {
@@ -54,10 +57,10 @@ public class HCFCommand extends BaseCommand {
                 case "give-money": case "set-money": case "give-key": case "unban":
                     return onlinePlayers(args[1]);
                 case "sotw": case "eotw":
-                    return filterPrefix(java.util.Arrays.asList("start", "stop"), args[1]);
+                    return filterPrefix(Arrays.asList("start", "stop"), args[1]);
             }
         }
-        return java.util.Collections.emptyList();
+        return Collections.emptyList();
     }
 
     @Override
@@ -151,12 +154,12 @@ public class HCFCommand extends BaseCommand {
                 final long sotwMs = hours * 3600_000L;
                 sotwService.startSotw(sotwMs);
                 String sotwMsg = messages.format("sotw.started", "hours", String.valueOf(hours));
-                for (org.bukkit.entity.Player p : Bukkit.getOnlinePlayers()) p.sendMessage(sotwMsg);
+                for (Player p : Bukkit.getOnlinePlayers()) p.sendMessage(sotwMsg);
                 break;
             case "stop":
                 sotwService.stopSotw();
                 String stopMsg = messages.get("sotw.ended");
-                for (org.bukkit.entity.Player p : Bukkit.getOnlinePlayers()) p.sendMessage(stopMsg);
+                for (Player p : Bukkit.getOnlinePlayers()) p.sendMessage(stopMsg);
                 break;
             default:
                 sender.sendMessage(color("&cUso: /hcf sotw <start <horas>|stop>"));
@@ -177,12 +180,12 @@ public class HCFCommand extends BaseCommand {
                 final long eotwMs = hours * 3600_000L;
                 sotwService.startEotw(eotwMs);
                 String eotwMsg = messages.format("eotw.started", "hours", String.valueOf(hours));
-                for (org.bukkit.entity.Player p : Bukkit.getOnlinePlayers()) p.sendMessage(eotwMsg);
+                for (Player p : Bukkit.getOnlinePlayers()) p.sendMessage(eotwMsg);
                 break;
             case "stop":
                 sotwService.stopEotw();
                 String stopMsg = messages.get("eotw.ended");
-                for (org.bukkit.entity.Player p : Bukkit.getOnlinePlayers()) p.sendMessage(stopMsg);
+                for (Player p : Bukkit.getOnlinePlayers()) p.sendMessage(stopMsg);
                 break;
             default:
                 sender.sendMessage(color("&cUso: /hcf eotw <start <horas>|stop>"));
@@ -200,7 +203,7 @@ public class HCFCommand extends BaseCommand {
             if (remaining.isEmpty()) {
                 Bukkit.getScheduler().runTask(plugin, () ->
                         sender.sendMessage(messages.format("hcf.unban-not-banned", "player", targetName)));
-                return java.util.concurrent.CompletableFuture.completedFuture(null);
+                return CompletableFuture.completedFuture(null);
             }
             return deathbanRepository.removeDeathban(uuid).thenRun(() ->
                     Bukkit.getScheduler().runTask(plugin, () ->

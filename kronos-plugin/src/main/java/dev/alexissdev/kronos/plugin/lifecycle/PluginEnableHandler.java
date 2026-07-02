@@ -38,6 +38,11 @@ import dev.alexissdev.kronos.spawn.listener.SpawnListener;
 import dev.alexissdev.kronos.spawn.listener.SpawnWandListener;
 import dev.alexissdev.kronos.timers.TimerApplicationService;
 import org.bukkit.Bukkit;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.PluginCommand;
+import org.bukkit.command.TabCompleter;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -65,7 +70,7 @@ public class PluginEnableHandler {
         injector.getInstance(ScoreboardTask.class); // schedules periodic tasks
 
         ScoreboardManager scoreboardManager = injector.getInstance(ScoreboardManager.class);
-        for (org.bukkit.entity.Player online : Bukkit.getOnlinePlayers()) {
+        for (Player online : Bukkit.getOnlinePlayers()) {
             scoreboardManager.createBoard(online);
         }
 
@@ -90,18 +95,18 @@ public class PluginEnableHandler {
         registerCommand("crate",    injector.getInstance(CrateCommand.class));
     }
 
-    private void registerCommand(String name, org.bukkit.command.CommandExecutor executor) {
-        org.bukkit.command.PluginCommand cmd = plugin.getCommand(name);
+    private void registerCommand(String name, CommandExecutor executor) {
+        PluginCommand cmd = plugin.getCommand(name);
         if (cmd != null) {
             cmd.setExecutor(executor);
-            if (executor instanceof org.bukkit.command.TabCompleter) {
-                cmd.setTabCompleter((org.bukkit.command.TabCompleter) executor);
+            if (executor instanceof TabCompleter) {
+                cmd.setTabCompleter((TabCompleter) executor);
             }
         }
     }
 
     private void registerListeners() {
-        org.bukkit.plugin.PluginManager pm = Bukkit.getPluginManager();
+        PluginManager pm = Bukkit.getPluginManager();
         pm.registerEvents(injector.getInstance(ChatListener.class), plugin);
         pm.registerEvents(injector.getInstance(DeathbanListener.class), plugin);
         pm.registerEvents(injector.getInstance(PlayerDataListener.class), plugin);

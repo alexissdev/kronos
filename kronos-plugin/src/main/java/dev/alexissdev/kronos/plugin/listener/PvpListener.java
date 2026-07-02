@@ -33,8 +33,10 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
@@ -169,29 +171,27 @@ public class PvpListener implements Listener {
         ).thenCompose(claimOpt -> {
             if (claimOpt.isEmpty() || !claimOpt.get().getType().isProtectedFromBuild()) {
                 allowPearlTeleport(player, destination);
-                return java.util.concurrent.CompletableFuture.completedFuture(null);
+                return CompletableFuture.completedFuture(null);
             }
             Claim claim = claimOpt.get();
             String claimFactionId = claim.getFactionId();
-            // Check if destination faction is raidable and player's relation
             return factionService.getByPlayer(player.getUniqueId()).thenCompose(playerFactionOpt -> {
                 String playerFactionId = playerFactionOpt.map(Faction::getId).orElse(null);
                 boolean own  = claimFactionId != null && claimFactionId.equals(playerFactionId);
                 boolean ally = playerFactionOpt.map(f -> f.isAlly(claimFactionId)).orElse(false);
                 if (own || ally) {
                     allowPearlTeleport(player, destination);
-                    return java.util.concurrent.CompletableFuture.completedFuture(null);
+                    return CompletableFuture.completedFuture(null);
                 }
-                // Check if the owning faction is raidable
                 if (claimFactionId == null) {
                     Bukkit.getScheduler().runTask(plugin, () -> {
                         player.getInventory().addItem(new ItemStack(Material.ENDER_PEARL));
                         player.sendMessage(messages.get("pvp.pearl-claim-blocked"));
                     });
-                    return java.util.concurrent.CompletableFuture.completedFuture(null);
+                    return CompletableFuture.completedFuture(null);
                 }
                 return factionService.getById(claimFactionId).thenAccept(ownerOpt -> {
-                    boolean raidable = ownerOpt.map(dev.alexissdev.kronos.factions.domain.Faction::isRaidable).orElse(false);
+                    boolean raidable = ownerOpt.map(Faction::isRaidable).orElse(false);
                     Bukkit.getScheduler().runTask(plugin, () -> {
                         if (raidable) {
                             pearlTeleport(player, destination);
@@ -261,11 +261,11 @@ public class PvpListener implements Listener {
         final UUID killerUuid = killer != null ? killer.getUniqueId() : null;
         final String killerName = killer != null ? killer.getName() : null;
 
-        java.util.concurrent.CompletableFuture<java.util.Optional<Faction>> vFactionFuture =
+        CompletableFuture<Optional<Faction>> vFactionFuture =
                 factionService.getByPlayer(victimUuid);
-        java.util.concurrent.CompletableFuture<java.util.Optional<Faction>> kFactionFuture =
+        CompletableFuture<Optional<Faction>> kFactionFuture =
                 killerUuid != null ? factionService.getByPlayer(killerUuid)
-                        : java.util.concurrent.CompletableFuture.completedFuture(java.util.Optional.empty());
+                        : CompletableFuture.completedFuture(Optional.empty());
 
         vFactionFuture.thenCombine(kFactionFuture, (vFact, kFact) -> {
             String vTag = vFact.map(f -> ChatColor.GRAY + "[" + ChatColor.YELLOW + f.getName() + ChatColor.GRAY + "] ").orElse("");
@@ -290,9 +290,9 @@ public class PvpListener implements Listener {
         playerService.decrementLives(victimUuid)
                 .thenCompose(remainingLives -> {
                     // Run recordKill AFTER decrement so saves don't overwrite each other
-                    java.util.concurrent.CompletableFuture<Void> killRecord = killerUuid != null
+                    CompletableFuture<Void> killRecord = killerUuid != null
                             ? playerService.recordKill(killerUuid, victimUuid)
-                            : java.util.concurrent.CompletableFuture.completedFuture(null);
+                            : CompletableFuture.completedFuture(null);
                     return killRecord.thenApply(v -> remainingLives);
                 })
                 .thenAccept(remainingLives -> {

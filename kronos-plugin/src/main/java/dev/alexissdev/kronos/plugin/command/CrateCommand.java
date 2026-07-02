@@ -15,6 +15,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -64,7 +65,7 @@ public class CrateCommand extends BaseCommand {
             return;
         }
 
-        Block target = player.getTargetBlock((java.util.HashSet<Byte>) null, 5);
+        Block target = player.getTargetBlock((HashSet<Byte>) null, 5);
         if (target == null) { player.sendMessage(messages.get("crate.cmd.no-target")); return; }
 
         CrateType finalType = type;
@@ -85,7 +86,7 @@ public class CrateCommand extends BaseCommand {
     }
 
     private void handleRemove(Player player) {
-        Block target = player.getTargetBlock((java.util.HashSet<Byte>) null, 5);
+        Block target = player.getTargetBlock((HashSet<Byte>) null, 5);
         if (target == null) { player.sendMessage(messages.get("crate.cmd.no-target")); return; }
 
         String world = target.getWorld().getName();

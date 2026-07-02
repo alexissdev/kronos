@@ -28,6 +28,7 @@ import dev.alexissdev.kronos.plugin.listener.TimerListener;
 import dev.alexissdev.kronos.plugin.tablist.TabListManager;
 import dev.alexissdev.kronos.timers.TimersModule;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class RootModule extends AbstractModule {
@@ -43,7 +44,7 @@ public class RootModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(JavaPlugin.class).toInstance(plugin);
-        bind(org.bukkit.plugin.Plugin.class).toInstance(plugin);
+        bind(Plugin.class).toInstance(plugin);
         bind(MessagesConfig.class).toInstance(messagesConfig);
         bind(EventBus.class).in(Singleton.class);
         bind(ChatManager.class).in(Singleton.class);

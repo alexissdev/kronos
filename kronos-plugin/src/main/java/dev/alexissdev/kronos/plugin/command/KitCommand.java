@@ -9,6 +9,7 @@ import dev.alexissdev.kronos.players.domain.KitType;
 import dev.alexissdev.kronos.players.service.PlayerService;
 import dev.alexissdev.kronos.timers.TimerApplicationService;
 import dev.alexissdev.kronos.timers.domain.TimerType;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.enchantments.Enchantment;
@@ -49,7 +50,7 @@ public class KitCommand extends BaseCommand {
 
         playerService.getOrCreate(player.getUniqueId(), player.getName())
                 .thenAccept(hcfPlayer -> {
-                    org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
+                    Bukkit.getScheduler().runTask(plugin, () -> {
                         KitType kit = hcfPlayer.getActiveKit();
                         String perm = "hcf.kit." + kit.name().toLowerCase();
                         if (!player.hasPermission(perm)) {

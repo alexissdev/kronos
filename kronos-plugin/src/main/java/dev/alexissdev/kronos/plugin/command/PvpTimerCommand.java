@@ -11,7 +11,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @Singleton
 public class PvpTimerCommand extends BaseCommand {
@@ -34,7 +36,7 @@ public class PvpTimerCommand extends BaseCommand {
     protected List<String> tabComplete(CommandSender sender, String[] args) {
         if (args.length == 1) return subcommands(args, "give", "remove");
         if (args.length == 2) return onlinePlayers(args[1]);
-        return java.util.Collections.emptyList();
+        return Collections.emptyList();
     }
 
     @Override
@@ -58,7 +60,7 @@ public class PvpTimerCommand extends BaseCommand {
                     if (hasTimer) {
                         Bukkit.getScheduler().runTask(plugin, () ->
                                 sender.sendMessage(messages.format("pvptimer.already-has", "player", target.getName())));
-                        return java.util.concurrent.CompletableFuture.completedFuture(null);
+                        return CompletableFuture.completedFuture(null);
                     }
                     return timerService.startPvpTimer(target.getUniqueId(), PVP_TIMER_DURATION_MS)
                             .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
@@ -83,7 +85,7 @@ public class PvpTimerCommand extends BaseCommand {
                     if (!hasTimer) {
                         Bukkit.getScheduler().runTask(plugin, () ->
                                 sender.sendMessage(messages.format("pvptimer.does-not-have", "player", target.getName())));
-                        return java.util.concurrent.CompletableFuture.completedFuture(null);
+                        return CompletableFuture.completedFuture(null);
                     }
                     return timerService.cancelTimer(target.getUniqueId(), TimerType.PVP_TIMER)
                             .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {

@@ -9,6 +9,7 @@ import dev.alexissdev.kronos.api.event.FactionDisbandEvent;
 import dev.alexissdev.kronos.api.event.FactionClaimEvent;
 import dev.alexissdev.kronos.api.event.PlayerJoinFactionEvent;
 import dev.alexissdev.kronos.api.event.PlayerLeaveFactionEvent;
+import dev.alexissdev.kronos.api.model.ClaimSnapshot;
 import dev.alexissdev.kronos.api.model.FactionSnapshot;
 import dev.alexissdev.kronos.common.config.MessagesConfig;
 import dev.alexissdev.kronos.factions.event.FactionCreatedDomainEvent;
@@ -26,6 +27,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -59,7 +61,7 @@ public class FactionEventListener implements Listener {
             FactionSnapshot snapshot = new FactionSnapshot(
                     event.getFactionId(), event.getFactionName(), event.getLeaderId(),
                     List.of(event.getLeaderId()), Map.of(event.getLeaderId(), "LEADER"),
-                    0, 0, 20, 0.0, java.time.Instant.now()
+                    0, 0, 20, 0.0, Instant.now()
             );
             FactionCreateEvent bukkitEvent = new FactionCreateEvent(snapshot);
             Bukkit.getPluginManager().callEvent(bukkitEvent);
@@ -73,7 +75,7 @@ public class FactionEventListener implements Listener {
                     event.getFactionId(), event.getFactionName(), event.getActorUuid());
             Bukkit.getPluginManager().callEvent(bukkitEvent);
             String msg = messages.format("faction.broadcast.disbanded", "name", event.getFactionName());
-            for (org.bukkit.entity.Player online : Bukkit.getOnlinePlayers()) online.sendMessage(msg);
+            for (Player online : Bukkit.getOnlinePlayers()) online.sendMessage(msg);
             // Reset tab names for all online players (former members get no-faction format)
             tabListManager.refreshAll();
         });
@@ -140,8 +142,7 @@ public class FactionEventListener implements Listener {
     @Subscribe
     public void onFactionClaimed(FactionClaimedDomainEvent event) {
         Bukkit.getScheduler().runTask(plugin, () -> {
-            dev.alexissdev.kronos.api.model.ClaimSnapshot snapshot =
-                    new dev.alexissdev.kronos.api.model.ClaimSnapshot(
+            ClaimSnapshot snapshot = new ClaimSnapshot(
                             event.getClaimId(), event.getFactionId(),
                             ClaimType.valueOf(event.getClaimType()), event.getWorld(),
                             event.getMinChunkX(), event.getMinChunkZ(),

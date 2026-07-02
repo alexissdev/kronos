@@ -357,7 +357,7 @@ public class FactionCommand extends BaseCommand {
 
         factionService.getByPlayer(player.getUniqueId()).thenCompose(opt -> {
             if (opt.isEmpty()) throw new HCFException("No estás en una facción");
-            dev.alexissdev.kronos.factions.domain.Faction faction = opt.get();
+            Faction faction = opt.get();
             int maxClaims = faction.getMembers().size() * maxClaimsPerMember;
             return claimService.getFactionClaims(faction.getId()).thenCompose(existing -> {
                 if (existing.size() >= maxClaims) {
@@ -589,22 +589,21 @@ public class FactionCommand extends BaseCommand {
         }
         if (!requireArgs(player, args, 3, "/f strike <faccion> <razon>")) return;
         String factionName = args[1];
-        String reason = String.join(" ", java.util.Arrays.copyOfRange(args, 2, args.length));
+        String reason = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
 
         factionService.getByName(factionName).thenCompose(opt -> {
-            dev.alexissdev.kronos.factions.domain.Faction faction =
-                    opt.orElseThrow(() -> new HCFException("Facción no encontrada: " + factionName));
+            Faction faction = opt.orElseThrow(() -> new HCFException("Facción no encontrada: " + factionName));
             int newStrikes = faction.getStrikes() + 1;
             boolean willDisband = newStrikes >= faction.getMaxStrikes();
             return factionService.addStrike(faction.getId(), reason, player.getUniqueId())
                     .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
                         if (willDisband) {
-                            for (org.bukkit.entity.Player online : Bukkit.getOnlinePlayers()) {
+                            for (Player online : Bukkit.getOnlinePlayers()) {
                                 online.sendMessage(messages.format("faction.strike.disbanded",
                                         "name", factionName, "reason", reason));
                             }
                         } else {
-                            for (org.bukkit.entity.Player online : Bukkit.getOnlinePlayers()) {
+                            for (Player online : Bukkit.getOnlinePlayers()) {
                                 online.sendMessage(messages.format("faction.strike.added",
                                         "name", factionName, "strikes", String.valueOf(newStrikes),
                                         "max", String.valueOf(faction.getMaxStrikes()), "reason", reason));
@@ -627,8 +626,7 @@ public class FactionCommand extends BaseCommand {
         String factionName = args[1];
 
         factionService.getByName(factionName).thenCompose(opt -> {
-            dev.alexissdev.kronos.factions.domain.Faction faction =
-                    opt.orElseThrow(() -> new HCFException("Facción no encontrada: " + factionName));
+            Faction faction = opt.orElseThrow(() -> new HCFException("Facción no encontrada: " + factionName));
             return factionService.freezeFaction(faction.getId(), player.getUniqueId())
                     .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
                         player.sendMessage(messages.format("faction.frozen", "name", factionName));
@@ -650,8 +648,7 @@ public class FactionCommand extends BaseCommand {
         String factionName = args[1];
 
         factionService.getByName(factionName).thenCompose(opt -> {
-            dev.alexissdev.kronos.factions.domain.Faction faction =
-                    opt.orElseThrow(() -> new HCFException("Facción no encontrada: " + factionName));
+            Faction faction = opt.orElseThrow(() -> new HCFException("Facción no encontrada: " + factionName));
             return factionService.unfreezeFaction(faction.getId(), player.getUniqueId())
                     .thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
                         player.sendMessage(messages.format("faction.unfrozen", "name", factionName));
@@ -682,9 +679,9 @@ public class FactionCommand extends BaseCommand {
         });
     }
 
-    private void notifyOnlineFactionMembers(dev.alexissdev.kronos.factions.domain.Faction faction, String msg) {
-        for (dev.alexissdev.kronos.factions.domain.FactionMember m : faction.getMembers().values()) {
-            org.bukkit.entity.Player p = Bukkit.getPlayer(m.getUuid());
+    private void notifyOnlineFactionMembers(Faction faction, String msg) {
+        for (FactionMember m : faction.getMembers().values()) {
+            Player p = Bukkit.getPlayer(m.getUuid());
             if (p != null) p.sendMessage(msg);
         }
     }

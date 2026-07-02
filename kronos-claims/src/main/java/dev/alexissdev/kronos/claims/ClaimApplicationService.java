@@ -10,6 +10,9 @@ import dev.alexissdev.kronos.claims.exception.ClaimConflictException;
 import dev.alexissdev.kronos.factions.exception.FactionNotFoundException;
 import dev.alexissdev.kronos.factions.exception.FactionPermissionException;
 import dev.alexissdev.kronos.claims.repository.ClaimRepository;
+import dev.alexissdev.kronos.factions.domain.Faction;
+import dev.alexissdev.kronos.factions.domain.FactionMember;
+import dev.alexissdev.kronos.factions.domain.FactionRole;
 import dev.alexissdev.kronos.factions.repository.FactionRepository;
 import dev.alexissdev.kronos.claims.service.ClaimService;
 
@@ -39,10 +42,10 @@ public class ClaimApplicationService implements ClaimService {
     public CompletableFuture<Claim> claim(String factionId, UUID actorUuid, String world,
                                           int minChunkX, int minChunkZ, int maxChunkX, int maxChunkZ) {
         return factionRepository.findById(factionId).thenCompose(opt -> {
-            dev.alexissdev.kronos.factions.domain.Faction faction = opt.orElseThrow(() -> new FactionNotFoundException(factionId));
-            dev.alexissdev.kronos.factions.domain.FactionMember actor = faction.getMember(actorUuid)
+            Faction faction = opt.orElseThrow(() -> new FactionNotFoundException(factionId));
+            FactionMember actor = faction.getMember(actorUuid)
                     .orElseThrow(() -> new FactionPermissionException(actorUuid));
-            if (!actor.getRole().isAtLeast(dev.alexissdev.kronos.factions.domain.FactionRole.CAPTAIN)) {
+            if (!actor.getRole().isAtLeast(FactionRole.CAPTAIN)) {
                 throw new FactionPermissionException(actorUuid);
             }
             List<CompletableFuture<Optional<Claim>>> checks = new ArrayList<>();
@@ -108,10 +111,10 @@ public class ClaimApplicationService implements ClaimService {
     public CompletableFuture<Void> overclaim(String factionId, UUID actorUuid, String world,
                                              int chunkX, int chunkZ) {
         return factionRepository.findById(factionId).thenCompose(attackerOpt -> {
-            dev.alexissdev.kronos.factions.domain.Faction attacker = attackerOpt.orElseThrow(() -> new FactionNotFoundException(factionId));
-            dev.alexissdev.kronos.factions.domain.FactionMember actor = attacker.getMember(actorUuid)
+            Faction attacker = attackerOpt.orElseThrow(() -> new FactionNotFoundException(factionId));
+            FactionMember actor = attacker.getMember(actorUuid)
                     .orElseThrow(() -> new FactionPermissionException(actorUuid));
-            if (!actor.getRole().isAtLeast(dev.alexissdev.kronos.factions.domain.FactionRole.CAPTAIN)) {
+            if (!actor.getRole().isAtLeast(FactionRole.CAPTAIN)) {
                 throw new FactionPermissionException(actorUuid);
             }
             return claimRepository.findByChunk(world, chunkX, chunkZ).thenCompose(opt -> {
@@ -125,7 +128,7 @@ public class ClaimApplicationService implements ClaimService {
                     boolean enemy = attacker.isEnemy(existing.getFactionId());
                     if (!enemy) {
                         return factionRepository.findById(existing.getFactionId()).thenCompose(defenderOpt -> {
-                            boolean raidable = defenderOpt.map(dev.alexissdev.kronos.factions.domain.Faction::isRaidable).orElse(false);
+                            boolean raidable = defenderOpt.map(Faction::isRaidable).orElse(false);
                             if (!raidable) {
                                 throw new ClaimConflictException("Esa facción no es tu enemiga ni está siendo raideada");
                             }

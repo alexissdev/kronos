@@ -11,9 +11,11 @@ import dev.alexissdev.kronos.factions.exception.FactionNotFoundException;
 import dev.alexissdev.kronos.factions.exception.FactionPermissionException;
 import dev.alexissdev.kronos.common.exception.HCFException;
 import dev.alexissdev.kronos.economy.exception.InsufficientFundsException;
+import dev.alexissdev.kronos.factions.domain.FactionHome;
 import dev.alexissdev.kronos.factions.event.FactionCreatedDomainEvent;
 import dev.alexissdev.kronos.factions.event.FactionDisbandedDomainEvent;
 import dev.alexissdev.kronos.factions.event.FactionDtkDecrementedDomainEvent;
+import dev.alexissdev.kronos.factions.event.FactionRaidableDomainEvent;
 import dev.alexissdev.kronos.factions.event.PlayerJoinedFactionDomainEvent;
 import dev.alexissdev.kronos.factions.event.PlayerLeftFactionDomainEvent;
 
@@ -25,6 +27,7 @@ import dev.alexissdev.kronos.factions.service.FactionService;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
 public class FactionApplicationService implements FactionService {
@@ -36,10 +39,10 @@ public class FactionApplicationService implements FactionService {
     private final int maxMembers;
     private final long reinviteCooldownMs;
     private final long inviteExpiryMs;
-    private final Map<UUID, String> pendingInvites          = new java.util.concurrent.ConcurrentHashMap<>();
-    private final Map<UUID, Long>   inviteTimestamps        = new java.util.concurrent.ConcurrentHashMap<>();
-    private final Map<UUID, Long>   leftFactionTimestamps   = new java.util.concurrent.ConcurrentHashMap<>();
-    private final Map<UUID, String> leftFactionIds          = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Map<UUID, String> pendingInvites          = new ConcurrentHashMap<>();
+    private final Map<UUID, Long>   inviteTimestamps        = new ConcurrentHashMap<>();
+    private final Map<UUID, Long>   leftFactionTimestamps   = new ConcurrentHashMap<>();
+    private final Map<UUID, String> leftFactionIds          = new ConcurrentHashMap<>();
 
     @Inject
     public FactionApplicationService(FactionRepository factionRepository,
@@ -330,8 +333,7 @@ public class FactionApplicationService implements FactionService {
                 faction.decrementDtk();
                 if (faction.isAtDtk() && !faction.isRaidable()) {
                     faction.setRaidable(true);
-                    eventBus.post(new dev.alexissdev.kronos.factions.event.FactionRaidableDomainEvent(
-                            factionId, faction.getName()));
+                    eventBus.post(new FactionRaidableDomainEvent(factionId, faction.getName()));
                 }
                 eventBus.post(new FactionDtkDecrementedDomainEvent(
                         factionId, faction.getName(), faction.getDtkRemaining(), faction.getMaxDtk()));
@@ -341,7 +343,7 @@ public class FactionApplicationService implements FactionService {
     }
 
     @Override
-    public CompletableFuture<Void> setFactionHome(String factionId, UUID actorUuid, dev.alexissdev.kronos.factions.domain.FactionHome home) {
+    public CompletableFuture<Void> setFactionHome(String factionId, UUID actorUuid, FactionHome home) {
         return factionRepository.findById(factionId).thenCompose(opt -> {
             Faction faction = opt.orElseThrow(() -> new FactionNotFoundException(factionId));
             requireRole(faction, actorUuid, FactionRole.CAPTAIN);
