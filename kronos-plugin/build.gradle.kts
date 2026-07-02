@@ -78,6 +78,10 @@ bukkit {
             usage = "/fix"
             permission = "hcf.admin"
         }
+        register("baltop") {
+            description = "Ver el ranking de balance"
+            usage = "/baltop"
+        }
     }
 
     permissions {
