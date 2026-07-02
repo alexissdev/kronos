@@ -4,6 +4,7 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import dev.alexissdev.kronos.common.config.MessagesConfig;
 import dev.alexissdev.kronos.common.domain.SotwService;
 import dev.alexissdev.kronos.economy.service.EconomyService;
 import dev.alexissdev.kronos.factions.service.FactionService;
@@ -38,6 +39,10 @@ public class ScoreboardManager {
     private final FactionService factionService;
     private final EconomyService economyService;
     private final SotwService sotwService;
+    private final MessagesConfig messages;
+
+    private volatile boolean lastSotwActive = false;
+    private volatile boolean lastEotwActive = false;
 
     @Inject
     public ScoreboardManager(EventBus eventBus,
@@ -46,13 +51,15 @@ public class ScoreboardManager {
                              PlayerService playerService,
                              FactionService factionService,
                              EconomyService economyService,
-                             SotwService sotwService) {
+                             SotwService sotwService,
+                             MessagesConfig messages) {
         this.renderer       = renderer;
         this.plugin         = plugin;
         this.playerService  = playerService;
         this.factionService = factionService;
         this.economyService = economyService;
         this.sotwService    = sotwService;
+        this.messages       = messages;
         eventBus.register(this);
     }
 
@@ -76,6 +83,20 @@ public class ScoreboardManager {
     public void tickAll() {
         long sotwMs = sotwService.getSotwRemainingMs();
         long eotwMs = sotwService.getEotwRemainingMs();
+        boolean sotwNow = sotwMs > 0;
+        boolean eotwNow = eotwMs > 0;
+
+        if (lastSotwActive && !sotwNow) {
+            String msg = messages.get("sotw.ended");
+            for (Player p : Bukkit.getOnlinePlayers()) p.sendMessage(msg);
+        }
+        if (lastEotwActive && !eotwNow) {
+            String msg = messages.get("eotw.ended");
+            for (Player p : Bukkit.getOnlinePlayers()) p.sendMessage(msg);
+        }
+        lastSotwActive = sotwNow;
+        lastEotwActive = eotwNow;
+
         for (Player player : Bukkit.getOnlinePlayers()) {
             PlayerBoardData data = cache.get(player.getUniqueId());
             if (data != null) {
