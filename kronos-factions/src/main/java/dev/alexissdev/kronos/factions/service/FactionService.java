@@ -45,6 +45,8 @@ public interface FactionService {
 
     CompletableFuture<List<Faction>> getTopFactions(int limit);
 
+    CompletableFuture<List<Faction>> getRaidableFactions();
+
     CompletableFuture<Void> notifyMemberDeath(String factionId, UUID deadMemberUuid);
 
     CompletableFuture<Void> setFactionHome(String factionId, UUID actorUuid, FactionHome home);

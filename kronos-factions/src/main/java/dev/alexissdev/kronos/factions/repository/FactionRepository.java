@@ -18,6 +18,8 @@ public interface FactionRepository {
 
     CompletableFuture<List<Faction>> findTopByKills(int limit);
 
+    CompletableFuture<List<Faction>> findRaidable();
+
     CompletableFuture<Faction> save(Faction faction);
 
     CompletableFuture<Void> delete(String id);

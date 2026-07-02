@@ -22,6 +22,7 @@ public final class Faction {
     private FactionHome home;
     private int strikes;
     private boolean frozen;
+    private boolean raidable;
 
     public Faction(String id, String name, UUID leaderId, int maxDtk, Instant createdAt) {
         this.id = id;
@@ -37,13 +38,14 @@ public final class Faction {
         this.deaths = 0;
         this.strikes = 0;
         this.frozen = false;
+        this.raidable = false;
         this.createdAt = createdAt;
     }
 
     public Faction(String id, String name, UUID leaderId, int maxDtk, int dtkRemaining,
                    int kills, int deaths, double balance, Instant createdAt,
                    Map<UUID, FactionMember> members, Set<String> allies, Set<String> enemies,
-                   int strikes, boolean frozen) {
+                   int strikes, boolean frozen, boolean raidable) {
         this.id = id;
         this.name = name;
         this.leaderId = leaderId;
@@ -58,6 +60,7 @@ public final class Faction {
         this.enemies = enemies;
         this.strikes = strikes;
         this.frozen = frozen;
+        this.raidable = raidable;
     }
 
     public void addMember(FactionMember member) {
@@ -151,4 +154,8 @@ public final class Faction {
     public boolean isFrozen() { return frozen; }
 
     public void setFrozen(boolean frozen) { this.frozen = frozen; }
+
+    public boolean isRaidable() { return raidable; }
+
+    public void setRaidable(boolean raidable) { this.raidable = raidable; }
 }

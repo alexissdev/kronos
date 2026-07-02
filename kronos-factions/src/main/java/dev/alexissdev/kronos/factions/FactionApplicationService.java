@@ -317,16 +317,21 @@ public class FactionApplicationService implements FactionService {
     }
 
     @Override
+    public CompletableFuture<List<Faction>> getRaidableFactions() {
+        return factionRepository.findRaidable();
+    }
+
+    @Override
     public CompletableFuture<Void> notifyMemberDeath(String factionId, UUID deadMemberUuid) {
         return factionRepository.findById(factionId).thenCompose(opt -> {
             Faction faction = opt.orElseThrow(() -> new FactionNotFoundException(factionId));
             faction.incrementDeaths();
             if (faction.hasMember(deadMemberUuid)) {
                 faction.decrementDtk();
-                if (faction.isAtDtk()) {
-                    return factionRepository.delete(factionId).thenRun(() ->
-                            eventBus.post(new FactionDisbandedDomainEvent(
-                                    factionId, faction.getName(), deadMemberUuid)));
+                if (faction.isAtDtk() && !faction.isRaidable()) {
+                    faction.setRaidable(true);
+                    eventBus.post(new dev.alexissdev.kronos.factions.event.FactionRaidableDomainEvent(
+                            factionId, faction.getName()));
                 }
                 eventBus.post(new FactionDtkDecrementedDomainEvent(
                         factionId, faction.getName(), faction.getDtkRemaining(), faction.getMaxDtk()));

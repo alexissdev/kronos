@@ -120,15 +120,34 @@ public class ClaimApplicationService implements ClaimService {
                 if (factionId.equals(existing.getFactionId())) {
                     throw new ClaimConflictException("Este territorio ya es tuyo");
                 }
-                return claimRepository.delete(existing.getId()).thenCompose(v -> {
-                    String id = UUID.randomUUID().toString();
-                    Claim newClaim = new Claim(id, factionId, ClaimType.FACTION, world,
-                            existing.getMinChunkX(), existing.getMinChunkZ(),
-                            existing.getMaxChunkX(), existing.getMaxChunkZ());
-                    return claimRepository.save(newClaim).thenAccept(saved ->
-                            eventBus.post(new FactionClaimedDomainEvent(factionId, saved.getId(), saved.getType().name(), saved.getWorld(), saved.getMinChunkX(), saved.getMinChunkZ(), saved.getMaxChunkX(), saved.getMaxChunkZ())));
-                });
+                // Only allow overclaiming faction claims that are raidable OR from an enemy faction
+                if (existing.getType() == ClaimType.FACTION && existing.getFactionId() != null) {
+                    boolean enemy = attacker.isEnemy(existing.getFactionId());
+                    if (!enemy) {
+                        return factionRepository.findById(existing.getFactionId()).thenCompose(defenderOpt -> {
+                            boolean raidable = defenderOpt.map(dev.alexissdev.kronos.factions.domain.Faction::isRaidable).orElse(false);
+                            if (!raidable) {
+                                throw new ClaimConflictException("Esa facción no es tu enemiga ni está siendo raideada");
+                            }
+                            return doOverclaim(factionId, existing);
+                        });
+                    }
+                }
+                return doOverclaim(factionId, existing);
             });
+        });
+    }
+
+    private CompletableFuture<Void> doOverclaim(String factionId, Claim existing) {
+        return claimRepository.delete(existing.getId()).thenCompose(v -> {
+            String id = UUID.randomUUID().toString();
+            Claim newClaim = new Claim(id, factionId, ClaimType.FACTION, existing.getWorld(),
+                    existing.getMinChunkX(), existing.getMinChunkZ(),
+                    existing.getMaxChunkX(), existing.getMaxChunkZ());
+            return claimRepository.save(newClaim).thenAccept(saved ->
+                    eventBus.post(new FactionClaimedDomainEvent(factionId, saved.getId(), saved.getType().name(),
+                            saved.getWorld(), saved.getMinChunkX(), saved.getMinChunkZ(),
+                            saved.getMaxChunkX(), saved.getMaxChunkZ())));
         });
     }
 }

@@ -10,6 +10,7 @@ import dev.alexissdev.kronos.claims.service.ClaimService;
 import dev.alexissdev.kronos.common.domain.SotwService;
 import dev.alexissdev.kronos.factions.event.FactionClaimedDomainEvent;
 import dev.alexissdev.kronos.factions.event.FactionDisbandedDomainEvent;
+import dev.alexissdev.kronos.factions.event.FactionRaidableDomainEvent;
 import dev.alexissdev.kronos.factions.event.PlayerJoinedFactionDomainEvent;
 import dev.alexissdev.kronos.factions.event.PlayerLeftFactionDomainEvent;
 import dev.alexissdev.kronos.factions.service.FactionService;
@@ -38,9 +39,10 @@ public class ClaimListener implements Listener {
     private final Plugin plugin;
     private final EventBus eventBus;
 
-    private final Map<String, Claim> claimCache = new ConcurrentHashMap<>();
-    private final Map<UUID, String> playerFactionMap = new ConcurrentHashMap<>();
-    private final Map<UUID, String> playerChunkCache = new ConcurrentHashMap<>();
+    private final Map<String, Claim>  claimCache        = new ConcurrentHashMap<>();
+    private final Map<UUID, String>   playerFactionMap  = new ConcurrentHashMap<>();
+    private final Map<UUID, String>   playerChunkCache  = new ConcurrentHashMap<>();
+    private final Set<String>         raidableFactions  = ConcurrentHashMap.newKeySet();
 
     @Inject
     public ClaimListener(ClaimService claimService, FactionService factionService,
@@ -85,11 +87,17 @@ public class ClaimListener implements Listener {
         player.sendMessage(ChatColor.RED + "No puedes colocar bloques aquí.");
     }
 
+    @Subscribe
+    public void onFactionRaidable(FactionRaidableDomainEvent event) {
+        raidableFactions.add(event.getFactionId());
+    }
+
     private boolean canModify(Player player, Claim claim) {
         if (claim == null) return true;
         if (!claim.getType().isProtectedFromBuild()) return true;
         if (sotwService.isEotwActive()) return true;
         if (claim.getType() != ClaimType.FACTION) return false;
+        if (raidableFactions.contains(claim.getFactionId())) return true;
         String playerFaction = playerFactionMap.get(player.getUniqueId());
         return claim.getFactionId().equals(playerFaction);
     }
@@ -183,6 +191,13 @@ public class ClaimListener implements Listener {
             plugin.getLogger().info("Cargados " + claims.size() + " claims en caché.");
         }).exceptionally(ex -> {
             plugin.getLogger().warning("Error al precargar claims: " + ex.getMessage());
+            return null;
+        });
+
+        factionService.getRaidableFactions().thenAccept(factions ->
+                factions.forEach(f -> raidableFactions.add(f.getId()))
+        ).exceptionally(ex -> {
+            plugin.getLogger().warning("Error al cargar facciones raidable: " + ex.getMessage());
             return null;
         });
     }

@@ -74,6 +74,16 @@ public class MongoFactionRepository implements FactionRepository {
     }
 
     @Override
+    public CompletableFuture<List<Faction>> findRaidable() {
+        return CompletableFuture.supplyAsync(() -> {
+            List<Faction> result = new ArrayList<>();
+            collection.find(Filters.eq("raidable", true))
+                    .forEach(doc -> result.add(toFaction(doc)));
+            return result;
+        }, executor);
+    }
+
+    @Override
     public CompletableFuture<Faction> save(Faction faction) {
         return CompletableFuture.supplyAsync(() -> {
             collection.replaceOne(
@@ -132,7 +142,8 @@ public class MongoFactionRepository implements FactionRepository {
                 createdAtMs != null ? Instant.ofEpochMilli(createdAtMs) : Instant.now(),
                 members, allies, enemies,
                 doc.getInteger("strikes", 0),
-                Boolean.TRUE.equals(doc.getBoolean("frozen", false))
+                Boolean.TRUE.equals(doc.getBoolean("frozen", false)),
+                Boolean.TRUE.equals(doc.getBoolean("raidable", false))
         );
 
         Document homeDoc = doc.get("home", Document.class);
@@ -175,6 +186,7 @@ public class MongoFactionRepository implements FactionRepository {
                 .append("enemies", new ArrayList<>(f.getEnemies()))
                 .append("strikes", f.getStrikes())
                 .append("frozen", f.isFrozen())
+                .append("raidable", f.isRaidable())
                 .append("home", f.getHome() == null ? null : new Document()
                         .append("world", f.getHome().getWorld())
                         .append("x", f.getHome().getX())

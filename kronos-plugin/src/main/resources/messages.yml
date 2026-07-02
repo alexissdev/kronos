@@ -31,7 +31,8 @@ pvp:
   death-killed: "&7{victim_tag}&f{victim} &7fue eliminado por {killer_tag}&c{killer}"
   death-natural: "&7{victim_tag}&f{victim} &7murió"
   spawn-protected: "&cNo puedes atacar en el spawn."
-  pearl-spawn-blocked: "&cNo puedes usar Enderpearl dentro del spawn."
+  pearl-spawn-blocked:   "&cNo puedes usar Enderpearl dentro del spawn."
+  pearl-claim-blocked:   "&cNo puedes pearlear hacia ese territorio protegido."
 
 spawn:
   blocked-combat-tag: "&cNo puedes entrar al spawn estando en &lCombat Tag&c!"
@@ -109,6 +110,7 @@ koth:
 faction:
   broadcast:
     disbanded: "&7[Facción] &f{name} &7fue disuelta."
+    raidable:  "&4&l¡RAIDABLE! &r&7La facción &c{name} &7puede ser raideada. &4¡DTK en 0!"
   dtk-decremented: "&c[Facción] &fEl DTK bajó a &e{dtk}&f/&e{max}&f. Facción: &e{faction}"
   member:
     left: "&e{player} fue {reason} de la facción."

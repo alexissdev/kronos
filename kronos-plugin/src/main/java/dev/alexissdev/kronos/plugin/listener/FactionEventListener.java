@@ -14,6 +14,7 @@ import dev.alexissdev.kronos.common.config.MessagesConfig;
 import dev.alexissdev.kronos.factions.event.FactionCreatedDomainEvent;
 import dev.alexissdev.kronos.factions.event.FactionDisbandedDomainEvent;
 import dev.alexissdev.kronos.factions.event.FactionDtkDecrementedDomainEvent;
+import dev.alexissdev.kronos.factions.event.FactionRaidableDomainEvent;
 import dev.alexissdev.kronos.factions.event.PlayerJoinedFactionDomainEvent;
 import dev.alexissdev.kronos.factions.event.PlayerLeftFactionDomainEvent;
 import dev.alexissdev.kronos.factions.event.FactionClaimedDomainEvent;
@@ -126,6 +127,14 @@ public class FactionEventListener implements Listener {
                         if (member != null) member.sendMessage(msg);
                     }
                 })));
+    }
+
+    @Subscribe
+    public void onFactionRaidable(FactionRaidableDomainEvent event) {
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            String msg = messages.format("faction.broadcast.raidable", "name", event.getFactionName());
+            for (Player online : Bukkit.getOnlinePlayers()) online.sendMessage(msg);
+        });
     }
 
     @Subscribe
