@@ -2,6 +2,7 @@ package dev.alexissdev.kronos.plugin.listener;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import dev.alexissdev.kronos.common.config.MessagesConfig;
 import dev.alexissdev.kronos.players.domain.HCFPlayer;
 import dev.alexissdev.kronos.players.service.PlayerService;
@@ -9,6 +10,7 @@ import dev.alexissdev.kronos.plugin.tablist.TabListManager;
 import dev.alexissdev.kronos.timers.TimerApplicationService;
 import dev.alexissdev.kronos.timers.domain.TimerType;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -30,18 +32,24 @@ public class PlayerDataListener implements Listener {
     private final TabListManager tabListManager;
     private final Plugin plugin;
     private final MessagesConfig messages;
+    private final int maxLives;
+    private final long lifeRegenIntervalMs;
 
     @Inject
     public PlayerDataListener(PlayerService playerService,
                               TimerApplicationService timerService,
                               TabListManager tabListManager,
                               Plugin plugin,
-                              MessagesConfig messages) {
+                              MessagesConfig messages,
+                              @Named("lives.max-lives") int maxLives,
+                              @Named("lives.regen-interval-ms") long lifeRegenIntervalMs) {
         this.playerService = playerService;
         this.timerService = timerService;
         this.tabListManager = tabListManager;
         this.plugin = plugin;
         this.messages = messages;
+        this.maxLives = maxLives;
+        this.lifeRegenIntervalMs = lifeRegenIntervalMs;
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -57,7 +65,8 @@ public class PlayerDataListener implements Listener {
             playerService.getOrCreate(uuid, name)
                     .thenCompose(player ->
                             timerService.loadTimersIntoCache(uuid)
-                                    .thenCompose(ignored -> giveFirstJoinPvpTimer(uuid, player))
+                                    .thenCompose(v -> giveFirstJoinPvpTimer(uuid, player))
+                                    .thenCompose(v -> checkLifeRegen(uuid, player, event.getPlayer()))
                                     .thenRun(() -> checkLogoutTimer(event, uuid)))
                     .exceptionally(ex -> {
                         plugin.getLogger().warning("Error en carga de datos para "
@@ -77,6 +86,19 @@ public class PlayerDataListener implements Listener {
             return timerService.startPvpTimer(uuid, PVP_TIMER_DURATION_MS);
         }
         return CompletableFuture.completedFuture(null);
+    }
+
+    private CompletableFuture<Void> checkLifeRegen(UUID uuid, HCFPlayer player, Player bukkit) {
+        if (!player.tryRegenLife(maxLives, lifeRegenIntervalMs)) {
+            return CompletableFuture.completedFuture(null);
+        }
+        return playerService.savePlayer(player).thenRun(() ->
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    if (bukkit.isOnline()) {
+                        bukkit.sendMessage(messages.format("lives.regen",
+                                "lives", String.valueOf(player.getLives())));
+                    }
+                }));
     }
 
     private void checkLogoutTimer(PlayerJoinEvent event, UUID uuid) {

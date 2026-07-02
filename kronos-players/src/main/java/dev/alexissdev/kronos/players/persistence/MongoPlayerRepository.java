@@ -65,7 +65,8 @@ public class MongoPlayerRepository implements PlayerRepository {
                 kit,
                 doc.getString("savedInventoryJson"),
                 doc.getInteger("lives", 3),
-                doc.getBoolean("pvpTimerGiven", false)
+                doc.getBoolean("pvpTimerGiven", false),
+                doc.getLong("lastLifeRegenAt") != null ? doc.getLong("lastLifeRegenAt") : System.currentTimeMillis()
         );
     }
 
@@ -78,6 +79,7 @@ public class MongoPlayerRepository implements PlayerRepository {
                 .append("lives", p.getLives())
                 .append("pvpTimerGiven", p.isPvpTimerGiven())
                 .append("activeKit", p.getActiveKit().name())
-                .append("savedInventoryJson", p.getSavedInventoryJson());
+                .append("savedInventoryJson", p.getSavedInventoryJson())
+                .append("lastLifeRegenAt", p.getLastLifeRegenAt());
     }
 }
