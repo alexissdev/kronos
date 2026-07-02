@@ -5,6 +5,8 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import dev.alexissdev.kronos.common.config.MessagesConfig;
 import dev.alexissdev.kronos.common.domain.SotwService;
+import dev.alexissdev.kronos.claims.domain.Claim;
+import dev.alexissdev.kronos.claims.service.ClaimService;
 import dev.alexissdev.kronos.players.repository.DeathbanRepository;
 import dev.alexissdev.kronos.players.service.PlayerService;
 import dev.alexissdev.kronos.spawn.SpawnApplicationService;
@@ -13,6 +15,7 @@ import dev.alexissdev.kronos.timers.domain.TimerType;
 import dev.alexissdev.kronos.factions.service.FactionService;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.EnderPearl;
 import org.bukkit.entity.Player;
@@ -21,13 +24,18 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 
+import java.util.Collections;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
 public class PvpListener implements Listener {
@@ -35,6 +43,7 @@ public class PvpListener implements Listener {
     private final TimerApplicationService timerService;
     private final PlayerService playerService;
     private final FactionService factionService;
+    private final ClaimService claimService;
     private final DeathbanRepository deathbanRepository;
     private final SpawnApplicationService spawnService;
     private final MessagesConfig messages;
@@ -44,10 +53,13 @@ public class PvpListener implements Listener {
     private final long enderpearlCooldownMs;
     private final long gappleCooldownMs;
 
+    private final Set<UUID> recentlyPearled = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
     @Inject
     public PvpListener(TimerApplicationService timerService,
                        PlayerService playerService,
                        FactionService factionService,
+                       ClaimService claimService,
                        DeathbanRepository deathbanRepository,
                        SpawnApplicationService spawnService,
                        MessagesConfig messages,
@@ -59,6 +71,7 @@ public class PvpListener implements Listener {
         this.timerService = timerService;
         this.playerService = playerService;
         this.factionService = factionService;
+        this.claimService = claimService;
         this.deathbanRepository = deathbanRepository;
         this.spawnService = spawnService;
         this.messages = messages;
@@ -137,6 +150,79 @@ public class PvpListener implements Listener {
 
         if (timerService.hasActiveTimerSync(uuid, TimerType.COMBAT_TAG)) {
             timerService.startEnderpearlCooldown(uuid, enderpearlCooldownMs);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onPearlTeleport(PlayerTeleportEvent event) {
+        if (event.getCause() != PlayerTeleportEvent.TeleportCause.ENDER_PEARL) return;
+        Player player = event.getPlayer();
+        Location destination = event.getTo();
+
+        // Cancel immediately; we'll re-teleport manually if allowed
+        event.setCancelled(true);
+
+        claimService.getClaimAt(
+                destination.getWorld().getName(),
+                destination.getChunk().getX(),
+                destination.getChunk().getZ()
+        ).thenCompose(claimOpt -> {
+            if (claimOpt.isEmpty() || !claimOpt.get().getType().isProtectedFromBuild()) {
+                allowPearlTeleport(player, destination);
+                return java.util.concurrent.CompletableFuture.completedFuture(null);
+            }
+            Claim claim = claimOpt.get();
+            String claimFactionId = claim.getFactionId();
+            // Check if destination faction is raidable and player's relation
+            return factionService.getByPlayer(player.getUniqueId()).thenCompose(playerFactionOpt -> {
+                String playerFactionId = playerFactionOpt.map(Faction::getId).orElse(null);
+                boolean own  = claimFactionId != null && claimFactionId.equals(playerFactionId);
+                boolean ally = playerFactionOpt.map(f -> f.isAlly(claimFactionId)).orElse(false);
+                if (own || ally) {
+                    allowPearlTeleport(player, destination);
+                    return java.util.concurrent.CompletableFuture.completedFuture(null);
+                }
+                // Check if the owning faction is raidable
+                if (claimFactionId == null) {
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        player.getInventory().addItem(new ItemStack(Material.ENDER_PEARL));
+                        player.sendMessage(messages.get("pvp.pearl-claim-blocked"));
+                    });
+                    return java.util.concurrent.CompletableFuture.completedFuture(null);
+                }
+                return factionService.getById(claimFactionId).thenAccept(ownerOpt -> {
+                    boolean raidable = ownerOpt.map(dev.alexissdev.kronos.factions.domain.Faction::isRaidable).orElse(false);
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        if (raidable) {
+                            pearlTeleport(player, destination);
+                        } else {
+                            player.getInventory().addItem(new ItemStack(Material.ENDER_PEARL));
+                            player.sendMessage(messages.get("pvp.pearl-claim-blocked"));
+                        }
+                    });
+                });
+            });
+        });
+    }
+
+    private void allowPearlTeleport(Player player, Location destination) {
+        Bukkit.getScheduler().runTask(plugin, () -> pearlTeleport(player, destination));
+    }
+
+    private void pearlTeleport(Player player, Location destination) {
+        recentlyPearled.add(player.getUniqueId());
+        player.teleport(destination);
+        // Remove flag after 40 ticks to cover any delayed fall damage
+        Bukkit.getScheduler().runTaskLater(plugin,
+                () -> recentlyPearled.remove(player.getUniqueId()), 40L);
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onFallDamage(EntityDamageEvent event) {
+        if (event.getCause() != EntityDamageEvent.DamageCause.FALL) return;
+        if (!(event.getEntity() instanceof Player)) return;
+        if (recentlyPearled.remove(((Player) event.getEntity()).getUniqueId())) {
+            event.setCancelled(true);
         }
     }
 
