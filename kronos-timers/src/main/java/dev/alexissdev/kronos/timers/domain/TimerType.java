@@ -7,5 +7,6 @@ public enum TimerType {
     GAPPLE,
     HOME,
     CLASS_COOLDOWN,
-    LOGOUT
+    LOGOUT,
+    STUCK
 }

@@ -18,9 +18,12 @@ import dev.alexissdev.kronos.plugin.command.BaltopCommand;
 import dev.alexissdev.kronos.plugin.command.FactionCommand;
 import dev.alexissdev.kronos.plugin.command.FixCommand;
 import dev.alexissdev.kronos.plugin.command.HCFCommand;
+import dev.alexissdev.kronos.plugin.command.KitCommand;
 import dev.alexissdev.kronos.plugin.command.NearCommand;
 import dev.alexissdev.kronos.plugin.command.PvpTimerCommand;
 import dev.alexissdev.kronos.plugin.command.StatsCommand;
+import dev.alexissdev.kronos.plugin.command.StuckCommand;
+import dev.alexissdev.kronos.plugin.listener.StuckListener;
 import dev.alexissdev.kronos.plugin.listener.FactionEventListener;
 import dev.alexissdev.kronos.plugin.listener.PlayerDataListener;
 import dev.alexissdev.kronos.plugin.listener.PvpListener;
@@ -80,6 +83,8 @@ public class PluginEnableHandler {
         registerCommand("near",     injector.getInstance(NearCommand.class));
         registerCommand("fix",      injector.getInstance(FixCommand.class));
         registerCommand("baltop",   injector.getInstance(BaltopCommand.class));
+        registerCommand("stuck",    injector.getInstance(StuckCommand.class));
+        registerCommand("kit",      injector.getInstance(KitCommand.class));
     }
 
     private void registerCommand(String name, org.bukkit.command.CommandExecutor executor) {
@@ -108,6 +113,7 @@ public class PluginEnableHandler {
         pm.registerEvents(injector.getInstance(SpawnListener.class), plugin);
         pm.registerEvents(injector.getInstance(CrateListener.class), plugin);
         pm.registerEvents(injector.getInstance(SpawnWandListener.class), plugin);
+        pm.registerEvents(injector.getInstance(StuckListener.class), plugin);
     }
 
     private void registerApiService() {

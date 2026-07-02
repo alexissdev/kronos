@@ -81,6 +81,7 @@ final class ScoreboardRenderer {
         addTimer(lines, data, TimerType.HOME,           "scoreboard.timer.home");
         addTimer(lines, data, TimerType.LOGOUT,         "scoreboard.timer.logout");
         addTimer(lines, data, TimerType.CLASS_COOLDOWN, "scoreboard.timer.class");
+        addTimer(lines, data, TimerType.STUCK,          "scoreboard.timer.stuck");
         return lines;
     }
 

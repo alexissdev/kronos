@@ -48,7 +48,7 @@ public class TimerApplicationService implements TimerService<UUID> {
     public CompletableFuture<Void> startTimer(UUID playerUuid, TimerType type, long durationMillis) {
         Instant expiresAt = Instant.now().plusMillis(durationMillis);
         Timer timer = new Timer(playerUuid, type, expiresAt);
-        timerCache.markActive(playerUuid, type);
+        timerCache.markActive(playerUuid, type, expiresAt.toEpochMilli());
         eventBus.post(new PlayerTimerStartedDomainEvent(playerUuid, type, durationMillis));
         return timerRepository.saveTimer(timer)
                 .thenRun(() -> mongoBackup.save(timer))  // fire-and-forget backup
@@ -75,7 +75,7 @@ public class TimerApplicationService implements TimerService<UUID> {
                     boolean active = opt.isPresent() && !opt.get().isExpired();
                     boolean wasActive = timerCache.hasTimer(playerUuid, type);
                     if (active) {
-                        timerCache.markActive(playerUuid, type);
+                        timerCache.markActive(playerUuid, type, opt.get().getExpiresAt().toEpochMilli());
                     } else {
                         timerCache.markInactive(playerUuid, type);
                         if (wasActive) {
@@ -96,6 +96,10 @@ public class TimerApplicationService implements TimerService<UUID> {
 
     public boolean hasActiveTimerSync(UUID playerUuid, TimerType type) {
         return timerCache.hasTimer(playerUuid, type);
+    }
+
+    public long getRemainingSeconds(UUID playerUuid, TimerType type) {
+        return timerCache.getRemainingMillis(playerUuid, type) / 1000L;
     }
 
     public CompletableFuture<Void> tagForCombat(UUID tagged, UUID tagger) {
@@ -125,6 +129,10 @@ public class TimerApplicationService implements TimerService<UUID> {
         return startTimer(playerUuid, TimerType.HOME, durationMillis);
     }
 
+    public CompletableFuture<Void> startStuckTimer(UUID playerUuid, long durationMillis) {
+        return startTimer(playerUuid, TimerType.STUCK, durationMillis);
+    }
+
     public void clearCache(UUID playerUuid) {
         timerCache.clearAll(playerUuid);
     }
@@ -136,7 +144,7 @@ public class TimerApplicationService implements TimerService<UUID> {
                             if (redisOpt.isPresent() && !redisOpt.get().isExpired()) {
                                 // Found in Redis — use it directly
                                 Timer t = redisOpt.get();
-                                timerCache.markActive(playerUuid, type);
+                                timerCache.markActive(playerUuid, type, t.getExpiresAt().toEpochMilli());
                                 eventBus.post(new PlayerTimerStartedDomainEvent(
                                         playerUuid, type, t.getRemainingMillis()));
                                 return CompletableFuture.completedFuture(null);
@@ -145,7 +153,7 @@ public class TimerApplicationService implements TimerService<UUID> {
                             return mongoBackup.find(playerUuid, type).thenCompose(mongoOpt -> {
                                 if (mongoOpt.isPresent() && !mongoOpt.get().isExpired()) {
                                     Timer t = mongoOpt.get();
-                                    timerCache.markActive(playerUuid, type);
+                                    timerCache.markActive(playerUuid, type, t.getExpiresAt().toEpochMilli());
                                     return timerRepository.saveTimer(t).thenRun(() ->
                                             eventBus.post(new PlayerTimerStartedDomainEvent(
                                                     playerUuid, type, t.getRemainingMillis())));

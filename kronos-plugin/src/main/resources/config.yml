@@ -14,6 +14,12 @@ faction:
   max-claims-per-faction: 50
   max-members: 15
   reinvite-cooldown-hours: 24
+  max-claims-per-member: 5
+  invite-expiry-seconds: 120
+
+lives:
+  max-lives: 5
+  regen-interval-hours: 24
 
 timers:
   combat-tag-seconds: 30

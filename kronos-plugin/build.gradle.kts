@@ -82,6 +82,14 @@ bukkit {
             description = "Ver el ranking de balance"
             usage = "/baltop"
         }
+        register("stuck") {
+            description = "Teletransportarse al spawn si estás atrapado"
+            usage = "/stuck"
+        }
+        register("kit") {
+            description = "Recibir un kit según tu clase"
+            usage = "/kit"
+        }
     }
 
     permissions {
