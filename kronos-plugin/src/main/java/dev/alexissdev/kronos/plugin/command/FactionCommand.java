@@ -23,8 +23,14 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
+import dev.alexissdev.kronos.factions.domain.FactionMember;
+import dev.alexissdev.kronos.factions.domain.FactionRole;
+
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+
+import static java.util.Collections.emptyList;
 
 @Singleton
 public class FactionCommand extends BaseCommand {
@@ -53,6 +59,28 @@ public class FactionCommand extends BaseCommand {
         this.messages = messages;
         this.chatManager = chatManager;
         this.homeDelayMs = homeDelayMs;
+    }
+
+    private static final List<String> F_SUBS = Arrays.asList(
+            "create", "disband", "invite", "accept", "leave", "kick", "info", "chat", "top",
+            "ally", "enemy", "neutral", "deposit", "withdraw", "map", "claim", "unclaim",
+            "overclaim", "sethome", "home", "rename", "strike", "freeze", "unfreeze", "setleader");
+
+    @Override
+    protected List<String> tabComplete(CommandSender sender, String[] args) {
+        if (args.length == 1) return filterPrefix(F_SUBS, args[0]);
+        if (args.length == 2) {
+            String sub = args[0].toLowerCase();
+            switch (sub) {
+                case "invite": case "kick": case "ally": case "enemy": case "neutral":
+                case "setleader": case "info": case "deposit": case "withdraw":
+                case "strike": case "freeze": case "unfreeze":
+                    return onlinePlayers(args[1]);
+                case "accept":
+                    return onlinePlayers(args[1]);
+            }
+        }
+        return emptyList();
     }
 
     @Override
@@ -84,9 +112,10 @@ public class FactionCommand extends BaseCommand {
             case "home": handleHome(player); break;
             case "rename": handleRename(player, args); break;
             case "neutral": handleNeutral(player, args); break;
-            case "strike":   handleStrike(player, args);   break;
-            case "freeze":   handleFreeze(player, args);   break;
-            case "unfreeze": handleUnfreeze(player, args); break;
+            case "strike":    handleStrike(player, args);    break;
+            case "freeze":    handleFreeze(player, args);    break;
+            case "unfreeze":  handleUnfreeze(player, args);  break;
+            case "setleader": handleSetLeader(player, args); break;
             default: sendHelp(player);
         }
     }
@@ -193,7 +222,6 @@ public class FactionCommand extends BaseCommand {
     private void printFactionInfo(Player player, Faction f) {
         player.sendMessage(messages.get("faction.cmd.info-sep"));
         player.sendMessage(messages.format("faction.cmd.info-name",    "name",      f.getName()));
-        player.sendMessage(messages.format("faction.cmd.info-members", "count",     String.valueOf(f.getMembers().size())));
         player.sendMessage(messages.format("faction.cmd.info-stats",   "kills",     String.valueOf(f.getKills()),
                                                                         "deaths",   String.valueOf(f.getDeaths())));
         player.sendMessage(messages.format("faction.cmd.info-dtk",     "remaining", String.valueOf(f.getDtkRemaining()),
@@ -203,6 +231,22 @@ public class FactionCommand extends BaseCommand {
                                                                          "max",     String.valueOf(f.getMaxStrikes())));
         if (f.isFrozen()) {
             player.sendMessage(messages.get("faction.cmd.info-frozen"));
+        }
+        // Members by role
+        for (FactionRole role : new FactionRole[]{ FactionRole.LEADER, FactionRole.CO_LEADER, FactionRole.CAPTAIN, FactionRole.MEMBER }) {
+            List<String> names = f.getMembers().values().stream()
+                    .filter(m -> m.getRole() == role)
+                    .map(m -> {
+                        String name = Bukkit.getOfflinePlayer(m.getUuid()).getName();
+                        boolean online = Bukkit.getPlayer(m.getUuid()) != null;
+                        return (online ? ChatColor.GREEN : ChatColor.GRAY) + (name != null ? name : m.getUuid().toString());
+                    })
+                    .collect(Collectors.toList());
+            if (!names.isEmpty()) {
+                player.sendMessage(messages.format("faction.cmd.info-role-members",
+                        "role",    role.name(),
+                        "members", String.join(ChatColor.WHITE + ", ", names)));
+            }
         }
         player.sendMessage(messages.get("faction.cmd.info-sep"));
     }
@@ -604,6 +648,24 @@ public class FactionCommand extends BaseCommand {
         }).exceptionally(ex -> {
             Bukkit.getScheduler().runTask(plugin,
                     () -> player.sendMessage(messages.format("faction.cmd.error", "error", rootMsg(ex))));
+            return null;
+        });
+    }
+
+    private void handleSetLeader(Player player, String[] args) {
+        if (!requireArgs(player, args, 2, "/f setleader <jugador>")) return;
+        Player target = Bukkit.getPlayer(args[1]);
+        if (target == null) { player.sendMessage(messages.get("hcf.player-not-found")); return; }
+
+        factionService.getByPlayer(player.getUniqueId()).thenCompose(opt -> {
+            if (opt.isEmpty()) throw new HCFException("No estás en una facción");
+            return factionService.setLeader(opt.get().getId(), target.getUniqueId(), player.getUniqueId());
+        }).thenRun(() -> Bukkit.getScheduler().runTask(plugin, () -> {
+            player.sendMessage(messages.format("faction.cmd.setleader-success", "player", target.getName()));
+            target.sendMessage(messages.format("faction.cmd.setleader-target", "player", player.getName()));
+        })).exceptionally(ex -> {
+            Bukkit.getScheduler().runTask(plugin,
+                    () -> player.sendMessage(ChatColor.RED + rootMsg(ex)));
             return null;
         });
     }
