@@ -291,6 +291,22 @@ scoreboard:
     class:      "&dClase: &f{time}"
     stuck:      "&eAtascado: &f{time}"
 
+crate:
+  need-key:   "&cNecesitas una llave de crate &e{type} &cpara abrir esto."
+  wrong-key:  "&cEste crate es de tipo &e{required}&c, pero tienes una llave &e{held}&c."
+  cmd:
+    set:          "&aCrate &e{type} &aregistrado en &f{x}, {y}, {z}&a."
+    removed:      "&aCrate eliminado correctamente."
+    no-target:    "&cMira hacia un bloque a menos de 5 bloques de distancia."
+    invalid-type: "&cTipo inválido. Tipos válidos: &f{valid}"
+    list-empty:   "&7No hay crates registrados."
+    list-header:  "&6--- Crates registrados ---"
+    list-entry:   "&e{type} &7→ &f{world} &7({x}, {y}, {z})"
+    error:        "&cError: {error}"
+    help-set:     "&e/crate set <tipo> &7- Registrar el bloque que miras como crate"
+    help-remove:  "&e/crate remove &7- Eliminar el crate que miras"
+    help-list:    "&e/crate list &7- Listar todos los crates"
+
 stuck:
   started:           "&aTimer de /stuck iniciado. Muévete o recibe daño para cancelarlo."
   already-active:    "&cYa tienes un timer de /stuck activo."

@@ -15,6 +15,7 @@ import dev.alexissdev.kronos.plugin.listener.CrateListener;
 import dev.alexissdev.kronos.plugin.listener.DeathbanListener;
 import dev.alexissdev.kronos.plugin.listener.KothListener;
 import dev.alexissdev.kronos.plugin.command.BaltopCommand;
+import dev.alexissdev.kronos.plugin.command.CrateCommand;
 import dev.alexissdev.kronos.plugin.command.FactionCommand;
 import dev.alexissdev.kronos.plugin.command.FixCommand;
 import dev.alexissdev.kronos.plugin.command.HCFCommand;
@@ -59,6 +60,7 @@ public class PluginEnableHandler {
 
         injector.getInstance(SpawnApplicationService.class).loadZone();
         injector.getInstance(ClaimListener.class).preloadCache();
+        injector.getInstance(CrateListener.class).loadCrates();
         injector.getInstance(TimerApplicationService.class).scheduleExpiryChecks(plugin);
         injector.getInstance(ScoreboardTask.class); // schedules periodic tasks
 
@@ -85,6 +87,7 @@ public class PluginEnableHandler {
         registerCommand("baltop",   injector.getInstance(BaltopCommand.class));
         registerCommand("stuck",    injector.getInstance(StuckCommand.class));
         registerCommand("kit",      injector.getInstance(KitCommand.class));
+        registerCommand("crate",    injector.getInstance(CrateCommand.class));
     }
 
     private void registerCommand(String name, org.bukkit.command.CommandExecutor executor) {

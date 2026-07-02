@@ -82,6 +82,11 @@ bukkit {
             description = "Ver el ranking de balance"
             usage = "/baltop"
         }
+        register("crate") {
+            description = "Gestionar crates físicos en el mundo"
+            usage = "/crate <set|remove|list>"
+            permission = "hcf.admin"
+        }
         register("stuck") {
             description = "Teletransportarse al spawn si estás atrapado"
             usage = "/stuck"
