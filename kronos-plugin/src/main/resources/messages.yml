@@ -287,6 +287,26 @@ scoreboard:
     home:       "&aCasa: &f{time}"
     logout:     "&cDesconexión: &f{time}"
     class:      "&dClase: &f{time}"
+    stuck:      "&eAtascado: &f{time}"
+
+stuck:
+  started:           "&aTimer de /stuck iniciado. Muévete o recibe daño para cancelarlo."
+  already-active:    "&cYa tienes un timer de /stuck activo."
+  cancelled-move:    "&cTimer de /stuck cancelado por movimiento."
+  cancelled-damage:  "&cTimer de /stuck cancelado por daño recibido."
+  teleported:        "&aFuiste teletransportado al spawn."
+  no-spawn:          "&cNo se pudo determinar la ubicación del spawn."
+
+kit:
+  given:             "&aKit de {kit} entregado correctamente."
+  cooldown:          "&cDebes esperar &f{seconds}s &cpara usar /kit de nuevo."
+
+lives:
+  regen:             "&aRegeneraste una vida. Vidas actuales: &f{lives}."
+
+faction:
+  cmd:
+    claim-limit:     "&cHas alcanzado el límite de claims ({current}/{max})."
 
 tablist:
   leader:    "&4[{faction}] &f{player}"
