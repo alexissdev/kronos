@@ -7,6 +7,8 @@ import com.google.inject.Singleton;
 import dev.alexissdev.kronos.api.event.KothCaptureEvent;
 import dev.alexissdev.kronos.api.event.KothStartEvent;
 import dev.alexissdev.kronos.common.config.MessagesConfig;
+import dev.alexissdev.kronos.common.domain.CrateType;
+import dev.alexissdev.kronos.plugin.listener.CrateListener;
 import dev.alexissdev.kronos.koth.domain.KothZone;
 import dev.alexissdev.kronos.koth.event.KothCapturedDomainEvent;
 import dev.alexissdev.kronos.koth.event.KothDeletedDomainEvent;
@@ -98,6 +100,10 @@ public class KothListener implements Listener {
             String msg = messages.format("koth.broadcast.captured",
                     "player", captorName, "name", event.getKothName());
             for (Player online : Bukkit.getOnlinePlayers()) online.sendMessage(msg);
+            if (captor != null) {
+                captor.getInventory().addItem(CrateListener.createKey(CrateType.KOTH));
+                captor.sendMessage(messages.get("koth.reward-key"));
+            }
         });
     }
 
