@@ -192,11 +192,18 @@ public class FactionCommand extends BaseCommand {
 
     private void printFactionInfo(Player player, Faction f) {
         player.sendMessage(messages.get("faction.cmd.info-sep"));
-        player.sendMessage(messages.format("faction.cmd.info-name", "name", f.getName()));
-        player.sendMessage(messages.format("faction.cmd.info-members", "count", f.getMembers().size()));
-        player.sendMessage(messages.format("faction.cmd.info-stats", "kills", f.getKills(), "deaths", f.getDeaths()));
-        player.sendMessage(messages.format("faction.cmd.info-dtk", "remaining", f.getDtkRemaining(), "max", f.getMaxDtk()));
-        player.sendMessage(messages.format("faction.cmd.info-balance", "balance", String.format("%.2f", f.getBalance())));
+        player.sendMessage(messages.format("faction.cmd.info-name",    "name",      f.getName()));
+        player.sendMessage(messages.format("faction.cmd.info-members", "count",     String.valueOf(f.getMembers().size())));
+        player.sendMessage(messages.format("faction.cmd.info-stats",   "kills",     String.valueOf(f.getKills()),
+                                                                        "deaths",   String.valueOf(f.getDeaths())));
+        player.sendMessage(messages.format("faction.cmd.info-dtk",     "remaining", String.valueOf(f.getDtkRemaining()),
+                                                                        "max",      String.valueOf(f.getMaxDtk())));
+        player.sendMessage(messages.format("faction.cmd.info-balance",  "balance",  String.format("%.2f", f.getBalance())));
+        player.sendMessage(messages.format("faction.cmd.info-strikes",  "strikes",  String.valueOf(f.getStrikes()),
+                                                                         "max",     String.valueOf(f.getMaxStrikes())));
+        if (f.isFrozen()) {
+            player.sendMessage(messages.get("faction.cmd.info-frozen"));
+        }
         player.sendMessage(messages.get("faction.cmd.info-sep"));
     }
 
