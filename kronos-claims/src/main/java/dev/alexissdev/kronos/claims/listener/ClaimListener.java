@@ -7,6 +7,7 @@ import com.google.inject.Singleton;
 import dev.alexissdev.kronos.claims.domain.Claim;
 import dev.alexissdev.kronos.claims.domain.ClaimType;
 import dev.alexissdev.kronos.claims.service.ClaimService;
+import dev.alexissdev.kronos.common.domain.SotwService;
 import dev.alexissdev.kronos.factions.event.FactionClaimedDomainEvent;
 import dev.alexissdev.kronos.factions.event.FactionDisbandedDomainEvent;
 import dev.alexissdev.kronos.factions.event.PlayerJoinedFactionDomainEvent;
@@ -33,6 +34,7 @@ public class ClaimListener implements Listener {
 
     private final ClaimService claimService;
     private final FactionService factionService;
+    private final SotwService sotwService;
     private final Plugin plugin;
     private final EventBus eventBus;
 
@@ -42,9 +44,10 @@ public class ClaimListener implements Listener {
 
     @Inject
     public ClaimListener(ClaimService claimService, FactionService factionService,
-                         Plugin plugin, EventBus eventBus) {
+                         SotwService sotwService, Plugin plugin, EventBus eventBus) {
         this.claimService = claimService;
         this.factionService = factionService;
+        this.sotwService = sotwService;
         this.plugin = plugin;
         this.eventBus = eventBus;
         this.eventBus.register(this);
@@ -85,6 +88,7 @@ public class ClaimListener implements Listener {
     private boolean canModify(Player player, Claim claim) {
         if (claim == null) return true;
         if (!claim.getType().isProtectedFromBuild()) return true;
+        if (sotwService.isEotwActive()) return true;
         if (claim.getType() != ClaimType.FACTION) return false;
         String playerFaction = playerFactionMap.get(player.getUniqueId());
         return claim.getFactionId().equals(playerFaction);
