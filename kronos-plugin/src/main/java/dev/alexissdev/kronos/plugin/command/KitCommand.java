@@ -50,10 +50,16 @@ public class KitCommand extends BaseCommand {
         playerService.getOrCreate(player.getUniqueId(), player.getName())
                 .thenAccept(hcfPlayer -> {
                     org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
+                        KitType kit = hcfPlayer.getActiveKit();
+                        String perm = "hcf.kit." + kit.name().toLowerCase();
+                        if (!player.hasPermission(perm)) {
+                            player.sendMessage(messages.format("kit.no-permission",
+                                    "kit", kit.name()));
+                            return;
+                        }
                         giveKit(player, hcfPlayer);
                         timerService.startTimer(player.getUniqueId(), TimerType.CLASS_COOLDOWN, KIT_COOLDOWN_MS);
-                        player.sendMessage(messages.format("kit.given",
-                                "kit", hcfPlayer.getActiveKit().name()));
+                        player.sendMessage(messages.format("kit.given", "kit", kit.name()));
                     });
                 });
     }

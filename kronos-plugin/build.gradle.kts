@@ -117,6 +117,30 @@ bukkit {
             description = "Gestionar zona de spawn"
             default = net.minecrell.pluginyml.bukkit.BukkitPluginDescription.Permission.Default.OP
         }
+        register("hcf.kit.archer") {
+            description = "Usar el kit de Archer"
+            default = net.minecrell.pluginyml.bukkit.BukkitPluginDescription.Permission.Default.FALSE
+        }
+        register("hcf.kit.bard") {
+            description = "Usar el kit de Bard"
+            default = net.minecrell.pluginyml.bukkit.BukkitPluginDescription.Permission.Default.FALSE
+        }
+        register("hcf.kit.rogue") {
+            description = "Usar el kit de Rogue"
+            default = net.minecrell.pluginyml.bukkit.BukkitPluginDescription.Permission.Default.FALSE
+        }
+        register("hcf.kit.miner") {
+            description = "Usar el kit de Miner"
+            default = net.minecrell.pluginyml.bukkit.BukkitPluginDescription.Permission.Default.FALSE
+        }
+        register("hcf.kit.knight") {
+            description = "Usar el kit de Knight"
+            default = net.minecrell.pluginyml.bukkit.BukkitPluginDescription.Permission.Default.FALSE
+        }
+        register("hcf.kit.diamond") {
+            description = "Usar el kit de Diamond (default)"
+            default = net.minecrell.pluginyml.bukkit.BukkitPluginDescription.Permission.Default.FALSE
+        }
     }
 }
 

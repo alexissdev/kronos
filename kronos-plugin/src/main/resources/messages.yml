@@ -300,6 +300,7 @@ stuck:
 kit:
   given:             "&aKit de {kit} entregado correctamente."
   cooldown:          "&cDebes esperar &f{seconds}s &cpara usar /kit de nuevo."
+  no-permission:     "&cNo tienes permiso para usar el kit de {kit}."
 
 lives:
   regen:             "&aRegeneraste una vida. Vidas actuales: &f{lives}."
