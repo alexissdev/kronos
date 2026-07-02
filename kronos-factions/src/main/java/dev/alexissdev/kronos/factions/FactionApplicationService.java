@@ -13,6 +13,7 @@ import dev.alexissdev.kronos.common.exception.HCFException;
 import dev.alexissdev.kronos.economy.exception.InsufficientFundsException;
 import dev.alexissdev.kronos.factions.event.FactionCreatedDomainEvent;
 import dev.alexissdev.kronos.factions.event.FactionDisbandedDomainEvent;
+import dev.alexissdev.kronos.factions.event.FactionDtkDecrementedDomainEvent;
 import dev.alexissdev.kronos.factions.event.PlayerJoinedFactionDomainEvent;
 import dev.alexissdev.kronos.factions.event.PlayerLeftFactionDomainEvent;
 
@@ -311,11 +312,12 @@ public class FactionApplicationService implements FactionService {
             if (faction.hasMember(deadMemberUuid)) {
                 faction.decrementDtk();
                 if (faction.isAtDtk()) {
-                    // DTK exhausted — auto-disband the faction
                     return factionRepository.delete(factionId).thenRun(() ->
                             eventBus.post(new FactionDisbandedDomainEvent(
                                     factionId, faction.getName(), deadMemberUuid)));
                 }
+                eventBus.post(new FactionDtkDecrementedDomainEvent(
+                        factionId, faction.getName(), faction.getDtkRemaining(), faction.getMaxDtk()));
             }
             return factionRepository.save(faction).thenApply(f -> null);
         });
@@ -368,6 +370,25 @@ public class FactionApplicationService implements FactionService {
         return factionRepository.findById(factionId).thenCompose(opt -> {
             Faction faction = opt.orElseThrow(() -> new FactionNotFoundException(factionId));
             faction.setFrozen(false);
+            return factionRepository.save(faction).thenApply(f -> null);
+        });
+    }
+
+    @Override
+    public CompletableFuture<Void> setLeader(String factionId, UUID newLeaderUuid, UUID actorUuid) {
+        return factionRepository.findById(factionId).thenCompose(opt -> {
+            Faction faction = opt.orElseThrow(() -> new FactionNotFoundException(factionId));
+            requireRole(faction, actorUuid, FactionRole.LEADER);
+            if (actorUuid.equals(newLeaderUuid)) {
+                throw new HCFException("Ya eres el líder de esta facción");
+            }
+            FactionMember newLeader = faction.getMember(newLeaderUuid)
+                    .orElseThrow(() -> new HCFException("Ese jugador no está en la facción"));
+            FactionMember oldLeader = faction.getMember(actorUuid)
+                    .orElseThrow(() -> new HCFException("You are not in this faction"));
+            oldLeader.setRole(FactionRole.CO_LEADER);
+            newLeader.setRole(FactionRole.LEADER);
+            faction.setLeaderId(newLeaderUuid);
             return factionRepository.save(faction).thenApply(f -> null);
         });
     }

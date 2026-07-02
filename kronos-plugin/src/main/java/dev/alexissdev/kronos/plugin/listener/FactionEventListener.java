@@ -13,6 +13,7 @@ import dev.alexissdev.kronos.api.model.FactionSnapshot;
 import dev.alexissdev.kronos.common.config.MessagesConfig;
 import dev.alexissdev.kronos.factions.event.FactionCreatedDomainEvent;
 import dev.alexissdev.kronos.factions.event.FactionDisbandedDomainEvent;
+import dev.alexissdev.kronos.factions.event.FactionDtkDecrementedDomainEvent;
 import dev.alexissdev.kronos.factions.event.PlayerJoinedFactionDomainEvent;
 import dev.alexissdev.kronos.factions.event.PlayerLeftFactionDomainEvent;
 import dev.alexissdev.kronos.factions.event.FactionClaimedDomainEvent;
@@ -110,6 +111,21 @@ public class FactionEventListener implements Listener {
                                                 "reason", reason))))));
             }
         });
+    }
+
+    @Subscribe
+    public void onDtkDecremented(FactionDtkDecrementedDomainEvent event) {
+        factionService.getById(event.getFactionId()).thenAccept(opt ->
+                opt.ifPresent(f -> Bukkit.getScheduler().runTask(plugin, () -> {
+                    String msg = messages.format("faction.dtk-decremented",
+                            "faction", event.getFactionName(),
+                            "dtk",     String.valueOf(event.getNewDtk()),
+                            "max",     String.valueOf(event.getMaxDtk()));
+                    for (UUID memberUuid : f.getMembers().keySet()) {
+                        Player member = Bukkit.getPlayer(memberUuid);
+                        if (member != null) member.sendMessage(msg);
+                    }
+                })));
     }
 
     @Subscribe
