@@ -10,6 +10,7 @@ import dev.alexissdev.kronos.players.repository.CrateLocationRepository;
 import dev.alexissdev.kronos.players.repository.DeathbanRepository;
 import dev.alexissdev.kronos.players.repository.PlayerRepository;
 import dev.alexissdev.kronos.players.service.CrateService;
+import dev.alexissdev.kronos.players.service.KitService;
 import dev.alexissdev.kronos.players.service.PlayerService;
 
 public class PlayersModule extends AbstractModule {
@@ -23,6 +24,8 @@ public class PlayersModule extends AbstractModule {
         bind(CrateLocationRepository.class).to(MongoCrateLocationRepository.class).in(Singleton.class);
         bind(CrateApplicationService.class).in(Singleton.class);
         bind(CrateService.class).to(CrateApplicationService.class);
+        bind(KitApplicationService.class).in(Singleton.class);
+        bind(KitService.class).to(KitApplicationService.class);
         bind(CrateInventory.class).in(Singleton.class);
     }
 }

@@ -17,4 +17,8 @@ public interface PlayerService {
     CompletableFuture<Void> recordKill(UUID killerUuid, UUID victimUuid);
 
     CompletableFuture<Integer> decrementLives(UUID uuid);
+
+    CompletableFuture<Boolean> isDeathbanned(UUID uuid);
+
+    CompletableFuture<Void> removeDeathban(UUID uuid);
 }

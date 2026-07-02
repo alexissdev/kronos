@@ -5,6 +5,7 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import dev.alexissdev.kronos.players.domain.HCFPlayer;
 import dev.alexissdev.kronos.players.exception.PlayerNotFoundException;
+import dev.alexissdev.kronos.players.repository.DeathbanRepository;
 import dev.alexissdev.kronos.players.repository.PlayerRepository;
 import dev.alexissdev.kronos.players.service.PlayerService;
 
@@ -16,13 +17,16 @@ import java.util.concurrent.CompletableFuture;
 public class PlayerApplicationService implements PlayerService {
 
     private final PlayerRepository playerRepository;
+    private final DeathbanRepository deathbanRepository;
     private final int defaultLives;
 
     @Inject
     public PlayerApplicationService(PlayerRepository playerRepository,
+                                    DeathbanRepository deathbanRepository,
                                     @Named("hcf.lives") int defaultLives) {
-        this.playerRepository = playerRepository;
-        this.defaultLives = defaultLives;
+        this.playerRepository    = playerRepository;
+        this.deathbanRepository  = deathbanRepository;
+        this.defaultLives        = defaultLives;
     }
 
     @Override
@@ -83,5 +87,16 @@ public class PlayerApplicationService implements PlayerService {
             int remaining = player.decrementLives();
             return playerRepository.save(player).thenApply(p -> remaining);
         });
+    }
+
+    @Override
+    public CompletableFuture<Boolean> isDeathbanned(UUID uuid) {
+        return deathbanRepository.getRemainingSeconds(uuid)
+                .thenApply(opt -> opt.isPresent() && opt.getAsLong() > 0);
+    }
+
+    @Override
+    public CompletableFuture<Void> removeDeathban(UUID uuid) {
+        return deathbanRepository.removeDeathban(uuid);
     }
 }

@@ -1,15 +1,14 @@
 package dev.alexissdev.kronos.plugin.command;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import dev.alexissdev.kronos.common.command.BaseCommand;
 import dev.alexissdev.kronos.common.config.MessagesConfig;
 import dev.alexissdev.kronos.common.domain.CrateType;
 import dev.alexissdev.kronos.common.domain.SotwService;
-import dev.alexissdev.kronos.players.repository.DeathbanRepository;
-import dev.alexissdev.kronos.plugin.listener.CrateListener;
-
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import dev.alexissdev.kronos.economy.service.EconomyService;
+import dev.alexissdev.kronos.players.service.PlayerService;
+import dev.alexissdev.kronos.plugin.listener.CrateListener;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -31,21 +30,21 @@ import java.util.concurrent.CompletableFuture;
 public class HCFCommand extends BaseCommand {
 
     private final EconomyService economyService;
-    private final SotwService sotwService;
-    private final DeathbanRepository deathbanRepository;
-    private final Plugin plugin;
+    private final SotwService    sotwService;
+    private final PlayerService  playerService;
+    private final Plugin         plugin;
     private final MessagesConfig messages;
 
     @Inject
     public HCFCommand(EconomyService economyService, SotwService sotwService,
-                      DeathbanRepository deathbanRepository,
+                      PlayerService playerService,
                       Plugin plugin, MessagesConfig messages) {
         super("hcf.admin");
         this.economyService = economyService;
-        this.sotwService = sotwService;
-        this.deathbanRepository = deathbanRepository;
-        this.plugin = plugin;
-        this.messages = messages;
+        this.sotwService    = sotwService;
+        this.playerService  = playerService;
+        this.plugin         = plugin;
+        this.messages       = messages;
     }
 
     @Override
@@ -151,15 +150,14 @@ public class HCFCommand extends BaseCommand {
                 if (args.length >= 3) {
                     try { hours = Integer.parseInt(args[2]); } catch (NumberFormatException ignored) {}
                 }
-                final long sotwMs = hours * 3600_000L;
-                sotwService.startSotw(sotwMs);
-                String sotwMsg = messages.format("sotw.started", "hours", String.valueOf(hours));
+                sotwService.startSotw(hours * 3600_000L);
+                final String sotwMsg = messages.format("sotw.started", "hours", String.valueOf(hours));
                 for (Player p : Bukkit.getOnlinePlayers()) p.sendMessage(sotwMsg);
                 break;
             case "stop":
                 sotwService.stopSotw();
-                String stopMsg = messages.get("sotw.ended");
-                for (Player p : Bukkit.getOnlinePlayers()) p.sendMessage(stopMsg);
+                final String stopSotwMsg = messages.get("sotw.ended");
+                for (Player p : Bukkit.getOnlinePlayers()) p.sendMessage(stopSotwMsg);
                 break;
             default:
                 sender.sendMessage(color("&cUso: /hcf sotw <start <horas>|stop>"));
@@ -177,15 +175,14 @@ public class HCFCommand extends BaseCommand {
                 if (args.length >= 3) {
                     try { hours = Integer.parseInt(args[2]); } catch (NumberFormatException ignored) {}
                 }
-                final long eotwMs = hours * 3600_000L;
-                sotwService.startEotw(eotwMs);
-                String eotwMsg = messages.format("eotw.started", "hours", String.valueOf(hours));
+                sotwService.startEotw(hours * 3600_000L);
+                final String eotwMsg = messages.format("eotw.started", "hours", String.valueOf(hours));
                 for (Player p : Bukkit.getOnlinePlayers()) p.sendMessage(eotwMsg);
                 break;
             case "stop":
                 sotwService.stopEotw();
-                String stopMsg = messages.get("eotw.ended");
-                for (Player p : Bukkit.getOnlinePlayers()) p.sendMessage(stopMsg);
+                final String stopEotwMsg = messages.get("eotw.ended");
+                for (Player p : Bukkit.getOnlinePlayers()) p.sendMessage(stopEotwMsg);
                 break;
             default:
                 sender.sendMessage(color("&cUso: /hcf eotw <start <horas>|stop>"));
@@ -199,13 +196,13 @@ public class HCFCommand extends BaseCommand {
         UUID uuid = online != null ? online.getUniqueId()
                 : Bukkit.getOfflinePlayer(targetName).getUniqueId();
 
-        deathbanRepository.getRemainingSeconds(uuid).thenCompose(remaining -> {
-            if (remaining.isEmpty()) {
+        playerService.isDeathbanned(uuid).thenCompose(banned -> {
+            if (!banned) {
                 Bukkit.getScheduler().runTask(plugin, () ->
                         sender.sendMessage(messages.format("hcf.unban-not-banned", "player", targetName)));
                 return CompletableFuture.completedFuture(null);
             }
-            return deathbanRepository.removeDeathban(uuid).thenRun(() ->
+            return playerService.removeDeathban(uuid).thenRun(() ->
                     Bukkit.getScheduler().runTask(plugin, () ->
                             sender.sendMessage(messages.format("hcf.unban-success", "player", targetName))));
         }).exceptionally(ex -> {
