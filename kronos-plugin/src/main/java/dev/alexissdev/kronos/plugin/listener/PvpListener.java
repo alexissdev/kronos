@@ -39,6 +39,28 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Listener central del sistema de PvP del plugin HCF.
+ *
+ * <p>Gestiona todas las mecánicas relacionadas con el combate jugador vs. jugador:
+ * <ul>
+ *   <li><strong>Combat tag</strong>: marca a los jugadores como en combate al recibir daño de otro jugador,
+ *       impidiendo que se desconecten sin consecuencias.</li>
+ *   <li><strong>PvP timer</strong>: protección temporal para jugadores nuevos que impide que sean atacados
+ *       y que ellos ataquen a otros.</li>
+ *   <li><strong>SOTW</strong>: durante el periodo Start of the World, todo el PvP queda bloqueado.</li>
+ *   <li><strong>Spawn protection</strong>: cancela el daño cuando cualquiera de los dos jugadores está en spawn.</li>
+ *   <li><strong>Enderpearl cooldown</strong>: aplica un cooldown al lanzar perlas de éter en combate
+ *       y bloquea su uso en spawn. Además, valida el destino de la teleportación por perla según el
+ *       tipo de territorio (reclamación protegida, saqueable o territorio aliado).</li>
+ *   <li><strong>Gapple cooldown</strong>: impide consumir manzanas doradas si el cooldown está activo.</li>
+ *   <li><strong>Deathban</strong>: al morir sin vidas restantes, el jugador es expulsado y se le aplica
+ *       un ban temporal configurado.</li>
+ *   <li><strong>Kill y death tracking</strong>: registra kills y descuenta vidas al morir.</li>
+ *   <li><strong>DTK (Deaths to Kill)</strong>: notifica al servicio de facciones cuando un miembro muere
+ *       a manos de un jugador de otra facción para decrementar el contador DTK.</li>
+ * </ul>
+ */
 @Singleton
 public class PvpListener implements Listener {
 
@@ -55,8 +77,26 @@ public class PvpListener implements Listener {
     private final long enderpearlCooldownMs;
     private final long gappleCooldownMs;
 
+    /** UUIDs de jugadores que acaban de teletransportarse con perla, usados para cancelar el daño de caída. */
     private final Set<UUID> recentlyPearled = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
+    /**
+     * Crea el listener de PvP con todas sus dependencias inyectadas, incluyendo parámetros
+     * de configuración anotados con {@code @Named}.
+     *
+     * @param timerService           servicio de timers (combat tag, PvP timer, enderpearl, gapple, home)
+     * @param playerService          servicio para gestionar datos y vidas de los jugadores
+     * @param factionService         servicio de facciones para calcular mensajes de muerte y DTK
+     * @param claimService           servicio de reclamaciones para validar destinos de perlas
+     * @param deathbanRepository     repositorio para aplicar y consultar deathbans
+     * @param spawnService           servicio de spawn para verificar si un jugador está en zona protegida
+     * @param messages               configuración de mensajes localizada
+     * @param plugin                 instancia del plugin principal para programar tareas
+     * @param sotwService            servicio que indica si el período SOTW está activo
+     * @param deathbanDurationSeconds duración del deathban en segundos (de {@code config.yml})
+     * @param enderpearlCooldownMs   cooldown de la perla de éter en milisegundos
+     * @param gappleCooldownMs       cooldown de la manzana dorada en milisegundos
+     */
     @Inject
     public PvpListener(TimerApplicationService timerService,
                        PlayerService playerService,

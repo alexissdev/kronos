@@ -10,11 +10,23 @@ import org.bukkit.command.CommandSender;
 
 import java.util.Set;
 
+/**
+ * Comando principal {@code /crate} para la gestión administrativa de cofres de
+ * recompensas en el servidor HCF. Requiere el permiso {@code hcf.admin} y delega
+ * cada operación a sus sub-comandos registrados: {@code set}, {@code remove} y
+ * {@code list}.
+ */
 @Singleton
 public class CrateCommand extends DispatchCommand {
 
     private final MessagesConfig messages;
 
+    /**
+     * Construye el comando registrando los sub-comandos de crate inyectados por Guice.
+     *
+     * @param subs     conjunto de sub-comandos del grupo {@code crate} anotado con {@code @Named("crate")}
+     * @param messages configuración de mensajes localizados
+     */
     @Inject
     public CrateCommand(@Named("crate") Set<SubCommand> subs, MessagesConfig messages) {
         super("hcf.admin");
@@ -22,6 +34,12 @@ public class CrateCommand extends DispatchCommand {
         register(subs);
     }
 
+    /**
+     * Envía al ejecutor el menú de ayuda del comando {@code /crate} con todos
+     * los sub-comandos disponibles y su sintaxis.
+     *
+     * @param sender ejecutor del comando que recibirá los mensajes de ayuda
+     */
     @Override
     protected void sendUsage(CommandSender sender) {
         sender.sendMessage(messages.get("crate.cmd.help-set"));

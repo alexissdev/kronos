@@ -11,6 +11,13 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+/**
+ * Comando {@code /near} que muestra al jugador la lista de otros jugadores
+ * presentes en su mismo mundo dentro de un radio especificado.
+ * El radio por defecto es de {@value #DEFAULT_RADIUS} bloques y el máximo
+ * permitido es {@value #MAX_RADIUS} bloques. Los resultados se ordenan
+ * alfabéticamente e incluyen la distancia de cada jugador al ejecutor.
+ */
 @Singleton
 public class NearCommand extends BaseCommand {
 
@@ -19,12 +26,25 @@ public class NearCommand extends BaseCommand {
 
     private final MessagesConfig messages;
 
+    /**
+     * Construye el comando inyectando las dependencias mediante Guice.
+     *
+     * @param messages configuración de mensajes localizados
+     */
     @Inject
     public NearCommand(MessagesConfig messages) {
         super(null);
         this.messages = messages;
     }
 
+    /**
+     * Busca los jugadores cercanos al ejecutor dentro del radio indicado
+     * (o el radio por defecto si no se especifica), los ordena alfabéticamente
+     * con su distancia y los muestra en pantalla.
+     *
+     * @param sender ejecutor del comando; debe ser un {@link org.bukkit.entity.Player}
+     * @param args   argumentos opcionales; {@code args[0]} puede ser un radio numérico
+     */
     @Override
     protected void execute(CommandSender sender, String[] args) {
         Player player = requirePlayer(sender);

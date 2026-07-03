@@ -70,16 +70,40 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
+/**
+ * Módulo Guice raíz que ensambla toda la configuración de inyección de dependencias del plugin.
+ *
+ * <p>Este módulo actúa como punto central de composición: instala todos los sub-módulos de los
+ * distintos dominios del sistema HCF (economía, jugadores, timers, facciones, reclamaciones,
+ * KOTH, clases, API, scoreboard y spawn), registra los listeners y comandos principales como
+ * singletons, y vincula los valores de configuración ({@code config.yml}) mediante anotaciones
+ * {@code @Named} para su inyección directa en cualquier componente que los requiera.
+ */
 public class RootModule extends AbstractModule {
 
     private final JavaPlugin plugin;
     private final MessagesConfig messagesConfig;
 
+    /**
+     * Crea el módulo raíz con las dependencias que no pueden obtenerse vía Guice.
+     *
+     * @param plugin         instancia del plugin principal de Bukkit, necesaria para bindear
+     *                       {@link JavaPlugin} y {@link org.bukkit.plugin.Plugin}
+     * @param messagesConfig configuración de mensajes ya cargada desde {@code messages.yml}
+     */
     public RootModule(JavaPlugin plugin, MessagesConfig messagesConfig) {
         this.plugin = plugin;
         this.messagesConfig = messagesConfig;
     }
 
+    /**
+     * Configura todos los bindings del contenedor Guice para el plugin.
+     *
+     * <p>Registra instancias del plugin, el bus de eventos, los managers de chat y SOTW,
+     * todos los listeners y comandos como singletons, y luego delega en los métodos auxiliares
+     * para registrar sub-comandos y valores de configuración. Finalmente instala todos los
+     * sub-módulos de los dominios funcionales del sistema.
+     */
     @Override
     protected void configure() {
         bind(JavaPlugin.class).toInstance(plugin);
@@ -118,6 +142,13 @@ public class RootModule extends AbstractModule {
         install(new SpawnModule());
     }
 
+    /**
+     * Registra todos los sub-comandos del comando {@code /faction} (alias {@code /f}) mediante
+     * un {@link com.google.inject.multibindings.Multibinder} anotado con {@code @Named("faction")}.
+     *
+     * <p>Cada sub-comando (crear, disolver, invitar, etc.) es un singleton independiente que
+     * se inyecta automáticamente en el ejecutor de comandos de facciones.
+     */
     private void bindFactionSubCommands() {
         Multibinder<SubCommand> binder = Multibinder.newSetBinder(binder(), SubCommand.class, Names.named("faction"));
         binder.addBinding().to(CreateFactionSub.class).in(Singleton.class);
@@ -147,6 +178,13 @@ public class RootModule extends AbstractModule {
         binder.addBinding().to(SetLeaderFactionSub.class).in(Singleton.class);
     }
 
+    /**
+     * Registra los sub-comandos del comando de administración {@code /hcf} mediante un
+     * {@link com.google.inject.multibindings.Multibinder} anotado con {@code @Named("hcf")}.
+     *
+     * <p>Incluye comandos de administración como reload, dar dinero, gestionar llaves de crates,
+     * controlar el periodo SOTW/EOTW y desbanear jugadores.
+     */
     private void bindHcfSubCommands() {
         Multibinder<SubCommand> binder = Multibinder.newSetBinder(binder(), SubCommand.class, Names.named("hcf"));
         binder.addBinding().to(ReloadSub.class).in(Singleton.class);
@@ -158,12 +196,24 @@ public class RootModule extends AbstractModule {
         binder.addBinding().to(UnbanSub.class).in(Singleton.class);
     }
 
+    /**
+     * Registra los sub-comandos del comando {@code /pvptimer} mediante un
+     * {@link com.google.inject.multibindings.Multibinder} anotado con {@code @Named("pvptimer")}.
+     *
+     * <p>Permite a los administradores otorgar o quitar el temporizador de protección PvP a jugadores.
+     */
     private void bindPvpTimerSubCommands() {
         Multibinder<SubCommand> binder = Multibinder.newSetBinder(binder(), SubCommand.class, Names.named("pvptimer"));
         binder.addBinding().to(GivePvpTimerSub.class).in(Singleton.class);
         binder.addBinding().to(RemovePvpTimerSub.class).in(Singleton.class);
     }
 
+    /**
+     * Registra los sub-comandos del comando {@code /crate} mediante un
+     * {@link com.google.inject.multibindings.Multibinder} anotado con {@code @Named("crate")}.
+     *
+     * <p>Permite a los administradores definir, eliminar y listar las ubicaciones de crates en el mundo.
+     */
     private void bindCrateSubCommands() {
         Multibinder<SubCommand> binder = Multibinder.newSetBinder(binder(), SubCommand.class, Names.named("crate"));
         binder.addBinding().to(SetCrateSub.class).in(Singleton.class);
@@ -171,6 +221,15 @@ public class RootModule extends AbstractModule {
         binder.addBinding().to(ListCrateSub.class).in(Singleton.class);
     }
 
+    /**
+     * Lee los valores del {@code config.yml} del plugin y los vincula en el contenedor Guice
+     * mediante anotaciones {@code @Named}, lo que permite inyectarlos directamente en
+     * cualquier clase que los necesite sin depender del objeto {@link org.bukkit.configuration.file.FileConfiguration}.
+     *
+     * <p>Los valores incluyen parámetros de conexión a base de datos, configuración de deathban,
+     * cooldowns de timers, límites de facciones y regeneración de vidas.
+     * Si una clave no está definida en el archivo, se usa el valor predeterminado indicado.
+     */
     private void bindConfig() {
         FileConfiguration config = plugin.getConfig();
 
@@ -193,14 +252,32 @@ public class RootModule extends AbstractModule {
         bindLong("lives.regen-interval-ms",      config.getInt("lives.regen-interval-hours",         24) * 3600L * 1000L);
     }
 
+    /**
+     * Vincula un valor {@link String} de configuración bajo la clave dada con anotación {@code @Named}.
+     *
+     * @param key   nombre de la anotación con la que se inyectará el valor (p. ej. {@code "mongo.uri"})
+     * @param value valor de cadena obtenido del {@code config.yml}
+     */
     private void bindString(String key, String value) {
         bind(String.class).annotatedWith(Names.named(key)).toInstance(value);
     }
 
+    /**
+     * Vincula un valor {@code int} de configuración bajo la clave dada con anotación {@code @Named}.
+     *
+     * @param key   nombre de la anotación con la que se inyectará el valor (p. ej. {@code "faction.max-members"})
+     * @param value valor entero obtenido del {@code config.yml}
+     */
     private void bindInt(String key, int value) {
         bind(Integer.class).annotatedWith(Names.named(key)).toInstance(value);
     }
 
+    /**
+     * Vincula un valor {@code long} de configuración bajo la clave dada con anotación {@code @Named}.
+     *
+     * @param key   nombre de la anotación con la que se inyectará el valor (p. ej. {@code "enderpearl.cooldown-ms"})
+     * @param value valor largo obtenido del {@code config.yml}, generalmente expresado en milisegundos
+     */
     private void bindLong(String key, long value) {
         bind(Long.class).annotatedWith(Names.named(key)).toInstance(value);
     }

@@ -24,6 +24,17 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Listener que gestiona la interacción de los jugadores con los cofres de recompensas (crates).
+ *
+ * <p>Mantiene una caché en memoria de las ubicaciones de crates registradas en la base de datos,
+ * indexadas por la clave {@code "mundo:x:y:z"}, para detectar de forma eficiente cuándo un
+ * jugador hace clic derecho sobre un bloque que corresponde a un crate.
+ *
+ * <p>Cuando un jugador interactúa con un crate, el listener verifica que tenga en la mano
+ * una llave de crate válida ({@link #createKey(CrateType)}) y del tipo correcto, consume la
+ * llave y abre la animación de recompensas.
+ */
 @Singleton
 public class CrateListener implements Listener {
 
@@ -37,6 +48,14 @@ public class CrateListener implements Listener {
     private final MessagesConfig messages;
     private final Plugin plugin;
 
+    /**
+     * Crea el listener de crates con todas sus dependencias inyectadas por Guice.
+     *
+     * @param crateService   servicio para consultar las ubicaciones de crates persistidas en base de datos
+     * @param crateInventory gestor de la interfaz gráfica de apertura de crates
+     * @param messages       configuración de mensajes localizada
+     * @param plugin         instancia del plugin principal, usada para el logger
+     */
     @Inject
     public CrateListener(CrateService crateService, CrateInventory crateInventory,
                          MessagesConfig messages, Plugin plugin) {
@@ -46,6 +65,13 @@ public class CrateListener implements Listener {
         this.plugin         = plugin;
     }
 
+    /**
+     * Carga todas las ubicaciones de crates desde la base de datos y las almacena en la caché
+     * en memoria, descartando los datos anteriores.
+     *
+     * <p>Este método se invoca durante el arranque del plugin ({@link dev.alexissdev.kronos.plugin.lifecycle.PluginEnableHandler#enable()})
+     * y también puede llamarse manualmente para refrescar la caché tras cambios administrativos.
+     */
     public void loadCrates() {
         crateService.getAllCrates().thenAccept(list -> {
             crateCache.clear();
@@ -56,14 +82,43 @@ public class CrateListener implements Listener {
         });
     }
 
+    /**
+     * Registra una nueva ubicación de crate en la caché en memoria.
+     *
+     * <p>Debe invocarse tras crear o mover un crate en la base de datos para mantener
+     * la caché sincronizada sin necesidad de recargar todos los crates.
+     *
+     * @param loc objeto {@link CrateLocation} con el mundo, coordenadas y tipo del crate
+     */
     public void registerCrate(CrateLocation loc) {
         crateCache.put(locationKey(loc.getWorld(), loc.getX(), loc.getY(), loc.getZ()), loc.getType());
     }
 
+    /**
+     * Elimina un crate de la caché en memoria por sus coordenadas.
+     *
+     * <p>Debe invocarse al eliminar un crate de la base de datos para que el bloque
+     * correspondiente deje de tratarse como crate sin recargar toda la caché.
+     *
+     * @param world nombre del mundo donde se ubica el crate
+     * @param x     coordenada X del bloque
+     * @param y     coordenada Y del bloque
+     * @param z     coordenada Z del bloque
+     */
     public void unregisterCrate(String world, int x, int y, int z) {
         crateCache.remove(locationKey(world, x, y, z));
     }
 
+    /**
+     * Maneja el clic derecho de un jugador sobre un bloque que puede ser un crate.
+     *
+     * <p>Verifica que el bloque clickeado esté registrado en la caché de crates, cancela el
+     * evento nativo de Bukkit para evitar interacciones secundarias, y comprueba que el jugador
+     * tenga en la mano una llave del tipo correcto. Si la llave es válida, la consume (reduce
+     * su cantidad en uno) y abre la animación de apertura del crate.
+     *
+     * @param event evento de interacción del jugador con un bloque
+     */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onInteract(PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
@@ -102,6 +157,17 @@ public class CrateListener implements Listener {
         crateInventory.openCrateAnimation(player, crateType);
     }
 
+    /**
+     * Crea un item de llave de crate para el tipo especificado.
+     *
+     * <p>La llave se representa como un gancho de trampilla ({@link Material#TRIPWIRE_HOOK}) con
+     * nombre y lore personalizados. El lore contiene un prefijo especial ({@value #LORE_PREFIX})
+     * seguido del nombre del tipo de crate, que se utiliza internamente para identificar el tipo
+     * de llave sin depender del nombre visible.
+     *
+     * @param type tipo de crate para el que se genera la llave
+     * @return un {@link ItemStack} configurado como llave del tipo indicado
+     */
     public static ItemStack createKey(CrateType type) {
         ItemStack item = new ItemStack(Material.TRIPWIRE_HOOK);
         ItemMeta meta = item.getItemMeta();

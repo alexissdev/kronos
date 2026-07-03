@@ -13,8 +13,32 @@ import dev.alexissdev.kronos.players.service.CrateService;
 import dev.alexissdev.kronos.players.service.KitService;
 import dev.alexissdev.kronos.players.service.PlayerService;
 
+/**
+ * Módulo Guice del subsistema de jugadores del plugin HCF.
+ *
+ * <p>Configura todas las vinculaciones de inyección de dependencias necesarias para
+ * el módulo {@code kronos-players}: interfaces de servicio a sus implementaciones,
+ * interfaces de repositorio a sus implementaciones de persistencia, y la clase de
+ * animación de inventario de crates.</p>
+ *
+ * <p>Vinculaciones registradas:</p>
+ * <ul>
+ *   <li>{@link PlayerService} → {@link PlayerApplicationService} (MongoDB + Redis)</li>
+ *   <li>{@link CrateService} → {@link CrateApplicationService} (MongoDB)</li>
+ *   <li>{@link KitService} → {@link KitApplicationService}</li>
+ *   <li>{@link PlayerRepository} → {@link MongoPlayerRepository}</li>
+ *   <li>{@link DeathbanRepository} → {@link RedisDeathbanRepository}</li>
+ *   <li>{@link CrateLocationRepository} → {@link MongoCrateLocationRepository}</li>
+ *   <li>{@link CrateInventory} como singleton de UI de inventario</li>
+ * </ul>
+ */
 public class PlayersModule extends AbstractModule {
 
+    /**
+     * Configura las vinculaciones de dependencias del módulo de jugadores.
+     * Todos los servicios y repositorios se registran como singletons para garantizar
+     * una única instancia por inyector de Guice.
+     */
     @Override
     protected void configure() {
         bind(PlayerApplicationService.class).in(Singleton.class);

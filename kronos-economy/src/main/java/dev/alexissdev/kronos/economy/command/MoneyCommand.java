@@ -15,6 +15,25 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+/**
+ * Comando {@code /money} del plugin Kronos HCF que expone las operaciones de economía a los jugadores.
+ *
+ * <p>Gestiona las siguientes suboperaciones:</p>
+ * <ul>
+ *   <li><strong>Sin argumentos</strong>: muestra el saldo del jugador que ejecuta el comando.</li>
+ *   <li><strong>{@code <jugador>}</strong>: muestra el saldo de otro jugador online.</li>
+ *   <li><strong>{@code pay <jugador> <cantidad>}</strong>: transfiere dinero a otro jugador conectado.</li>
+ *   <li><strong>{@code top}</strong>: muestra el ranking de los 10 jugadores online con mayor saldo.</li>
+ * </ul>
+ *
+ * <p>Todas las operaciones de economía son asíncronas (devuelven {@link CompletableFuture})
+ * y los mensajes de respuesta se envían al jugador de vuelta en el hilo principal de Bukkit
+ * usando el scheduler del plugin.</p>
+ *
+ * <p>No requiere permiso especial (pasa {@code null} a {@link BaseCommand}), por lo que
+ * cualquier jugador puede usarlo. Se registra como {@code @Singleton} para reutilizar
+ * la instancia inyectada por Guice.</p>
+ */
 @Singleton
 public class MoneyCommand extends BaseCommand {
 
@@ -22,6 +41,13 @@ public class MoneyCommand extends BaseCommand {
     private final Plugin plugin;
     private final MessagesConfig messages;
 
+    /**
+     * Construye el comando de dinero con sus dependencias inyectadas por Guice.
+     *
+     * @param economyService servicio de economía que ejecuta las operaciones financieras
+     * @param plugin         instancia del plugin principal para programar tareas en el hilo principal
+     * @param messages       configuración de mensajes para obtener los textos localizados
+     */
     @Inject
     public MoneyCommand(EconomyService economyService, Plugin plugin, MessagesConfig messages) {
         super(null);
@@ -30,6 +56,17 @@ public class MoneyCommand extends BaseCommand {
         this.messages = messages;
     }
 
+    /**
+     * Genera sugerencias de autocompletado para el comando {@code /money}.
+     * <ul>
+     *   <li>Primer argumento: sugiere {@code pay} y {@code top}.</li>
+     *   <li>Segundo argumento tras {@code pay}: sugiere nombres de jugadores online.</li>
+     * </ul>
+     *
+     * @param sender quien está escribiendo el comando
+     * @param args   argumentos parciales introducidos hasta el momento
+     * @return lista de sugerencias contextuales
+     */
     @Override
     protected List<String> tabComplete(CommandSender sender, String[] args) {
         if (args.length == 1) return subcommands(args, "pay", "top");
@@ -37,6 +74,14 @@ public class MoneyCommand extends BaseCommand {
         return Collections.emptyList();
     }
 
+    /**
+     * Punto de entrada principal del comando {@code /money}. Solo puede ser ejecutado por jugadores.
+     * Analiza los argumentos y delega a los manejadores específicos según la acción solicitada.
+     *
+     * @param sender quien ejecutó el comando; debe ser un jugador
+     * @param args   argumentos del comando: vacío para ver propio saldo, {@code pay} para pagar,
+     *               {@code top} para el ranking, o un nombre de jugador para ver su saldo
+     */
     @Override
     protected void execute(CommandSender sender, String[] args) {
         Player player = requirePlayer(sender);
@@ -54,6 +99,15 @@ public class MoneyCommand extends BaseCommand {
         }
     }
 
+    /**
+     * Consulta el saldo del jugador indicado y envía el resultado al observador.
+     * El mensaje varía dependiendo de si el observador está consultando su propio saldo
+     * o el de otro jugador.
+     *
+     * @param viewer      jugador que recibirá el mensaje con el saldo
+     * @param targetUuid  UUID del jugador cuyo saldo se consulta
+     * @param targetName  nombre del jugador cuyo saldo se consulta, para incluirlo en el mensaje
+     */
     private void showBalance(Player viewer, UUID targetUuid, String targetName) {
         economyService.getBalance(targetUuid)
                 .thenAccept(balance -> Bukkit.getScheduler().runTask(plugin, () -> {
@@ -68,6 +122,15 @@ public class MoneyCommand extends BaseCommand {
                 }));
     }
 
+    /**
+     * Maneja la suboperación {@code /money pay <jugador> <cantidad>}.
+     * Valida todos los casos de error (jugador no encontrado, autoenvío, cantidad inválida o
+     * no positiva) antes de ejecutar la transferencia. Si la transferencia falla (p. ej.
+     * fondos insuficientes), informa al remitente con el mensaje de error correspondiente.
+     *
+     * @param sender jugador que inicia el pago
+     * @param args   argumentos del comando; {@code args[1]} es el destinatario y {@code args[2]} la cantidad
+     */
     private void handlePay(Player sender, String[] args) {
         if (!requireArgs(sender, args, 3, "/money pay <jugador> <cantidad>")) return;
         Player target = Bukkit.getPlayer(args[1]);
@@ -98,6 +161,16 @@ public class MoneyCommand extends BaseCommand {
                 });
     }
 
+    /**
+     * Maneja la suboperación {@code /money top}, mostrando los 10 jugadores online
+     * con mayor saldo ordenados de mayor a menor.
+     *
+     * <p>Consulta el saldo de todos los jugadores conectados en paralelo usando
+     * {@link CompletableFuture}s independientes y espera a que todas completen antes
+     * de ordenar y mostrar el resultado en el hilo principal de Bukkit.</p>
+     *
+     * @param player jugador que solicita ver el ranking de riqueza
+     */
     private void handleTop(Player player) {
         Collection<? extends Player> online = Bukkit.getOnlinePlayers();
         if (online.isEmpty()) { player.sendMessage(messages.get("economy.player-not-found")); return; }

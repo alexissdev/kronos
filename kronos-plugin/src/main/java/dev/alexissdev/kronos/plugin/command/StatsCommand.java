@@ -16,6 +16,13 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Comando {@code /stats} que muestra las estadísticas de combate de un jugador:
+ * kills, muertes, vidas restantes y facción a la que pertenece. Si se ejecuta
+ * sin argumentos muestra las estadísticas propias; si se especifica un nombre,
+ * muestra las de ese jugador (que debe estar en línea). Las consultas se realizan
+ * de forma asíncrona combinando los datos del perfil del jugador y su facción.
+ */
 @Singleton
 public class StatsCommand extends BaseCommand {
 
@@ -24,6 +31,14 @@ public class StatsCommand extends BaseCommand {
     private final MessagesConfig messages;
     private final Plugin plugin;
 
+    /**
+     * Construye el comando inyectando sus dependencias mediante Guice.
+     *
+     * @param playerService  servicio para obtener el perfil HCF del jugador (kills, muertes, vidas)
+     * @param factionService servicio para obtener la facción a la que pertenece el jugador
+     * @param messages       configuración de mensajes localizados
+     * @param plugin         instancia del plugin, usada para programar tareas en el hilo principal
+     */
     @Inject
     public StatsCommand(PlayerService playerService, FactionService factionService,
                         MessagesConfig messages, Plugin plugin) {
@@ -34,12 +49,30 @@ public class StatsCommand extends BaseCommand {
         this.plugin = plugin;
     }
 
+    /**
+     * Proporciona sugerencias de autocompletado con los nombres de los jugadores
+     * en línea para el primer argumento del comando.
+     *
+     * @param sender ejecutor del comando
+     * @param args   argumentos escritos hasta el momento
+     * @return lista de nombres de jugadores en línea que comienzan con el prefijo indicado,
+     *         o lista vacía si ya se proporcionó el primer argumento
+     */
     @Override
     protected List<String> tabComplete(CommandSender sender, String[] args) {
         if (args.length == 1) return onlinePlayers(args[0]);
         return Collections.emptyList();
     }
 
+    /**
+     * Determina el jugador objetivo (el propio ejecutor o el especificado como argumento),
+     * consulta de forma asíncrona su perfil HCF y su facción, y muestra las estadísticas
+     * en el hilo principal de Bukkit.
+     *
+     * @param sender ejecutor del comando; debe ser un {@link org.bukkit.entity.Player}
+     *               si no se especifica un objetivo
+     * @param args   argumentos opcionales; {@code args[0]} puede ser el nombre de un jugador en línea
+     */
     @Override
     protected void execute(CommandSender sender, String[] args) {
         Player target;

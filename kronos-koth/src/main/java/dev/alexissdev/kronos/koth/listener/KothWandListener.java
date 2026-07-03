@@ -21,6 +21,23 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Optional;
 
+/**
+ * Listener de Bukkit que gestiona las interacciones del administrador con la varita KOTH
+ * durante una sesión de creación de zona.
+ *
+ * <p>Intercepta {@link org.bukkit.event.player.PlayerInteractEvent} para detectar clics
+ * con la varita KOTH (BLAZE_ROD con nombre especial) y actualiza la {@link KothCreationSession}
+ * del jugador en consecuencia:
+ * <ul>
+ *   <li><b>Clic izquierdo</b> en un bloque → establece la posición 1 de la fase actual.</li>
+ *   <li><b>Clic derecho</b> en un bloque → establece la posición 2 de la fase actual.
+ *       Si el claim queda completo, avanza automáticamente a la fase de captura.
+ *       Si la captura también se completa, persiste la nueva zona KOTH.</li>
+ * </ul>
+ *
+ * <p>También cancela la sesión cuando el jugador abandona el servidor para evitar
+ * sesiones huérfanas.</p>
+ */
 @Singleton
 public class KothWandListener implements Listener {
 
@@ -29,6 +46,14 @@ public class KothWandListener implements Listener {
     private final JavaPlugin plugin;
     private final MessagesConfig messages;
 
+    /**
+     * Constructor inyectado por Guice con las dependencias necesarias.
+     *
+     * @param creationService servicio que almacena y gestiona las sesiones de creación
+     * @param kothService     servicio de negocio para persistir la zona creada
+     * @param plugin          instancia del plugin usada para sincronizar tareas al hilo principal
+     * @param messages        configuración de mensajes para feedback al administrador
+     */
     @Inject
     public KothWandListener(KothCreationService creationService,
                              KothService kothService,
@@ -40,6 +65,13 @@ public class KothWandListener implements Listener {
         this.messages = messages;
     }
 
+    /**
+     * Procesa el clic del jugador con la varita KOTH. Si el jugador tiene una sesión activa,
+     * registra la posición seleccionada (clic izquierdo = pos1, clic derecho = pos2) en la
+     * fase correspondiente. Cancela el evento de Bukkit para evitar interacciones con el bloque.
+     *
+     * @param event evento de interacción de jugador con un bloque
+     */
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void onInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
@@ -73,6 +105,12 @@ public class KothWandListener implements Listener {
         }
     }
 
+    /**
+     * Cancela la sesión de creación activa del jugador cuando éste abandona el servidor,
+     * evitando que queden sesiones huérfanas en memoria.
+     *
+     * @param event evento de desconexión del jugador
+     */
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         creationService.cancelSession(event.getPlayer().getUniqueId());

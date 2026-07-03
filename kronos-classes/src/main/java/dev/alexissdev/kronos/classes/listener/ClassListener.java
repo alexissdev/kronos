@@ -34,6 +34,24 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+/**
+ * Listener de Bukkit que aplica las habilidades pasivas y activas de todas las clases HCF.
+ *
+ * <p>Gestiona el ciclo de vida completo de las clases durante la sesión de cada jugador:</p>
+ * <ul>
+ *   <li>Detecta la clase activa al conectarse y la actualiza automáticamente cuando el
+ *       jugador cambia de casco (el tipo de casco determina la clase).</li>
+ *   <li>Aplica efectos pasivos en combate según la clase del atacante.</li>
+ *   <li>Ejecuta la habilidad activa al hacer clic derecho con una {@code BLAZE_ROD},
+ *       respetando el cooldown gestionado por {@link dev.alexissdev.kronos.timers.TimerApplicationService}.</li>
+ *   <li>Ejecuta el aura periódica del Bardo para otorgar efectos a los aliados cercanos.</li>
+ * </ul>
+ *
+ * <p>Mantiene un caché en memoria ({@code playerKitCache}) para evitar consultas asíncronas
+ * a la base de datos durante eventos de alta frecuencia como el combate.</p>
+ *
+ * <p>Registrada como singleton por Guice a través de {@link dev.alexissdev.kronos.classes.ClassesModule}.</p>
+ */
 @Singleton
 public class ClassListener implements Listener {
 
@@ -42,8 +60,17 @@ public class ClassListener implements Listener {
     private final FactionService factionService;
     private final Plugin plugin;
 
+    /** Caché que asocia el UUID de cada jugador conectado con su clase activa actual. */
     private final Map<UUID, KitType> playerKitCache = new ConcurrentHashMap<>();
 
+    /**
+     * Construye el listener inyectando sus dependencias e inicia el aura periódica del Bardo.
+     *
+     * @param kitService     servicio de clases para detectar y persistir el kit activo
+     * @param timerService   servicio de timers para gestionar cooldowns de habilidades activas
+     * @param factionService servicio de facciones para identificar aliados en el aura del Bardo
+     * @param plugin         instancia del plugin principal, necesaria para programar tareas Bukkit
+     */
     @Inject
     public ClassListener(KitService kitService, TimerApplicationService timerService,
                          FactionService factionService, Plugin plugin) {
@@ -54,6 +81,14 @@ public class ClassListener implements Listener {
         scheduleBardAura();
     }
 
+    /**
+     * Programa la tarea periódica del aura del Bardo, que se ejecuta cada 2 segundos (40 ticks).
+     *
+     * <p>Para cada jugador conectado con clase {@link KitType#BARD} activa, otorga los efectos
+     * de Velocidad II y Regeneración I al propio Bardo y a todos los miembros de su facción
+     * dentro de un radio de 15 bloques. La tarea se ejecuta de forma asíncrona y sólo aplica
+     * los efectos en el hilo principal de Bukkit.</p>
+     */
     private void scheduleBardAura() {
         new BukkitRunnable() {
             @Override
@@ -93,6 +128,14 @@ public class ClassListener implements Listener {
         }.runTaskTimerAsynchronously(plugin, 40L, 40L);
     }
 
+    /**
+     * Carga la clase activa del jugador en el caché local cuando se conecta al servidor.
+     *
+     * <p>La carga es asíncrona para no bloquear el hilo principal. Si el jugador no tiene
+     * un kit asignado en su perfil, el caché no se inicializa con ninguna entrada para él.</p>
+     *
+     * @param event evento de conexión del jugador
+     */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent event) {
         kitService.detectKit(event.getPlayer().getUniqueId())
@@ -100,11 +143,28 @@ public class ClassListener implements Listener {
                         playerKitCache.put(event.getPlayer().getUniqueId(), kit)));
     }
 
+    /**
+     * Elimina la clase del jugador del caché local cuando se desconecta.
+     *
+     * <p>Previene fugas de memoria asegurándose de que no permanezcan entradas obsoletas
+     * en el caché de sesión.</p>
+     *
+     * @param event evento de desconexión del jugador
+     */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent event) {
         playerKitCache.remove(event.getPlayer().getUniqueId());
     }
 
+    /**
+     * Detecta cambios de clase cuando el jugador interactúa con su inventario relacionado con cascos.
+     *
+     * <p>Escucha clics en el inventario que puedan afectar la ranura de casco (ranura de armadura
+     * o cualquier movimiento de un ítem de casco). Programa la actualización de clase en el
+     * siguiente tick del servidor para que el cambio de equipo ya esté reflejado en el inventario.</p>
+     *
+     * @param event evento de clic en inventario de Bukkit
+     */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player)) return;
@@ -121,6 +181,14 @@ public class ClassListener implements Listener {
         plugin.getServer().getScheduler().runTask(plugin, () -> updateKit(player));
     }
 
+    /**
+     * Aumenta la velocidad de las flechas disparadas por jugadores con clase {@link KitType#ARCHER}.
+     *
+     * <p>Multiplica el vector de velocidad de la flecha por {@code 1.3}, incrementando su alcance
+     * y dificultando esquivarla. Solo afecta a flechas (no otros proyectiles de arco).</p>
+     *
+     * @param event evento de disparo con arco de Bukkit
+     */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onArrowShoot(EntityShootBowEvent event) {
         if (!(event.getEntity() instanceof Player)) return;
@@ -133,6 +201,14 @@ public class ClassListener implements Listener {
         arrow.setVelocity(arrow.getVelocity().multiply(1.3));
     }
 
+    /**
+     * Aplica los efectos pasivos de combate según la clase del jugador atacante.
+     *
+     * <p>Solo procesa eventos en los que tanto el atacante como la víctima son jugadores.
+     * Delega la aplicación concreta de efectos en {@link #applyPassiveEffect(Player, Player, KitType)}.</p>
+     *
+     * @param event evento de daño entre entidades de Bukkit
+     */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onEntityDamage(EntityDamageByEntityEvent event) {
         if (!(event.getDamager() instanceof Player) || !(event.getEntity() instanceof Player)) return;

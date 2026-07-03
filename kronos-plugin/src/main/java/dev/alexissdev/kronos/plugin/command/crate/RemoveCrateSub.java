@@ -14,6 +14,12 @@ import org.bukkit.plugin.Plugin;
 
 import java.util.HashSet;
 
+/**
+ * Sub-comando {@code /crate remove} que elimina el cofre de recompensas ubicado
+ * en el bloque al que está mirando el ejecutor (a un máximo de 5 bloques de distancia).
+ * Tras eliminar el registro de la base de datos, también desregistra el cofre del
+ * listener activo para que deje de procesarse en tiempo real.
+ */
 @Singleton
 public class RemoveCrateSub extends SubCommand {
 
@@ -22,6 +28,14 @@ public class RemoveCrateSub extends SubCommand {
     private final MessagesConfig messages;
     private final Plugin         plugin;
 
+    /**
+     * Construye el sub-comando inyectando sus dependencias mediante Guice.
+     *
+     * @param crateService  servicio para eliminar cofres de la persistencia
+     * @param crateListener listener de cofres, usado para desregistrar el cofre en tiempo real
+     * @param messages      configuración de mensajes localizados
+     * @param plugin        instancia del plugin, usada para programar tareas en el hilo principal
+     */
     @Inject
     public RemoveCrateSub(CrateService crateService, CrateListener crateListener,
                           MessagesConfig messages, Plugin plugin) {
@@ -31,8 +45,17 @@ public class RemoveCrateSub extends SubCommand {
         this.plugin        = plugin;
     }
 
+    /** @return el nombre del sub-comando: {@code "remove"} */
     @Override public String name() { return "remove"; }
 
+    /**
+     * Obtiene el bloque que el jugador tiene en la mira (máx. 5 bloques),
+     * elimina el cofre registrado en esa posición y lo desregistra del listener.
+     * En caso de error, notifica al ejecutor con el mensaje de error correspondiente.
+     *
+     * @param sender ejecutor del comando; debe ser un {@link org.bukkit.entity.Player}
+     * @param args   argumentos adicionales (no utilizados por este sub-comando)
+     */
     @Override
     public void execute(CommandSender sender, String[] args) {
         Player player = requirePlayer(sender);

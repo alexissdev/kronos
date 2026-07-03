@@ -21,6 +21,21 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+/**
+ * Implementación MongoDB del repositorio de facciones.
+ *
+ * <p>Persiste y recupera instancias de {@link Faction} en la colección
+ * {@value #COLLECTION} de la base de datos MongoDB del plugin. Todas las
+ * operaciones se ejecutan de forma asíncrona en un pool de hilos dedicado
+ * para no bloquear el hilo principal del servidor Spigot.
+ *
+ * <p>La serialización entre {@link Faction} y {@link Document} (BSON) se
+ * realiza mediante los métodos privados {@link #toFaction(Document)} y
+ * {@link #toDocument(Faction)}.
+ *
+ * <p>Registrada como {@link Singleton} en el contenedor Guice a través de
+ * {@link dev.alexissdev.kronos.factions.FactionsModule}.
+ */
 @Singleton
 public class MongoFactionRepository implements FactionRepository {
 
@@ -29,6 +44,11 @@ public class MongoFactionRepository implements FactionRepository {
     private final MongoCollection<Document> collection;
     private final Executor executor;
 
+    /**
+     * Construye el repositorio obteniendo la colección MongoDB desde la fábrica de conexiones.
+     *
+     * @param factory fábrica que provee la conexión y la base de datos MongoDB del plugin
+     */
     @Inject
     public MongoFactionRepository(MongoConnectionFactory factory) {
         this.collection = factory.getDatabase().getCollection(COLLECTION);
@@ -101,6 +121,15 @@ public class MongoFactionRepository implements FactionRepository {
                 () -> collection.deleteOne(Filters.eq("_id", id)), executor);
     }
 
+    /**
+     * Deserializa un documento BSON de MongoDB a una instancia de {@link Faction}.
+     *
+     * <p>Maneja valores nulos o malformados con valores por defecto seguros para
+     * garantizar que una corrupción parcial del documento no impida cargar la facción.
+     *
+     * @param doc documento BSON recuperado de la colección {@value #COLLECTION}
+     * @return instancia de {@link Faction} reconstituida a partir del documento
+     */
     private Faction toFaction(Document doc) {
         Map<UUID, FactionMember> members = new LinkedHashMap<>();
         for (Document m : doc.getList("members", Document.class, Collections.emptyList())) {
@@ -162,6 +191,16 @@ public class MongoFactionRepository implements FactionRepository {
         return faction;
     }
 
+    /**
+     * Serializa una instancia de {@link Faction} a un documento BSON listo para
+     * ser almacenado en MongoDB.
+     *
+     * <p>El campo {@code home} se serializa como sub-documento anidado, o como
+     * {@code null} si la facción no tiene hogar configurado.
+     *
+     * @param f instancia de {@link Faction} a serializar
+     * @return documento BSON con todos los campos de la facción
+     */
     private Document toDocument(Faction f) {
         List<Document> membersDoc = new ArrayList<>();
         for (FactionMember m : f.getMembers().values()) {

@@ -10,16 +10,63 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * Componente responsable de construir la lista de líneas que se mostrarán en el
+ * marcador lateral (sidebar) de cada jugador durante un tick del servidor.
+ * <p>
+ * Recibe un {@link PlayerBoardData} con el snapshot actual del jugador y la colección
+ * de {@link KothEntry} activos, y produce una lista de cadenas de texto formateadas
+ * con colores de Minecraft. El resultado es consumido por {@link PlayerBoard#render(java.util.List)}
+ * para actualizar el marcador sin parpadeo.
+ * </p>
+ * <p>
+ * El contenido del marcador se construye en este orden:
+ * </p>
+ * <ol>
+ *   <li>Separador superior</li>
+ *   <li>Facción y DTK (o mensaje de "sin facción")</li>
+ *   <li>Kills, deaths y balance económico</li>
+ *   <li>Información de KOTHs activos (nombre, coordenadas, tiempo de captura)</li>
+ *   <li>Timers individuales activos del jugador (combate, PvP, enderpearl, etc.)</li>
+ *   <li>Contadores globales SOTW/EOTW si están activos</li>
+ *   <li>Separador y pie de página</li>
+ * </ol>
+ * <p>
+ * Todas las plantillas de texto se obtienen de {@link dev.alexissdev.kronos.common.config.MessagesConfig},
+ * lo que permite personalizar el formato del scoreboard sin modificar el código fuente.
+ * </p>
+ */
 @Singleton
 final class ScoreboardRenderer {
 
     private final MessagesConfig messages;
 
+    /**
+     * Construye el renderer inyectando la configuración de mensajes del plugin.
+     *
+     * @param messages configuración de mensajes y plantillas de texto usadas para
+     *                 formatear las líneas del marcador lateral
+     */
     @Inject
     ScoreboardRenderer(MessagesConfig messages) {
         this.messages = messages;
     }
 
+    /**
+     * Genera la lista de líneas del marcador lateral para el jugador en su estado actual.
+     * <p>
+     * Las líneas se construyen de forma dinámica: las secciones de KOTH y timers solo
+     * aparecen si hay datos relevantes, evitando mostrar separadores vacíos. Cada cadena
+     * puede contener códigos de color de Minecraft ({@code §}).
+     * </p>
+     *
+     * @param player jugador propietario del marcador (no se utiliza actualmente, pero
+     *               se pasa por extensibilidad futura para permisos o contexto específico)
+     * @param data   snapshot mutable con las estadísticas y timers del jugador para este tick
+     * @param koths  colección de KOTHs activos en el servidor en el momento del renderizado
+     * @return lista de cadenas de texto formateadas, en orden descendente de visualización;
+     *         el primer elemento aparece en la parte superior del marcador lateral
+     */
     List<String> render(Player player, PlayerBoardData data, Collection<KothEntry> koths) {
         List<String> lines = new ArrayList<>();
         String sep = messages.get("scoreboard.separator");

@@ -19,6 +19,17 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+/**
+ * Implementación de {@link CrateLocationRepository} que persiste las ubicaciones
+ * de crates en la colección {@code crate_locations} de MongoDB.
+ *
+ * <p>Cada crate se almacena como un documento BSON con su ID como clave primaria,
+ * junto a las coordenadas del mundo y el tipo. Las búsquedas por coordenadas
+ * combinan filtros sobre los campos {@code world}, {@code x}, {@code y} y {@code z}.</p>
+ *
+ * <p>Todas las operaciones se ejecutan de forma asíncrona en un pool de hilos dedicado
+ * para no bloquear el hilo principal del servidor Bukkit.</p>
+ */
 @Singleton
 public class MongoCrateLocationRepository implements CrateLocationRepository {
 
@@ -27,12 +38,23 @@ public class MongoCrateLocationRepository implements CrateLocationRepository {
     private final MongoCollection<Document> collection;
     private final Executor executor;
 
+    /**
+     * Crea el repositorio obteniendo la colección de MongoDB a través de la fábrica de conexiones.
+     *
+     * @param factory fábrica que provee la conexión y la base de datos de MongoDB
+     */
     @Inject
     public MongoCrateLocationRepository(MongoConnectionFactory factory) {
         this.collection = factory.getDatabase().getCollection(COLLECTION);
         this.executor   = Executors.newCachedThreadPool();
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Aplica un filtro compuesto sobre los cuatro campos de coordenadas
+     * ({@code world}, {@code x}, {@code y}, {@code z}) para localizar el crate.</p>
+     */
     @Override
     public CompletableFuture<Optional<CrateLocation>> findByLocation(String world, int x, int y, int z) {
         return CompletableFuture.supplyAsync(() -> {
@@ -47,6 +69,12 @@ public class MongoCrateLocationRepository implements CrateLocationRepository {
         }, executor);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Recorre todos los documentos de la colección y los convierte en entidades
+     * {@link CrateLocation}. Se usa al iniciar el servidor para pre-cargar los crates.</p>
+     */
     @Override
     public CompletableFuture<List<CrateLocation>> findAll() {
         return CompletableFuture.supplyAsync(() -> {
@@ -56,6 +84,12 @@ public class MongoCrateLocationRepository implements CrateLocationRepository {
         }, executor);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Realiza un upsert usando el ID del crate como clave primaria ({@code _id}).
+     * Si ya existe un crate con ese ID, es reemplazado; si no, se inserta.</p>
+     */
     @Override
     public CompletableFuture<CrateLocation> save(CrateLocation location) {
         return CompletableFuture.supplyAsync(() -> {
@@ -67,12 +101,25 @@ public class MongoCrateLocationRepository implements CrateLocationRepository {
         }, executor);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Elimina el documento de la colección usando el ID como filtro.</p>
+     */
     @Override
     public CompletableFuture<Void> delete(String id) {
         return CompletableFuture.runAsync(
                 () -> collection.deleteOne(Filters.eq("_id", id)), executor);
     }
 
+    /**
+     * Convierte un documento BSON de MongoDB en una entidad {@link CrateLocation}.
+     * Si el campo {@code type} contiene un valor desconocido, se usa {@link CrateType#KOTH}
+     * como valor de respaldo.
+     *
+     * @param doc documento BSON de la colección {@code crate_locations}
+     * @return entidad {@link CrateLocation} con los datos del documento
+     */
     private CrateLocation toLocation(Document doc) {
         CrateType type = CrateType.KOTH;
         try { type = CrateType.valueOf(doc.getString("type")); } catch (Exception ignored) {}
@@ -85,6 +132,12 @@ public class MongoCrateLocationRepository implements CrateLocationRepository {
                 type);
     }
 
+    /**
+     * Convierte una entidad {@link CrateLocation} en un documento BSON apto para MongoDB.
+     *
+     * @param loc entidad {@link CrateLocation} a serializar
+     * @return documento BSON con todos los campos de la ubicación del crate
+     */
     private Document toDocument(CrateLocation loc) {
         return new Document()
                 .append("_id",   loc.getId())

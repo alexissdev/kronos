@@ -18,6 +18,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Sub-comando {@code /crate set <tipo>} que registra el bloque al que está
+ * mirando el ejecutor como un cofre de recompensas del tipo especificado.
+ * Persiste la ubicación en la base de datos y la registra en el listener activo
+ * para que el cofre comience a procesarse inmediatamente.
+ */
 @Singleton
 public class SetCrateSub extends SubCommand {
 
@@ -26,6 +32,14 @@ public class SetCrateSub extends SubCommand {
     private final MessagesConfig messages;
     private final Plugin         plugin;
 
+    /**
+     * Construye el sub-comando inyectando sus dependencias mediante Guice.
+     *
+     * @param crateService  servicio para persistir la nueva ubicación del cofre
+     * @param crateListener listener de cofres, usado para registrar el cofre en tiempo real
+     * @param messages      configuración de mensajes localizados
+     * @param plugin        instancia del plugin, usada para programar tareas en el hilo principal
+     */
     @Inject
     public SetCrateSub(CrateService crateService, CrateListener crateListener,
                        MessagesConfig messages, Plugin plugin) {
@@ -35,8 +49,17 @@ public class SetCrateSub extends SubCommand {
         this.plugin        = plugin;
     }
 
+    /** @return el nombre del sub-comando: {@code "set"} */
     @Override public String name() { return "set"; }
 
+    /**
+     * Proporciona sugerencias de autocompletado con los valores del enum
+     * {@link dev.alexissdev.kronos.common.domain.CrateType} para el argumento de tipo.
+     *
+     * @param sender ejecutor del comando
+     * @param args   argumentos escritos hasta el momento
+     * @return lista de tipos de crate que coinciden con el prefijo del segundo argumento
+     */
     @Override
     public List<String> tabComplete(CommandSender sender, String[] args) {
         return args.length == 2
@@ -44,6 +67,15 @@ public class SetCrateSub extends SubCommand {
                 : List.of();
     }
 
+    /**
+     * Valida el tipo de crate proporcionado, obtiene el bloque en la mira del ejecutor
+     * y lo persiste como cofre de recompensas del tipo indicado. En caso de éxito
+     * registra el cofre en el listener activo y notifica al ejecutor con las coordenadas.
+     *
+     * @param sender ejecutor del comando; debe ser un {@link org.bukkit.entity.Player}
+     * @param args   argumentos; {@code args[0]} es el literal {@code "set"},
+     *               {@code args[1]} es el nombre del tipo de crate
+     */
     @Override
     public void execute(CommandSender sender, String[] args) {
         Player player = requirePlayer(sender);

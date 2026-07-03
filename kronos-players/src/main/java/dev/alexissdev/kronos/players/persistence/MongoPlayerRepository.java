@@ -17,6 +17,17 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+/**
+ * Implementación de {@link PlayerRepository} que persiste perfiles de jugadores
+ * en la colección {@code players} de MongoDB.
+ *
+ * <p>Cada jugador se almacena como un documento BSON usando su UUID como clave primaria
+ * ({@code _id}). Las operaciones de lectura y escritura se ejecutan en un pool de hilos
+ * dedicado para evitar bloquear el hilo principal del servidor Bukkit.</p>
+ *
+ * <p>La operación de guardado utiliza {@code upsert} para insertar o reemplazar el
+ * documento completo, garantizando consistencia sin necesidad de operaciones parciales.</p>
+ */
 @Singleton
 public class MongoPlayerRepository implements PlayerRepository {
 
@@ -25,12 +36,24 @@ public class MongoPlayerRepository implements PlayerRepository {
     private final MongoCollection<Document> collection;
     private final Executor executor;
 
+    /**
+     * Crea el repositorio obteniendo la colección de MongoDB a través de la fábrica de conexiones.
+     * Inicializa un pool de hilos en caché para ejecutar las operaciones de forma asíncrona.
+     *
+     * @param factory fábrica que provee la conexión y la base de datos de MongoDB
+     */
     @Inject
     public MongoPlayerRepository(MongoConnectionFactory factory) {
         this.collection = factory.getDatabase().getCollection(COLLECTION);
         this.executor = Executors.newCachedThreadPool();
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Busca el documento en MongoDB usando el UUID como filtro sobre el campo {@code _id}.
+     * La operación se ejecuta de forma asíncrona en el pool de hilos del repositorio.</p>
+     */
     @Override
     public CompletableFuture<Optional<HCFPlayer>> findByUuid(UUID uuid) {
         return CompletableFuture.supplyAsync(() -> {
@@ -39,6 +62,12 @@ public class MongoPlayerRepository implements PlayerRepository {
         }, executor);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Realiza un upsert del documento completo del jugador. Si ya existe un documento
+     * con el mismo {@code _id}, es reemplazado en su totalidad; si no existe, se inserta.</p>
+     */
     @Override
     public CompletableFuture<HCFPlayer> save(HCFPlayer player) {
         return CompletableFuture.supplyAsync(() -> {
@@ -51,6 +80,14 @@ public class MongoPlayerRepository implements PlayerRepository {
         }, executor);
     }
 
+    /**
+     * Convierte un documento BSON de MongoDB en una entidad {@link HCFPlayer}.
+     * Si el campo {@code activeKit} contiene un valor desconocido, se usa {@link KitType#DIAMOND}
+     * como valor de respaldo para evitar errores de deserialización.
+     *
+     * @param doc documento BSON obtenido de la colección de MongoDB
+     * @return entidad {@link HCFPlayer} con los datos del documento
+     */
     private HCFPlayer toPlayer(Document doc) {
         KitType kit = KitType.DIAMOND;
         String kitStr = doc.getString("activeKit");
@@ -70,6 +107,13 @@ public class MongoPlayerRepository implements PlayerRepository {
         );
     }
 
+    /**
+     * Convierte una entidad {@link HCFPlayer} en un documento BSON apto para MongoDB.
+     * El UUID se serializa como {@code String} en el campo {@code _id}.
+     *
+     * @param p entidad {@link HCFPlayer} a serializar
+     * @return documento BSON con todos los campos del jugador
+     */
     private Document toDocument(HCFPlayer p) {
         return new Document()
                 .append("_id", p.getUuid().toString())

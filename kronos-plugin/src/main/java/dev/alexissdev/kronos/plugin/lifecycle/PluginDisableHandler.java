@@ -8,6 +8,13 @@ import dev.alexissdev.kronos.koth.KothApplicationService;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
+/**
+ * Manejador dedicado a la lógica de apagado del plugin KronosHCF.
+ *
+ * <p>Separa la responsabilidad de {@code onDisable()} de la clase principal {@link dev.alexissdev.kronos.plugin.HCFPlugin}
+ * hacia esta clase inyectable, facilitando las pruebas y el mantenimiento. Se encarga de
+ * desactivar todos los KOTHs activos y de cerrar ordenadamente las conexiones a MongoDB y Redis.
+ */
 @Singleton
 public class PluginDisableHandler {
 
@@ -16,6 +23,14 @@ public class PluginDisableHandler {
     private final KothApplicationService kothService;
     private final JavaPlugin plugin;
 
+    /**
+     * Crea una nueva instancia del manejador de apagado con todas sus dependencias inyectadas.
+     *
+     * @param mongoFactory fábrica de conexión a MongoDB que debe cerrarse al apagar el plugin
+     * @param redisFactory fábrica de conexión a Redis que debe cerrarse al apagar el plugin
+     * @param kothService  servicio de aplicación de KOTH usado para desactivar eventos activos
+     * @param plugin       instancia del plugin principal, utilizada para el logger
+     */
     @Inject
     public PluginDisableHandler(MongoConnectionFactory mongoFactory,
                                 RedisConnectionFactory redisFactory,
@@ -27,6 +42,19 @@ public class PluginDisableHandler {
         this.plugin       = plugin;
     }
 
+    /**
+     * Ejecuta el proceso de apagado ordenado del plugin.
+     *
+     * <p>Realiza las siguientes operaciones en orden:
+     * <ol>
+     *   <li>Desregistra todos los servicios del plugin del {@code ServicesManager} de Bukkit.</li>
+     *   <li>Desactiva todos los KOTHs activos de forma sincrónica (bloqueante).</li>
+     *   <li>Cierra la conexión a MongoDB.</li>
+     *   <li>Cierra la conexión a Redis.</li>
+     * </ol>
+     * Cada paso se ejecuta dentro de un bloque {@code try-catch} individual para que un fallo
+     * en uno no impida la ejecución de los siguientes.
+     */
     public void disable() {
         Bukkit.getServicesManager().unregisterAll(plugin);
 

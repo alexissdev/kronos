@@ -30,6 +30,24 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Listener central que gestiona toda la mecánica de los eventos KOTH (King of the Hill).
+ *
+ * <p>Un KOTH es una zona especial del mapa donde los jugadores compiten por capturar un punto
+ * de control permaneciendo dentro de él durante el tiempo configurado. Este listener se encarga de:
+ * <ul>
+ *   <li>Mantener cachés en memoria de todas las zonas KOTH registradas y de las activas en curso.</li>
+ *   <li>Detectar cuándo un jugador entra o sale de la zona exterior de un KOTH y enviarle mensajes.</li>
+ *   <li>Detectar cuándo un jugador entra en la zona de captura de un KOTH activo e iniciar su progreso.</li>
+ *   <li>Ejecutar una tarea asíncrona que verifica el progreso de captura cada segundo y confirma
+ *       la captura cuando se cumple el tiempo requerido.</li>
+ *   <li>Reaccionar a eventos de dominio ({@link com.google.common.eventbus.EventBus}) para actualizar
+ *       las cachés cuando un KOTH inicia, es capturado, termina o es eliminado.</li>
+ * </ul>
+ *
+ * <p>Al ser capturado, el jugador recibe una llave de crate de tipo KOTH
+ * ({@link dev.alexissdev.kronos.common.domain.CrateType#KOTH}).
+ */
 @Singleton
 public class KothListener implements Listener {
 
@@ -38,18 +56,30 @@ public class KothListener implements Listener {
     private final MessagesConfig messages;
     private final ScoreboardManager scoreboardManager;
 
-    // All registered KOTHs — used for zone enter/leave messages regardless of active state
+    /** Caché de todas las zonas KOTH registradas, usada para mensajes de entrada/salida. */
     private final Map<String, KothZone> allKothCache    = new ConcurrentHashMap<>();
-    // Only active KOTHs — used for capture logic
+    /** Caché únicamente de las zonas KOTH activas, usada para la lógica de captura. */
     private final Map<String, KothZone> activeKothCache = new ConcurrentHashMap<>();
 
-    // Per-player outer zone tracking (for enter/leave messages)
+    /** Zona exterior en la que se encuentra actualmente cada jugador ({@code null} si no está en ninguna). */
     private final Map<UUID, String> playerOuterZone = new ConcurrentHashMap<>();
 
-    // Per-player capture state
+    /** Nombre del KOTH que está capturando actualmente cada jugador. */
     private final Map<UUID, String> capturingKoth = new ConcurrentHashMap<>();
+    /** Instante en milisegundos en que cada jugador comenzó a capturar. */
     private final Map<UUID, Long>   captureStart  = new ConcurrentHashMap<>();
 
+    /**
+     * Crea el listener, lo registra en el {@link com.google.common.eventbus.EventBus}, carga
+     * todas las zonas KOTH desde la base de datos en la caché y arranca la tarea de verificación
+     * de captura.
+     *
+     * @param kothService       servicio de dominio de KOTH para consultar zonas y registrar capturas
+     * @param plugin            instancia del plugin principal para programar tareas
+     * @param eventBus          bus de eventos de Guava para recibir eventos de dominio de KOTH
+     * @param messages          configuración de mensajes localizada
+     * @param scoreboardManager gestor del scoreboard para actualizar el progreso de captura
+     */
     @Inject
     public KothListener(KothService kothService, Plugin plugin, EventBus eventBus,
                         MessagesConfig messages, ScoreboardManager scoreboardManager) {
@@ -71,6 +101,13 @@ public class KothListener implements Listener {
 
     // ── Domain events → update caches ─────────────────────────────────────
 
+    /**
+     * Actualiza la caché cuando un KOTH inicia, lo agrega a la caché de activos,
+     * publica el evento de Bukkit {@link dev.alexissdev.kronos.api.event.KothStartEvent}
+     * y emite un broadcast si el evento no es cancelado.
+     *
+     * @param event evento de dominio emitido cuando un KOTH comienza a estar activo
+     */
     @Subscribe
     public void onKothStarted(KothStartedDomainEvent event) {
         KothZone zone = event.getZone();
@@ -87,6 +124,14 @@ public class KothListener implements Listener {
         });
     }
 
+    /**
+     * Maneja la captura exitosa de un KOTH: elimina la zona de la caché de activos, expulsa
+     * a todos los jugadores en proceso de captura, publica el evento de Bukkit
+     * {@link dev.alexissdev.kronos.api.event.KothCaptureEvent}, emite un broadcast
+     * y entrega una llave de crate KOTH al jugador capturador.
+     *
+     * @param event evento de dominio que incluye el nombre del KOTH y el UUID del capturador
+     */
     @Subscribe
     public void onKothCaptured(KothCapturedDomainEvent event) {
         activeKothCache.remove(event.getKothName());
@@ -107,12 +152,24 @@ public class KothListener implements Listener {
         });
     }
 
+    /**
+     * Maneja la finalización de un KOTH sin captura exitosa: elimina la zona de la caché de
+     * activos y cancela el estado de captura de todos los jugadores que estaban en proceso.
+     *
+     * @param event evento de dominio emitido cuando un KOTH termina sin que nadie lo haya capturado
+     */
     @Subscribe
     public void onKothEnded(KothEndedDomainEvent event) {
         activeKothCache.remove(event.getKothName());
         evictCapturingPlayers(event.getKothName());
     }
 
+    /**
+     * Elimina un KOTH de todas las cachés cuando es borrado del sistema, cancelando también el
+     * estado de captura de los jugadores afectados y limpiando el rastreo de zona exterior.
+     *
+     * @param event evento de dominio emitido cuando un administrador elimina un KOTH del sistema
+     */
     @Subscribe
     public void onKothDeleted(KothDeletedDomainEvent event) {
         allKothCache.remove(event.getKothName());
@@ -123,6 +180,20 @@ public class KothListener implements Listener {
 
     // ── Player movement ───────────────────────────────────────────────────
 
+    /**
+     * Rastrea el movimiento del jugador para detectar entradas y salidas de zonas KOTH y
+     * actualizar el estado de captura.
+     *
+     * <p>Solo se procesa si el jugador ha cruzado al menos un bloque completo (no sub-píxel)
+     * para optimizar el rendimiento. La lógica se divide en dos capas:
+     * <ol>
+     *   <li><strong>Zona exterior</strong> (todos los KOTHs): envía mensajes de entrada/salida.</li>
+     *   <li><strong>Zona de captura</strong> (solo KOTHs activos): inicia o cancela el proceso
+     *       de captura del jugador.</li>
+     * </ol>
+     *
+     * @param event evento de movimiento del jugador
+     */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerMove(PlayerMoveEvent event) {
         if (!hasCrossedBlock(event)) return;
@@ -179,6 +250,14 @@ public class KothListener implements Listener {
         }
     }
 
+    /**
+     * Limpia todos los datos de rastreo de KOTH del jugador cuando se desconecta.
+     *
+     * <p>Elimina su zona exterior registrada, su progreso de captura y actualiza el scoreboard
+     * para evitar fugas de memoria y estados inconsistentes.
+     *
+     * @param event evento de desconexión del jugador
+     */
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         UUID uuid = event.getPlayer().getUniqueId();

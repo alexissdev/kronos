@@ -11,6 +11,11 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
+/**
+ * Sub-comando {@code /crate list} que muestra al ejecutor la lista de todos
+ * los cofres de recompensas (crates) registrados en el servidor, incluyendo
+ * su tipo, mundo y coordenadas. La consulta se realiza de forma asíncrona.
+ */
 @Singleton
 public class ListCrateSub extends SubCommand {
 
@@ -18,6 +23,13 @@ public class ListCrateSub extends SubCommand {
     private final MessagesConfig messages;
     private final Plugin         plugin;
 
+    /**
+     * Construye el sub-comando inyectando sus dependencias mediante Guice.
+     *
+     * @param crateService servicio para consultar los cofres registrados
+     * @param messages     configuración de mensajes localizados
+     * @param plugin       instancia del plugin, usada para programar tareas en el hilo principal
+     */
     @Inject
     public ListCrateSub(CrateService crateService, MessagesConfig messages, Plugin plugin) {
         this.crateService = crateService;
@@ -25,8 +37,17 @@ public class ListCrateSub extends SubCommand {
         this.plugin       = plugin;
     }
 
+    /** @return el nombre del sub-comando: {@code "list"} */
     @Override public String name() { return "list"; }
 
+    /**
+     * Obtiene de forma asíncrona todos los cofres registrados y los imprime
+     * al ejecutor en el hilo principal. Si no hay cofres registrados, envía
+     * el mensaje correspondiente.
+     *
+     * @param sender ejecutor del comando; debe ser un {@link org.bukkit.entity.Player}
+     * @param args   argumentos adicionales (no utilizados por este sub-comando)
+     */
     @Override
     public void execute(CommandSender sender, String[] args) {
         Player player = requirePlayer(sender);

@@ -18,6 +18,19 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+/**
+ * Implementación MongoDB del repositorio de zonas KOTH.
+ *
+ * <p>Utiliza la colección {@code "koths"} de la base de datos MongoDB del servidor para
+ * almacenar y recuperar entidades {@link KothZone}. El campo {@code _id} de cada documento
+ * corresponde al nombre único del KOTH.</p>
+ *
+ * <p>Todas las operaciones se ejecutan de forma asíncrona en un {@code CachedThreadPool}
+ * dedicado, garantizando que el hilo principal de Bukkit nunca sea bloqueado por I/O de red.</p>
+ *
+ * <p>Se maneja compatibilidad con documentos legados que no tienen campos de zona de captura:
+ * en ese caso se usan las coordenadas del claim como fallback.</p>
+ */
 @Singleton
 public class MongoKothRepository implements KothRepository {
 
@@ -26,12 +39,18 @@ public class MongoKothRepository implements KothRepository {
     private final MongoCollection<Document> collection;
     private final Executor executor;
 
+    /**
+     * Constructor inyectado por Guice que obtiene la colección MongoDB a través de la fábrica.
+     *
+     * @param factory fábrica de conexiones MongoDB del módulo común de Kronos
+     */
     @Inject
     public MongoKothRepository(MongoConnectionFactory factory) {
         this.collection = factory.getDatabase().getCollection(COLLECTION);
         this.executor   = Executors.newCachedThreadPool();
     }
 
+    /** {@inheritDoc} */
     @Override
     public CompletableFuture<Optional<KothZone>> findByName(String name) {
         return CompletableFuture.supplyAsync(() -> {
@@ -40,6 +59,7 @@ public class MongoKothRepository implements KothRepository {
         }, executor);
     }
 
+    /** {@inheritDoc} */
     @Override
     public CompletableFuture<List<KothZone>> findAll() {
         return CompletableFuture.supplyAsync(() -> {
@@ -49,6 +69,7 @@ public class MongoKothRepository implements KothRepository {
         }, executor);
     }
 
+    /** {@inheritDoc} */
     @Override
     public CompletableFuture<KothZone> save(KothZone zone) {
         return CompletableFuture.supplyAsync(() -> {
@@ -60,6 +81,7 @@ public class MongoKothRepository implements KothRepository {
         }, executor);
     }
 
+    /** {@inheritDoc} */
     @Override
     public CompletableFuture<Void> delete(String name) {
         return CompletableFuture.runAsync(

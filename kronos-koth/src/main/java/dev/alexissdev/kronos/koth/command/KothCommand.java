@@ -14,6 +14,23 @@ import org.bukkit.plugin.Plugin;
 
 import java.util.List;
 
+/**
+ * Comando administrativo {@code /koth} para la gestión de eventos KOTH en el servidor HCF.
+ *
+ * <p>Permite a los administradores (permiso {@code hcf.koth.admin}) realizar las siguientes
+ * operaciones sobre las zonas KOTH registradas:
+ * <ul>
+ *   <li>{@code /koth start <nombre>} — inicia un evento KOTH existente.</li>
+ *   <li>{@code /koth end <nombre>} — finaliza un evento KOTH activo sin captura.</li>
+ *   <li>{@code /koth list} — muestra la lista de todos los KOTHs con su estado.</li>
+ *   <li>{@code /koth create <nombre> <tiempoCaptura(s)>} — inicia una sesión de creación
+ *       interactiva y entrega la varita de selección al administrador.</li>
+ *   <li>{@code /koth delete <nombre>} — elimina permanentemente un KOTH.</li>
+ * </ul>
+ *
+ * <p>Todas las operaciones de estado son asíncronas; la retroalimentación al emisor del
+ * comando se envía de vuelta en el hilo principal de Bukkit mediante el scheduler.</p>
+ */
 @Singleton
 public class KothCommand extends BaseCommand {
 
@@ -22,6 +39,14 @@ public class KothCommand extends BaseCommand {
     private final Plugin plugin;
     private final MessagesConfig messages;
 
+    /**
+     * Constructor inyectado por Guice con todas las dependencias del comando.
+     *
+     * @param kothService     servicio de negocio para operar sobre zonas KOTH
+     * @param creationService servicio que gestiona las sesiones de creación interactiva
+     * @param plugin          instancia del plugin de Bukkit, usada para el scheduler
+     * @param messages        configuración de mensajes del plugin para internacionalización
+     */
     @Inject
     public KothCommand(KothService kothService,
                        KothCreationService creationService,
@@ -34,6 +59,16 @@ public class KothCommand extends BaseCommand {
         this.messages        = messages;
     }
 
+    /**
+     * Provee sugerencias de autocompletado para el comando {@code /koth}.
+     * En el primer argumento sugiere los subcomandos disponibles; en el segundo argumento,
+     * para {@code start}, {@code end} y {@code delete}, sugiere los nombres de los KOTHs
+     * registrados filtrados por el prefijo ya escrito.
+     *
+     * @param sender remitente del comando que solicita el autocompletado
+     * @param args   argumentos parciales ya escritos por el remitente
+     * @return lista de sugerencias de autocompletado según el contexto actual
+     */
     @Override
     protected List<String> tabComplete(CommandSender sender, String[] args) {
         if (args.length == 1) return subcommands(args, "start", "end", "list", "create", "delete");
@@ -50,6 +85,14 @@ public class KothCommand extends BaseCommand {
         return java.util.Collections.emptyList();
     }
 
+    /**
+     * Despacha la ejecución del comando {@code /koth} al sub-manejador correspondiente
+     * según el primer argumento recibido. Si no se proveen argumentos o el subcomando
+     * no es reconocido, muestra el menú de ayuda.
+     *
+     * @param sender remitente del comando (jugador u consola)
+     * @param args   argumentos del comando; {@code args[0]} determina el subcomando
+     */
     @Override
     protected void execute(CommandSender sender, String[] args) {
         if (args.length == 0) { sendHelp(sender); return; }

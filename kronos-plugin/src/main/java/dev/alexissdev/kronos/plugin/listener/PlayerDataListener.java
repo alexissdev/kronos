@@ -21,6 +21,22 @@ import org.bukkit.plugin.Plugin;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Listener que gestiona la carga y persistencia de datos de los jugadores en el ciclo
+ * de conexión/desconexión del servidor.
+ *
+ * <p>Al conectarse un jugador, este listener coordina de forma asíncrona y secuencial:
+ * <ol>
+ *   <li>La carga o creación del perfil {@link dev.alexissdev.kronos.players.domain.HCFPlayer}.</li>
+ *   <li>La carga de todos sus timers activos en la caché del {@link dev.alexissdev.kronos.timers.TimerApplicationService}.</li>
+ *   <li>La asignación automática del PvP timer para jugadores que se unen por primera vez.</li>
+ *   <li>La regeneración de una vida si ha transcurrido el intervalo configurado.</li>
+ *   <li>La ejecución del timer de logout (kill on reconnect) si estaba activo al desconectarse.</li>
+ * </ol>
+ *
+ * <p>Al desconectarse, si el jugador tiene un combat tag activo, se inicia un timer de logout
+ * que lo matará si vuelve a conectarse antes de que expire (protección anti-combat-log).
+ */
 @Singleton
 public class PlayerDataListener implements Listener {
 
@@ -35,6 +51,18 @@ public class PlayerDataListener implements Listener {
     private final int maxLives;
     private final long lifeRegenIntervalMs;
 
+    /**
+     * Crea el listener con todas sus dependencias inyectadas, incluyendo parámetros de configuración
+     * anotados con {@code @Named}.
+     *
+     * @param playerService       servicio para cargar y persistir datos de jugadores
+     * @param timerService        servicio de timers para cargar, cancelar e iniciar temporizadores
+     * @param tabListManager      gestor del TabList para actualizarlo al conectarse el jugador
+     * @param plugin              instancia del plugin principal para programar tareas en el scheduler
+     * @param messages            configuración de mensajes localizada
+     * @param maxLives            número máximo de vidas que puede tener un jugador (de {@code config.yml})
+     * @param lifeRegenIntervalMs intervalo en milisegundos para la regeneración automática de vidas
+     */
     @Inject
     public PlayerDataListener(PlayerService playerService,
                               TimerApplicationService timerService,
@@ -52,6 +80,16 @@ public class PlayerDataListener implements Listener {
         this.lifeRegenIntervalMs = lifeRegenIntervalMs;
     }
 
+    /**
+     * Maneja la conexión de un jugador al servidor.
+     *
+     * <p>Actualiza el TabList inmediatamente y, en el siguiente tick del servidor (para garantizar
+     * que el scoreboard ya esté creado), carga el perfil del jugador, sus timers, aplica el
+     * PvP timer de primer ingreso, verifica la regeneración de vidas y ejecuta el kill de logout
+     * si corresponde.
+     *
+     * @param event evento de unión del jugador al servidor
+     */
     @EventHandler(priority = EventPriority.LOWEST)
     public void onJoin(PlayerJoinEvent event) {
         tabListManager.refresh(event.getPlayer());
@@ -113,6 +151,15 @@ public class PlayerDataListener implements Listener {
         }
     }
 
+    /**
+     * Maneja la desconexión de un jugador del servidor.
+     *
+     * <p>Si el jugador tenía un combat tag activo al desconectarse, se inicia un timer de logout
+     * que lo matará automáticamente si vuelve a conectarse antes de que expire (mecanismo anti-combat-log).
+     * Independientemente del estado del combat tag, se limpia la caché de timers del jugador en memoria.
+     *
+     * @param event evento de desconexión del jugador
+     */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent event) {
         UUID uuid = event.getPlayer().getUniqueId();

@@ -17,6 +17,20 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+/**
+ * Listener de Bukkit que intercepta los mensajes de chat de los jugadores y los enruta
+ * al canal correspondiente según el {@link ChatMode} activo del remitente.
+ *
+ * <p>Este listener cancela el evento de chat nativo de Bukkit ({@link org.bukkit.event.player.AsyncPlayerChatEvent})
+ * y gestiona manualmente el envío del mensaje al conjunto correcto de destinatarios:
+ * <ul>
+ *   <li>{@link ChatMode#GLOBAL} — todos los jugadores en línea.</li>
+ *   <li>{@link ChatMode#FACTION} — únicamente los miembros de la facción del remitente.</li>
+ *   <li>{@link ChatMode#ALLY} — los miembros de la facción del remitente y de sus aliadas.</li>
+ * </ul>
+ *
+ * <p>La consulta de la facción se realiza de forma asíncrona para no bloquear el hilo del evento.
+ */
 @Singleton
 public class ChatListener implements Listener {
 
@@ -24,6 +38,13 @@ public class ChatListener implements Listener {
     private final FactionService factionService;
     private final MessagesConfig messages;
 
+    /**
+     * Crea el listener con todas sus dependencias inyectadas por Guice.
+     *
+     * @param chatManager    gestor que mantiene el modo de chat activo de cada jugador
+     * @param factionService servicio para consultar la facción a la que pertenece el jugador
+     * @param messages       configuración de mensajes localizada del plugin
+     */
     @Inject
     public ChatListener(ChatManager chatManager,
                         FactionService factionService,
@@ -33,6 +54,15 @@ public class ChatListener implements Listener {
         this.messages = messages;
     }
 
+    /**
+     * Intercepta el evento de chat asíncrono del jugador y lo redirige al canal correcto.
+     *
+     * <p>El evento se cancela siempre para evitar que Bukkit distribuya el mensaje por defecto.
+     * Acto seguido se consulta la facción del remitente de forma asíncrona y, una vez resuelta,
+     * se envía el mensaje al grupo de destinatarios correspondiente al modo activo.
+     *
+     * @param event evento de chat asíncrono de Bukkit, ya filtrado por prioridad alta
+     */
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onChat(AsyncPlayerChatEvent event) {
         event.setCancelled(true);
@@ -50,6 +80,14 @@ public class ChatListener implements Listener {
         });
     }
 
+    /**
+     * Restablece el modo de chat del jugador a {@link ChatMode#GLOBAL} cuando se desconecta.
+     *
+     * <p>Esto libera la entrada correspondiente del mapa interno de {@link ChatManager} y garantiza
+     * que la próxima vez que el jugador se conecte parta con el modo predeterminado.
+     *
+     * @param event evento de desconexión del jugador
+     */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent event) {
         chatManager.reset(event.getPlayer().getUniqueId());

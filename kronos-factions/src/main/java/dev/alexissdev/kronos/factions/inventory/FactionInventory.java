@@ -16,16 +16,49 @@ import org.bukkit.inventory.meta.SkullMeta;
 
 import java.util.*;
 
+/**
+ * Gestiona la interfaz gráfica (GUI) de facción que se muestra a los jugadores
+ * en un inventario de Bukkit de 54 slots.
+ *
+ * <p>El menú presenta información general de la facción (miembros, kills, DTK, balance)
+ * y muestra a cada miembro representado con su cabeza de jugador, rol y estado de conexión.
+ *
+ * <p>Esta clase opera en dos fases asíncronas:
+ * <ol>
+ *   <li>Consulta la facción del jugador de forma asíncrona mediante {@link FactionService}.</li>
+ *   <li>Construye y abre el inventario en el hilo principal de Bukkit mediante
+ *       {@code Bukkit.getScheduler().runTask(...)}.</li>
+ * </ol>
+ *
+ * <p>Registrada como {@link Singleton} en el contenedor Guice a través de
+ * {@link dev.alexissdev.kronos.factions.FactionsModule}.
+ */
 @Singleton
 public class FactionInventory {
 
     private final FactionService factionService;
 
+    /**
+     * Construye el componente de inventario con el servicio de facciones necesario
+     * para consultar los datos del jugador.
+     *
+     * @param factionService servicio de facciones inyectado por Guice
+     */
     @Inject
     public FactionInventory(FactionService factionService) {
         this.factionService = factionService;
     }
 
+    /**
+     * Abre el menú de facción para el jugador dado.
+     *
+     * <p>Consulta de forma asíncrona la facción a la que pertenece el jugador.
+     * Si el jugador no está en ninguna facción, le envía un mensaje de error
+     * en el hilo principal. De lo contrario, abre el inventario con la información
+     * de su facción.
+     *
+     * @param player jugador al que se le abrirá el menú de facción
+     */
     public void openFactionMenu(Player player) {
         factionService.getByPlayer(player.getUniqueId()).thenAccept(opt -> {
             if (opt.isEmpty()) {
@@ -40,6 +73,15 @@ public class FactionInventory {
         });
     }
 
+    /**
+     * Construye y abre el inventario Bukkit con la información de la facción dada.
+     *
+     * <p>Debe llamarse siempre desde el hilo principal del servidor para evitar
+     * excepciones de concurrencia con la API de Bukkit.
+     *
+     * @param player  jugador al que se abrirá el inventario
+     * @param faction facción cuyos datos se mostrarán en el GUI
+     */
     private void openInventory(Player player, Faction faction) {
         Inventory inv = Bukkit.createInventory(null, 54,
                 ChatColor.DARK_GREEN + "" + ChatColor.BOLD + faction.getName());
@@ -60,6 +102,14 @@ public class FactionInventory {
         player.openInventory(inv);
     }
 
+    /**
+     * Crea el ítem de información general de la facción (slot 0).
+     *
+     * <p>Muestra en el lore el número de miembros, kills totales, DTK restante y balance.
+     *
+     * @param faction facción de la que se extraen los datos
+     * @return ítem de papel con la información de la facción como lore
+     */
     private ItemStack createInfoItem(Faction faction) {
         ItemStack item = new ItemStack(Material.PAPER);
         ItemMeta meta = item.getItemMeta();
@@ -74,6 +124,14 @@ public class FactionInventory {
         return item;
     }
 
+    /**
+     * Crea el ítem decorativo "Ver Top Facciones" ubicado en el slot 8.
+     *
+     * <p>Sirve como acceso rápido visual al ranking de facciones del servidor.
+     * La lógica de click debe manejarse en el listener de inventario correspondiente.
+     *
+     * @return ítem de lingote de oro con el texto de acceso al ranking
+     */
     private ItemStack createTopItem() {
         ItemStack item = new ItemStack(Material.GOLD_INGOT);
         ItemMeta meta = item.getItemMeta();

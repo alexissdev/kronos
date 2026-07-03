@@ -46,18 +46,46 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
+/**
+ * Manejador dedicado a la lógica de arranque del plugin KronosHCF.
+ *
+ * <p>Separa la responsabilidad de {@code onEnable()} de la clase principal
+ * {@link dev.alexissdev.kronos.plugin.HCFPlugin} hacia esta clase inyectable. Se encarga de
+ * registrar todos los comandos y listeners del plugin, exponer la API pública en el
+ * {@code ServicesManager} de Bukkit, precargar cachés y lanzar las tareas recurrentes.
+ */
 @Singleton
 public class PluginEnableHandler {
 
     private final Injector injector;
     private final JavaPlugin plugin;
 
+    /**
+     * Crea el manejador de arranque con sus dependencias inyectadas por Guice.
+     *
+     * @param injector inyector Guice del que se obtienen todas las instancias del plugin
+     * @param plugin   instancia del plugin principal de Bukkit
+     */
     @Inject
     public PluginEnableHandler(Injector injector, JavaPlugin plugin) {
         this.injector = injector;
         this.plugin = plugin;
     }
 
+    /**
+     * Ejecuta el proceso completo de arranque del plugin.
+     *
+     * <p>Realiza en orden:
+     * <ol>
+     *   <li>Registro de comandos con sus tab-completers asociados.</li>
+     *   <li>Registro de todos los listeners de eventos de Bukkit.</li>
+     *   <li>Exposición de {@link HCFApi} en el {@code ServicesManager} de Bukkit.</li>
+     *   <li>Carga de la zona de spawn y los crates desde la base de datos.</li>
+     *   <li>Precarga de la caché de claims.</li>
+     *   <li>Inicio de las tareas programadas de timers y scoreboard.</li>
+     *   <li>Creación del scoreboard para todos los jugadores ya conectados.</li>
+     * </ol>
+     */
     public void enable() {
         registerCommands();
         registerListeners();
@@ -77,6 +105,13 @@ public class PluginEnableHandler {
         plugin.getLogger().info("KronosHCF habilitado correctamente.");
     }
 
+    /**
+     * Registra todos los comandos del plugin en el servidor de Bukkit.
+     *
+     * <p>Cada comando declarado en {@code plugin.yml} recibe su {@link org.bukkit.command.CommandExecutor}.
+     * Si el ejecutor también implementa {@link org.bukkit.command.TabCompleter}, se asigna
+     * automáticamente para ofrecer autocompletado en la consola y en el chat de los jugadores.
+     */
     private void registerCommands() {
         registerCommand("f",       injector.getInstance(FactionCommand.class));
         registerCommand("faction", injector.getInstance(FactionCommand.class));
@@ -95,6 +130,15 @@ public class PluginEnableHandler {
         registerCommand("crate",    injector.getInstance(CrateCommand.class));
     }
 
+    /**
+     * Asocia un ejecutor (y, opcionalmente, un tab-completer) a un comando registrado en {@code plugin.yml}.
+     *
+     * <p>Si el comando no está declarado en {@code plugin.yml}, la operación se omite silenciosamente.
+     *
+     * @param name     nombre del comando tal como aparece en {@code plugin.yml} (p. ej. {@code "f"})
+     * @param executor ejecutor que procesará las invocaciones del comando; si también implementa
+     *                 {@link org.bukkit.command.TabCompleter}, se registra como tal de forma automática
+     */
     private void registerCommand(String name, CommandExecutor executor) {
         PluginCommand cmd = plugin.getCommand(name);
         if (cmd != null) {
@@ -105,6 +149,12 @@ public class PluginEnableHandler {
         }
     }
 
+    /**
+     * Registra todos los listeners de eventos del plugin en el {@code PluginManager} de Bukkit.
+     *
+     * <p>Incluye listeners de chat, deathban, datos de jugador, PvP, claims, clases de HCF,
+     * timers, KOTH, facciones, scoreboard, spawn, crates y el comando stuck.
+     */
     private void registerListeners() {
         PluginManager pm = Bukkit.getPluginManager();
         pm.registerEvents(injector.getInstance(ChatListener.class), plugin);
@@ -124,6 +174,12 @@ public class PluginEnableHandler {
         pm.registerEvents(injector.getInstance(StuckListener.class), plugin);
     }
 
+    /**
+     * Registra la implementación de {@link HCFApi} en el {@code ServicesManager} de Bukkit.
+     *
+     * <p>Esto permite que otros plugins externos consulten la API pública del sistema HCF
+     * mediante {@code Bukkit.getServicesManager().getRegistration(HCFApi.class)}.
+     */
     private void registerApiService() {
         HCFApi apiImpl = injector.getInstance(HCFApiImpl.class);
         Bukkit.getServicesManager().register(HCFApi.class, apiImpl, plugin, ServicePriority.Normal);
