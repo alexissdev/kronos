@@ -15,22 +15,23 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Implementación principal del servicio de aplicación para las clases (kits) de jugadores HCF.
+ * Primary application service implementation for HCF player class (kit) management.
  *
- * <p>Coordina la lógica de negocio relacionada con los kits: detectar el kit activo de un
- * jugador, activar y verificar el cooldown de habilidades, y persistir los cambios de kit.
- * Delega en {@link PlayerRepository} para leer y actualizar perfiles de jugador, y en
- * {@link TimerApplicationService} para gestionar el temporizador de cooldown de habilidades.</p>
+ * <p>Coordinates the business logic related to kits: detecting a player's active kit,
+ * activating and verifying ability cooldowns, and persisting kit changes. Delegates to
+ * {@link PlayerRepository} for reading and updating player profiles, and to
+ * {@link TimerApplicationService} for managing the ability cooldown timer.</p>
  *
- * <p>El cooldown de habilidad está fijado en {@value #CLASS_COOLDOWN_MS} ms (10 segundos)
- * y se gestiona mediante el timer de tipo {@link dev.alexissdev.kronos.timers.domain.TimerType#CLASS_COOLDOWN}.</p>
+ * <p>The ability cooldown is fixed at {@value #CLASS_COOLDOWN_MS} ms (10 seconds) and
+ * is managed through the timer of type
+ * {@link dev.alexissdev.kronos.timers.domain.TimerType#CLASS_COOLDOWN}.</p>
  *
- * <p>Registrada como singleton por Guice a través de {@link ClassesModule}.</p>
+ * <p>Registered as a singleton by Guice through {@link ClassesModule}.</p>
  */
 @Singleton
 public class KitApplicationService implements KitService {
 
-    /** Duración en milisegundos del cooldown aplicado tras activar una habilidad de clase. */
+    /** Duration in milliseconds of the cooldown applied after activating a class ability. */
     private static final long CLASS_COOLDOWN_MS = 10_000L;
 
     private final PlayerRepository playerRepository;
@@ -38,11 +39,11 @@ public class KitApplicationService implements KitService {
     private final TimerApplicationService timerService;
 
     /**
-     * Construye el servicio inyectando sus dependencias.
+     * Constructs the service by injecting its dependencies.
      *
-     * @param playerRepository repositorio de perfiles de jugador para leer y actualizar kits
-     * @param timerRepository  repositorio de temporizadores (inyectado para uso futuro o extensión)
-     * @param timerService     servicio de timers para iniciar y consultar el cooldown de habilidades
+     * @param playerRepository repository of player profiles for reading and updating kits
+     * @param timerRepository  timer repository (injected for future use or extension)
+     * @param timerService     timer service for starting and querying the ability cooldown
      */
     @Inject
     public KitApplicationService(PlayerRepository playerRepository,
@@ -56,7 +57,7 @@ public class KitApplicationService implements KitService {
     /**
      * {@inheritDoc}
      *
-     * <p>Consulta el repositorio de jugadores y extrae el kit activo del perfil almacenado.</p>
+     * <p>Queries the player repository and extracts the active kit from the stored profile.</p>
      */
     @Override
     public CompletableFuture<Optional<KitType>> detectKit(UUID playerUuid) {
@@ -67,9 +68,9 @@ public class KitApplicationService implements KitService {
     /**
      * {@inheritDoc}
      *
-     * <p>Inicia el timer {@code CLASS_COOLDOWN} con una duración de {@value #CLASS_COOLDOWN_MS} ms.
-     * El parámetro {@code kitType} está disponible para extensiones futuras (por ejemplo,
-     * cooldowns distintos por clase), pero actualmente no varía la duración.</p>
+     * <p>Starts the {@code CLASS_COOLDOWN} timer with a duration of {@value #CLASS_COOLDOWN_MS} ms.
+     * The {@code kitType} parameter is available for future extensions (e.g., per-class cooldown
+     * durations) but does not affect the duration at this time.</p>
      */
     @Override
     public CompletableFuture<Void> activateClassAbility(UUID playerUuid, KitType kitType) {
@@ -79,8 +80,8 @@ public class KitApplicationService implements KitService {
     /**
      * {@inheritDoc}
      *
-     * <p>Consulta el servicio de timers para verificar si el timer {@code CLASS_COOLDOWN}
-     * sigue activo para el jugador indicado.</p>
+     * <p>Queries the timer service to check whether the {@code CLASS_COOLDOWN} timer is
+     * still active for the given player.</p>
      */
     @Override
     public CompletableFuture<Boolean> isClassAbilityOnCooldown(UUID playerUuid) {
@@ -90,9 +91,10 @@ public class KitApplicationService implements KitService {
     /**
      * {@inheritDoc}
      *
-     * <p>Recupera el perfil del jugador, actualiza su kit activo en memoria y lo guarda
-     * en el repositorio. Si el jugador no existe, lanza
-     * {@link dev.alexissdev.kronos.players.exception.PlayerNotFoundException}.</p>
+     * <p>Retrieves the player's profile, updates their active kit in memory, and saves it
+     * back to the repository. Throws
+     * {@link dev.alexissdev.kronos.players.exception.PlayerNotFoundException} if the
+     * player has no registered profile.</p>
      */
     @Override
     public CompletableFuture<Void> updateActiveKit(UUID playerUuid, KitType kitType) {

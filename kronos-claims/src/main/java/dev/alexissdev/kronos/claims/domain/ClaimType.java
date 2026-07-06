@@ -1,60 +1,60 @@
 package dev.alexissdev.kronos.claims.domain;
 
 /**
- * Enumeración de los tipos de territorio (claim) disponibles en el sistema HCF.
+ * Enumeration of the territory (claim) types available in the HCF system.
  *
- * <p>Cada valor representa una categoría de zona con reglas de combate y construcción
- * distintas. Los tipos de sistema ({@link #isSystemClaim()}) son administrados por el
- * servidor y no pueden ser reclamados por facciones de jugadores.</p>
+ * <p>Each value represents a zone category with distinct combat and building rules.
+ * System types ({@link #isSystemClaim()}) are administered by the server and cannot
+ * be claimed by player factions.</p>
  */
 public enum ClaimType {
 
-    /** Territorio reclamado por una facción de jugadores. */
+    /** Territory claimed by a player faction. */
     FACTION,
 
-    /** Zona segura donde el PvP está deshabilitado y los jugadores no pueden ser atacados. */
+    /** Safe zone where PvP is disabled and players cannot be attacked. */
     SAFEZONE,
 
-    /** Zona de guerra donde el PvP siempre está activo y las reglas de protección no aplican. */
+    /** War zone where PvP is always active and protection rules do not apply. */
     WARZONE,
 
-    /** Camino administrado por el sistema que separa territorios; protegido contra construcción. */
+    /** System-administered road separating territories; protected against building. */
     ROAD,
 
-    /** Tierra sin reclamar, abierta a todos los jugadores; permite PvP y construcción libre. */
+    /** Unclaimed wilderness open to all players; PvP and free building are allowed. */
     WILDERNESS,
 
-    /** Zona de King of the Hill: territorio de evento con PvP habilitado. */
+    /** King of the Hill zone: an event territory with PvP enabled. */
     KOTH,
 
-    /** Zona de Ciudadela: evento especial de alto valor con PvP habilitado. */
+    /** Citadel zone: a high-value special event area with PvP enabled. */
     CITADEL;
 
     /**
-     * Indica si este tipo de claim es administrado por el sistema del servidor
-     * y no pertenece a ninguna facción de jugadores.
+     * Indicates whether this claim type is administered by the server system
+     * and does not belong to any player faction.
      *
-     * @return {@code true} si el tipo es {@link #SAFEZONE}, {@link #WARZONE},
-     *         {@link #ROAD} o {@link #WILDERNESS}; {@code false} en caso contrario
+     * @return {@code true} if the type is {@link #SAFEZONE}, {@link #WARZONE},
+     *         {@link #ROAD}, or {@link #WILDERNESS}; {@code false} otherwise
      */
     public boolean isSystemClaim() {
         return this == SAFEZONE || this == WARZONE || this == ROAD || this == WILDERNESS;
     }
 
     /**
-     * Indica si el PvP (combate entre jugadores) está permitido dentro de este tipo de zona.
+     * Indicates whether PvP (player-versus-player combat) is permitted within this zone type.
      *
-     * @return {@code true} si el PvP es válido en este tipo de territorio
+     * @return {@code true} if PvP is allowed in this territory type
      */
     public boolean allowsPvp() {
         return this == WARZONE || this == KOTH || this == CITADEL || this == WILDERNESS;
     }
 
     /**
-     * Indica si los bloques dentro de este tipo de territorio están protegidos
-     * contra rotura y colocación por jugadores no autorizados.
+     * Indicates whether blocks within this territory type are protected
+     * against breaking and placing by unauthorized players.
      *
-     * @return {@code true} para todo tipo de zona excepto {@link #WILDERNESS}
+     * @return {@code true} for every zone type except {@link #WILDERNESS}
      */
     public boolean isProtectedFromBuild() {
         return this != WILDERNESS;

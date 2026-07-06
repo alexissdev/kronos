@@ -12,11 +12,10 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * Comando {@code /near} que muestra al jugador la lista de otros jugadores
- * presentes en su mismo mundo dentro de un radio especificado.
- * El radio por defecto es de {@value #DEFAULT_RADIUS} bloques y el máximo
- * permitido es {@value #MAX_RADIUS} bloques. Los resultados se ordenan
- * alfabéticamente e incluyen la distancia de cada jugador al ejecutor.
+ * Command {@code /near} that lists all other players in the executor's world
+ * within a given radius. The default search radius is {@value #DEFAULT_RADIUS}
+ * blocks and the maximum allowed is {@value #MAX_RADIUS} blocks. Results are
+ * sorted alphabetically and include the distance of each player to the executor.
  */
 @Singleton
 public class NearCommand extends BaseCommand {
@@ -27,9 +26,9 @@ public class NearCommand extends BaseCommand {
     private final MessagesConfig messages;
 
     /**
-     * Construye el comando inyectando las dependencias mediante Guice.
+     * Constructs the command by injecting its dependencies via Guice.
      *
-     * @param messages configuración de mensajes localizados
+     * @param messages localised message configuration
      */
     @Inject
     public NearCommand(MessagesConfig messages) {
@@ -38,12 +37,12 @@ public class NearCommand extends BaseCommand {
     }
 
     /**
-     * Busca los jugadores cercanos al ejecutor dentro del radio indicado
-     * (o el radio por defecto si no se especifica), los ordena alfabéticamente
-     * con su distancia y los muestra en pantalla.
+     * Searches for players near the executor within the provided radius (or the
+     * default radius if none is specified), sorts them alphabetically with their
+     * respective distance, and displays the list to the executor.
      *
-     * @param sender ejecutor del comando; debe ser un {@link org.bukkit.entity.Player}
-     * @param args   argumentos opcionales; {@code args[0]} puede ser un radio numérico
+     * @param sender command executor; must be a {@link org.bukkit.entity.Player}
+     * @param args   optional arguments; {@code args[0]} may be a numeric radius value
      */
     @Override
     protected void execute(CommandSender sender, String[] args) {

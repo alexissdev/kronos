@@ -4,27 +4,28 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
 
 /**
- * Módulo Guice que configura el subsistema de scoreboards del plugin Kronos HCF.
+ * Guice module that configures the scoreboard subsystem of the Kronos HCF plugin.
  * <p>
- * Registra como singletons todos los componentes del marcador lateral:
- * el renderizador ({@link ScoreboardRenderer}), el gestor central ({@link ScoreboardManager}),
- * el listener de Bukkit ({@link ScoreboardListener}) y la tarea periódica ({@link ScoreboardTask}).
- * Al ser singletons, Guice garantiza que existe una única instancia de cada clase durante
- * todo el ciclo de vida del plugin, evitando inicializaciones duplicadas y condiciones de carrera.
+ * Binds all sidebar scoreboard components as singletons:
+ * the renderer ({@link ScoreboardRenderer}), the central manager ({@link ScoreboardManager}),
+ * the Bukkit listener ({@link ScoreboardListener}), and the periodic task ({@link ScoreboardTask}).
+ * Because they are singletons, Guice guarantees that exactly one instance of each class
+ * exists for the entire lifecycle of the plugin, preventing duplicate initialisation
+ * and race conditions.
  * </p>
  * <p>
- * Este módulo debe instalarse en el injector principal del plugin junto con los demás
- * módulos del proyecto (factions, economy, timers, koth, etc.).
+ * This module must be installed into the plugin's main injector alongside the other
+ * project modules (factions, economy, timers, koth, etc.).
  * </p>
  */
 public class ScoreboardModule extends AbstractModule {
 
     /**
-     * Configura los bindings del subsistema de scoreboards.
+     * Configures the bindings for the scoreboard subsystem.
      * <p>
-     * Todos los componentes quedan ligados en scope {@link Singleton} para garantizar
-     * una única instancia compartida. El orden de inyección es gestionado automáticamente
-     * por Guice a través del grafo de dependencias.
+     * All components are bound in {@link Singleton} scope to ensure a single shared
+     * instance. The injection order is managed automatically by Guice through
+     * its dependency graph.
      * </p>
      */
     @Override

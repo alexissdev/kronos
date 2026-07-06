@@ -4,16 +4,17 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Entidad de dominio que representa un timer activo asociado a un jugador HCF.
+ * Domain entity representing an active timer associated with an HCF player.
  *
- * <p>Un timer es una restricción temporal aplicada a un jugador durante un período
- * determinado. Puede ser de diferentes tipos ({@link TimerType}): protección PvP al
- * entrar, combat tag al entrar en combate, deathban tras quedarse sin vidas, cooldown
- * de enderpearl o manzana dorada, timer de logout, etc.</p>
+ * <p>A timer is a temporary restriction applied to a player for a fixed period.
+ * It can be of various types ({@link TimerType}): PvP protection on first join,
+ * combat tag when entering combat, deathban after running out of lives, enderpearl
+ * or golden apple cooldowns, logout timer, and so on.</p>
  *
- * <p>El timer almacena el momento exacto de expiración como un {@link Instant} y
- * expone métodos para comprobar si ya expiró y cuánto tiempo le queda. La persistencia
- * primaria se realiza en Redis (con TTL nativo) y existe un respaldo en MongoDB.</p>
+ * <p>The timer stores the exact expiration moment as an {@link Instant} and exposes
+ * methods to check whether it has already expired and how much time remains.
+ * Primary persistence is handled by Redis (using native TTL), with MongoDB acting
+ * as a durable backup layer.</p>
  */
 public final class Timer {
 
@@ -22,11 +23,11 @@ public final class Timer {
     private final Instant expiresAt;
 
     /**
-     * Crea un nuevo timer para el jugador y tipo especificados con la hora de expiración dada.
+     * Creates a new timer for the specified player and type, with the given expiration time.
      *
-     * @param playerUuid UUID del jugador al que pertenece este timer
-     * @param type       tipo de timer que determina su comportamiento y restricciones
-     * @param expiresAt  instante exacto en que el timer expirará y dejará de estar activo
+     * @param playerUuid UUID of the player this timer belongs to
+     * @param type       timer type that determines the behaviour and restrictions imposed
+     * @param expiresAt  exact instant at which the timer will expire and become inactive
      */
     public Timer(UUID playerUuid, TimerType type, Instant expiresAt) {
         this.playerUuid = playerUuid;
@@ -35,20 +36,21 @@ public final class Timer {
     }
 
     /**
-     * Verifica si el timer ya ha expirado comparando el instante actual con {@link #expiresAt}.
+     * Checks whether this timer has already expired by comparing the current instant
+     * against {@link #expiresAt}.
      *
-     * @return {@code true} si el momento actual es posterior al instante de expiración,
-     *         {@code false} si el timer sigue activo
+     * @return {@code true} if the current moment is after the expiration instant,
+     *         {@code false} if the timer is still active
      */
     public boolean isExpired() {
         return Instant.now().isAfter(expiresAt);
     }
 
     /**
-     * Calcula los milisegundos restantes hasta que el timer expire.
-     * Si el timer ya expiró, devuelve cero en lugar de un valor negativo.
+     * Calculates the number of milliseconds remaining until this timer expires.
+     * If the timer has already expired, returns zero instead of a negative value.
      *
-     * @return milisegundos restantes hasta la expiración del timer, mínimo {@code 0}
+     * @return milliseconds remaining until expiration, minimum {@code 0}
      */
     public long getRemainingMillis() {
         long remaining = expiresAt.toEpochMilli() - Instant.now().toEpochMilli();
@@ -56,23 +58,23 @@ public final class Timer {
     }
 
     /**
-     * Obtiene el UUID del jugador al que pertenece este timer.
+     * Returns the UUID of the player this timer belongs to.
      *
-     * @return UUID del jugador propietario del timer
+     * @return UUID of the player that owns this timer
      */
     public UUID getPlayerUuid() { return playerUuid; }
 
     /**
-     * Obtiene el tipo de este timer, que determina las restricciones que impone al jugador.
+     * Returns the type of this timer, which determines the restrictions it imposes on the player.
      *
-     * @return tipo del timer
+     * @return the timer type
      */
     public TimerType getType() { return type; }
 
     /**
-     * Obtiene el instante exacto en que este timer expirará.
+     * Returns the exact instant at which this timer will expire.
      *
-     * @return instante UTC de expiración del timer
+     * @return UTC instant of expiration
      */
     public Instant getExpiresAt() { return expiresAt; }
 }

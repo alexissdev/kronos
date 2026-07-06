@@ -3,15 +3,13 @@ package dev.alexissdev.kronos.players.domain;
 import dev.alexissdev.kronos.common.domain.CrateType;
 
 /**
- * Entidad de dominio que representa la ubicación de un crate (cofre de recompensas)
- * en el mundo del servidor.
+ * Domain entity representing the world location of a crate (reward chest) on the server.
  *
- * <p>Los crates son cofres especiales colocados en coordenadas específicas del mapa
- * que los jugadores pueden abrir para obtener recompensas aleatorias. Cada crate
- * tiene un tipo que determina la categoría de recompensas que puede otorgar.</p>
+ * <p>Crates are special chests placed at specific map coordinates that players can open
+ * to receive random rewards. Each crate has a type that determines the reward pool it draws from.</p>
  *
- * <p>Las ubicaciones de crates se persisten en MongoDB a través de
- * {@code CrateLocationRepository} para que sobrevivan reinicios del servidor.</p>
+ * <p>Crate locations are persisted in MongoDB through {@code CrateLocationRepository}
+ * so that they survive server restarts.</p>
  */
 public final class CrateLocation {
 
@@ -23,14 +21,14 @@ public final class CrateLocation {
     private final CrateType type;
 
     /**
-     * Crea una nueva ubicación de crate con todos sus datos.
+     * Creates a new crate location with all its data.
      *
-     * @param id    identificador único del crate, generado como UUID aleatorio
-     * @param world nombre del mundo de Minecraft donde está ubicado el crate
-     * @param x     coordenada X del bloque donde se encuentra el crate
-     * @param y     coordenada Y del bloque donde se encuentra el crate
-     * @param z     coordenada Z del bloque donde se encuentra el crate
-     * @param type  tipo de crate que determina la tabla de recompensas disponibles
+     * @param id    unique identifier for this crate, generated as a random UUID
+     * @param world name of the Minecraft world where the crate is located
+     * @param x     X coordinate of the block where the crate resides
+     * @param y     Y coordinate of the block where the crate resides
+     * @param z     Z coordinate of the block where the crate resides
+     * @param type  crate type that determines the available reward table
      */
     public CrateLocation(String id, String world, int x, int y, int z, CrateType type) {
         this.id    = id;
@@ -42,45 +40,45 @@ public final class CrateLocation {
     }
 
     /**
-     * Obtiene el identificador único de esta ubicación de crate.
+     * Returns the unique identifier of this crate location.
      *
-     * @return ID único del crate
+     * @return unique ID of the crate
      */
     public String    getId()    { return id; }
 
     /**
-     * Obtiene el nombre del mundo de Minecraft donde está ubicado el crate.
+     * Returns the name of the Minecraft world where this crate is located.
      *
-     * @return nombre del mundo del servidor
+     * @return name of the server world
      */
     public String    getWorld() { return world; }
 
     /**
-     * Obtiene la coordenada X del bloque donde se encuentra el crate.
+     * Returns the X coordinate of the block where this crate resides.
      *
-     * @return coordenada X en el mundo de Minecraft
+     * @return X coordinate in the Minecraft world
      */
     public int       getX()     { return x; }
 
     /**
-     * Obtiene la coordenada Y del bloque donde se encuentra el crate.
+     * Returns the Y coordinate of the block where this crate resides.
      *
-     * @return coordenada Y en el mundo de Minecraft
+     * @return Y coordinate in the Minecraft world
      */
     public int       getY()     { return y; }
 
     /**
-     * Obtiene la coordenada Z del bloque donde se encuentra el crate.
+     * Returns the Z coordinate of the block where this crate resides.
      *
-     * @return coordenada Z en el mundo de Minecraft
+     * @return Z coordinate in the Minecraft world
      */
     public int       getZ()     { return z; }
 
     /**
-     * Obtiene el tipo de crate, que determina la categoría de recompensas disponibles
-     * al abrir este cofre.
+     * Returns the crate type, which determines the category of rewards available
+     * when this chest is opened.
      *
-     * @return tipo de crate asociado a esta ubicación
+     * @return the crate type associated with this location
      */
     public CrateType getType()  { return type; }
 }

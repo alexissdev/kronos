@@ -15,10 +15,10 @@ import org.bukkit.plugin.Plugin;
 import java.util.HashSet;
 
 /**
- * Sub-comando {@code /crate remove} que elimina el cofre de recompensas ubicado
- * en el bloque al que está mirando el ejecutor (a un máximo de 5 bloques de distancia).
- * Tras eliminar el registro de la base de datos, también desregistra el cofre del
- * listener activo para que deje de procesarse en tiempo real.
+ * Sub-command {@code /crate remove} that deletes the reward crate located at the
+ * block the executor is looking at (up to a maximum of 5 blocks away). After
+ * removing the database record it also unregisters the crate from the active
+ * listener so it stops being processed in real time.
  */
 @Singleton
 public class RemoveCrateSub extends SubCommand {
@@ -29,12 +29,12 @@ public class RemoveCrateSub extends SubCommand {
     private final Plugin         plugin;
 
     /**
-     * Construye el sub-comando inyectando sus dependencias mediante Guice.
+     * Constructs the sub-command by injecting its dependencies via Guice.
      *
-     * @param crateService  servicio para eliminar cofres de la persistencia
-     * @param crateListener listener de cofres, usado para desregistrar el cofre en tiempo real
-     * @param messages      configuración de mensajes localizados
-     * @param plugin        instancia del plugin, usada para programar tareas en el hilo principal
+     * @param crateService  service used to remove crates from the persistence layer
+     * @param crateListener crate listener used to unregister the crate from real-time processing
+     * @param messages      localised message configuration
+     * @param plugin        plugin instance used to schedule tasks on the main thread
      */
     @Inject
     public RemoveCrateSub(CrateService crateService, CrateListener crateListener,
@@ -45,16 +45,16 @@ public class RemoveCrateSub extends SubCommand {
         this.plugin        = plugin;
     }
 
-    /** @return el nombre del sub-comando: {@code "remove"} */
+    /** @return the sub-command name: {@code "remove"} */
     @Override public String name() { return "remove"; }
 
     /**
-     * Obtiene el bloque que el jugador tiene en la mira (máx. 5 bloques),
-     * elimina el cofre registrado en esa posición y lo desregistra del listener.
-     * En caso de error, notifica al ejecutor con el mensaje de error correspondiente.
+     * Retrieves the block the player is looking at (up to 5 blocks away), removes
+     * the registered crate at that position, and unregisters it from the listener.
+     * On failure, the executor is notified with the corresponding error message.
      *
-     * @param sender ejecutor del comando; debe ser un {@link org.bukkit.entity.Player}
-     * @param args   argumentos adicionales (no utilizados por este sub-comando)
+     * @param sender command executor; must be a {@link org.bukkit.entity.Player}
+     * @param args   additional arguments (not used by this sub-command)
      */
     @Override
     public void execute(CommandSender sender, String[] args) {

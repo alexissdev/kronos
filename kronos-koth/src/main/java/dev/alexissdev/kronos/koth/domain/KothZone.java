@@ -3,21 +3,21 @@ package dev.alexissdev.kronos.koth.domain;
 import dev.alexissdev.kronos.common.domain.CrateType;
 
 /**
- * Entidad de dominio que representa una zona KOTH (King of The Hill) en el servidor HCF.
+ * Domain entity representing a KOTH (King of The Hill) zone on the HCF server.
  *
- * <p>Una {@code KothZone} define dos regiones rectangulares en el plano XZ del mundo:
+ * <p>A {@code KothZone} defines two rectangular regions on the XZ plane of the world:
  * <ul>
- *   <li><b>Zona de claim</b> ({@code minX/minZ – maxX/maxZ}): territorio completo del KOTH,
- *       usado para protección y visualización en el mapa.</li>
- *   <li><b>Zona de captura</b> ({@code captureMinX/captureMinZ – captureMaxX/captureMaxZ}):
- *       área interior donde el jugador debe permanecer para acumular tiempo de captura.</li>
+ *   <li><b>Claim zone</b> ({@code minX/minZ – maxX/maxZ}): the full territory of the KOTH,
+ *       used for protection enforcement and map display.</li>
+ *   <li><b>Capture zone</b> ({@code captureMinX/captureMinZ – captureMaxX/captureMaxZ}):
+ *       the inner area where a player must remain to accumulate capture time.</li>
  * </ul>
  *
- * <p>La zona es inmutable en sus coordenadas geográficas; únicamente el estado {@code active}
- * puede cambiar en tiempo de ejecución a través de {@link #setActive(boolean)}.</p>
+ * <p>The zone is immutable in its geographic coordinates; only the {@code active} flag
+ * may change at runtime via {@link #setActive(boolean)}.</p>
  *
- * <p>Al capturar el KOTH, el sistema entrega al ganador un cofre del tipo {@link CrateType}
- * configurado en {@code rewardCrateType}.</p>
+ * <p>When the KOTH is captured, the system delivers a crate of the {@link CrateType}
+ * configured in {@code rewardCrateType} to the winning player.</p>
  */
 public final class KothZone {
 
@@ -41,21 +41,21 @@ public final class KothZone {
     private boolean active;
 
     /**
-     * Construye una nueva zona KOTH con todas sus propiedades geográficas y de juego.
+     * Constructs a new KOTH zone with all its geographic and gameplay properties.
      *
-     * @param name               nombre único que identifica este KOTH
-     * @param world              nombre del mundo de Bukkit donde se ubica la zona
-     * @param minX               coordenada X mínima del territorio de claim
-     * @param minZ               coordenada Z mínima del territorio de claim
-     * @param maxX               coordenada X máxima del territorio de claim
-     * @param maxZ               coordenada Z máxima del territorio de claim
-     * @param captureMinX        coordenada X mínima de la zona de captura interior
-     * @param captureMinZ        coordenada Z mínima de la zona de captura interior
-     * @param captureMaxX        coordenada X máxima de la zona de captura interior
-     * @param captureMaxZ        coordenada Z máxima de la zona de captura interior
-     * @param captureTimeSeconds segundos que un jugador debe permanecer en la zona de captura
-     *                           para ganar el evento
-     * @param rewardCrateType    tipo de cofre que se entregará al jugador que capture el KOTH
+     * @param name               unique name that identifies this KOTH
+     * @param world              name of the Bukkit world where the zone is located
+     * @param minX               minimum X coordinate of the claim territory
+     * @param minZ               minimum Z coordinate of the claim territory
+     * @param maxX               maximum X coordinate of the claim territory
+     * @param maxZ               maximum Z coordinate of the claim territory
+     * @param captureMinX        minimum X coordinate of the inner capture zone
+     * @param captureMinZ        minimum Z coordinate of the inner capture zone
+     * @param captureMaxX        maximum X coordinate of the inner capture zone
+     * @param captureMaxZ        maximum Z coordinate of the inner capture zone
+     * @param captureTimeSeconds seconds a player must remain inside the capture zone
+     *                           in order to win the event
+     * @param rewardCrateType    type of crate that will be delivered to the player who captures the KOTH
      */
     public KothZone(String name, String world,
                     int minX, int minZ, int maxX, int maxZ,
@@ -77,13 +77,13 @@ public final class KothZone {
     }
 
     /**
-     * Comprueba si una ubicación dada se encuentra dentro del territorio de claim de esta zona.
-     * Se utiliza para determinar protecciones de construcción/PvP en el área completa del KOTH.
+     * Checks whether a given location falls within the claim territory of this zone.
+     * Used to enforce build and PvP protection across the full KOTH area.
      *
-     * @param world nombre del mundo donde se encuentra la ubicación
-     * @param x     coordenada X a evaluar
-     * @param z     coordenada Z a evaluar
-     * @return {@code true} si la ubicación pertenece al territorio de claim de esta zona
+     * @param world name of the world where the location resides
+     * @param x     X coordinate to evaluate
+     * @param z     Z coordinate to evaluate
+     * @return {@code true} if the location belongs to the claim territory of this zone
      */
     public boolean containsLocation(String world, double x, double z) {
         return this.world.equals(world)
@@ -92,14 +92,14 @@ public final class KothZone {
     }
 
     /**
-     * Comprueba si una ubicación dada está dentro de la zona de captura interior.
-     * Un jugador debe permanecer en esta área durante {@link #getCaptureTimeSeconds()} segundos
-     * para ganar el evento KOTH.
+     * Checks whether a given location is inside the inner capture zone.
+     * A player must remain within this area for {@link #getCaptureTimeSeconds()} seconds
+     * to win the KOTH event.
      *
-     * @param world nombre del mundo donde se encuentra la ubicación
-     * @param x     coordenada X a evaluar
-     * @param z     coordenada Z a evaluar
-     * @return {@code true} si la ubicación está dentro de la zona de captura
+     * @param world name of the world where the location resides
+     * @param x     X coordinate to evaluate
+     * @param z     Z coordinate to evaluate
+     * @return {@code true} if the location is within the capture zone
      */
     public boolean isInCaptureZone(String world, double x, double z) {
         return this.world.equals(world)
@@ -107,37 +107,37 @@ public final class KothZone {
                 && z >= captureMinZ && z < captureMaxZ + 1;
     }
 
-    /** @return nombre único que identifica esta zona KOTH */
+    /** @return unique name that identifies this KOTH zone */
     public String getName()            { return name; }
-    /** @return nombre del mundo de Bukkit donde está ubicada la zona */
+    /** @return name of the Bukkit world where the zone is located */
     public String getWorld()           { return world; }
-    /** @return coordenada X mínima del territorio de claim */
+    /** @return minimum X coordinate of the claim territory */
     public int getMinX()               { return minX; }
-    /** @return coordenada Z mínima del territorio de claim */
+    /** @return minimum Z coordinate of the claim territory */
     public int getMinZ()               { return minZ; }
-    /** @return coordenada X máxima del territorio de claim */
+    /** @return maximum X coordinate of the claim territory */
     public int getMaxX()               { return maxX; }
-    /** @return coordenada Z máxima del territorio de claim */
+    /** @return maximum Z coordinate of the claim territory */
     public int getMaxZ()               { return maxZ; }
-    /** @return coordenada X mínima de la zona de captura interior */
+    /** @return minimum X coordinate of the inner capture zone */
     public int getCaptureMinX()        { return captureMinX; }
-    /** @return coordenada Z mínima de la zona de captura interior */
+    /** @return minimum Z coordinate of the inner capture zone */
     public int getCaptureMinZ()        { return captureMinZ; }
-    /** @return coordenada X máxima de la zona de captura interior */
+    /** @return maximum X coordinate of the inner capture zone */
     public int getCaptureMaxX()        { return captureMaxX; }
-    /** @return coordenada Z máxima de la zona de captura interior */
+    /** @return maximum Z coordinate of the inner capture zone */
     public int getCaptureMaxZ()        { return captureMaxZ; }
-    /** @return segundos que un jugador debe permanecer en la zona de captura para ganar */
+    /** @return seconds a player must remain inside the capture zone to win */
     public int getCaptureTimeSeconds() { return captureTimeSeconds; }
-    /** @return tipo de cofre que se entrega como recompensa al capturar el KOTH */
+    /** @return type of crate delivered as a reward when the KOTH is captured */
     public CrateType getRewardCrateType() { return rewardCrateType; }
-    /** @return {@code true} si el evento KOTH está actualmente en curso */
+    /** @return {@code true} if the KOTH event is currently running */
     public boolean isActive()          { return active; }
     /**
-     * Cambia el estado activo del evento KOTH. Este método es invocado por
-     * {@code KothApplicationService} durante el inicio, fin y captura del evento.
+     * Changes the active state of the KOTH event. This method is invoked by
+     * {@code KothApplicationService} during the start, end, and capture of the event.
      *
-     * @param active {@code true} para marcar el KOTH como activo; {@code false} para desactivarlo
+     * @param active {@code true} to mark the KOTH as active; {@code false} to deactivate it
      */
     public void setActive(boolean active) { this.active = active; }
 }

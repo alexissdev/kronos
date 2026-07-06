@@ -16,17 +16,17 @@ import org.bukkit.scheduler.BukkitRunnable;
 import java.util.*;
 
 /**
- * Componente de interfaz gráfica que gestiona la animación de apertura de crates
- * mediante un inventario de Bukkit de 27 slots (3 filas).
+ * GUI component that manages the crate-opening animation using a 27-slot (3-row)
+ * Bukkit inventory.
  *
- * <p>Cuando un jugador abre un crate, se le muestra un inventario con un borde de
- * cristal gris y una animación de giro en la fila central durante 30 ticks. Al finalizar,
- * se selecciona un premio aleatorio según la tabla de recompensas del tipo de crate,
- * se le entrega al jugador y se le notifica con un mensaje en el chat.</p>
+ * <p>When a player opens a crate they are shown an inventory with a grey stained-glass
+ * border and a spinning animation in the middle row that runs for 30 ticks. Once the
+ * animation ends, a random prize is selected from the crate type's reward table,
+ * delivered to the player's inventory, and announced in chat.</p>
  *
- * <p>La animación se ejecuta de forma asíncrona usando el planificador de tareas de Bukkit
- * ({@link BukkitRunnable}) para no bloquear el hilo principal. Esta clase es un singleton
- * gestionado por Guice y forma parte del módulo {@link dev.alexissdev.kronos.players.PlayersModule}.</p>
+ * <p>The animation runs asynchronously via the Bukkit task scheduler ({@link BukkitRunnable})
+ * to avoid blocking the main server thread. This class is a Guice-managed singleton and
+ * is part of the {@link dev.alexissdev.kronos.players.PlayersModule} module.</p>
  */
 @Singleton
 public class CrateInventory {
@@ -36,10 +36,10 @@ public class CrateInventory {
     private final Plugin plugin;
 
     /**
-     * Crea la clase de inventario de crates con la instancia del plugin inyectada por Guice.
-     * El plugin es necesario para programar las tareas del planificador de Bukkit.
+     * Creates the crate inventory handler with the plugin instance injected by Guice.
+     * The plugin reference is required to schedule tasks on the Bukkit scheduler.
      *
-     * @param plugin instancia principal del plugin de Bukkit
+     * @param plugin main Bukkit plugin instance
      */
     @Inject
     public CrateInventory(Plugin plugin) {
@@ -47,14 +47,14 @@ public class CrateInventory {
     }
 
     /**
-     * Abre la animación de apertura del crate para el jugador especificado.
+     * Opens the crate animation for the specified player.
      *
-     * <p>Crea un inventario de 27 slots con el nombre del tipo de crate, llena el borde
-     * con cristales de colores y lanza la animación de giro en la fila central. Tras
-     * 30 ticks de animación, se selecciona el premio final y se entrega al jugador.</p>
+     * <p>Creates a 27-slot inventory titled with the crate type name, fills the border
+     * with stained-glass panes, and starts the spin animation in the middle row. After
+     * 30 ticks the final prize is selected and delivered to the player.</p>
      *
-     * @param player    jugador de Bukkit que abre el crate y verá la animación
-     * @param crateType tipo de crate que determina la tabla de recompensas a mostrar
+     * @param player    the Bukkit player who is opening the crate and will see the animation
+     * @param crateType the type of crate, which determines the reward table to use
      */
     public void openCrateAnimation(Player player, CrateType crateType) {
         Inventory inv = Bukkit.createInventory(null, SIZE,
@@ -65,10 +65,10 @@ public class CrateInventory {
     }
 
     /**
-     * Rellena todos los slots del inventario con paneles de cristal gris para crear
-     * el efecto de borde decorativo alrededor de la fila central de animación.
+     * Fills every slot in the inventory with grey stained-glass panes to create the
+     * decorative border surrounding the central animation row.
      *
-     * @param inv inventario de Bukkit a rellenar con el borde de cristal
+     * @param inv Bukkit inventory to fill with the glass border
      */
     private void fillBorderWithGlass(Inventory inv) {
         // data value 7 = gray in 1.8.8 stained glass pane
@@ -82,16 +82,16 @@ public class CrateInventory {
     }
 
     /**
-     * Inicia la animación de giro que muestra premios aleatorios en la fila central del inventario.
+     * Starts the spin animation that cycles random prizes through the middle row of the inventory.
      *
-     * <p>Ejecuta un {@link BukkitRunnable} que rota premios aleatorios cada 3 ticks durante
-     * un máximo de 30 ticks. Si el jugador se desconecta durante la animación, ésta se cancela
-     * sin entregar ningún premio. Al finalizar, se muestra el premio ganado en el slot central
-     * (slot 13) y se entrega al inventario del jugador 40 ticks después.</p>
+     * <p>Schedules a {@link BukkitRunnable} that rotates random prizes every 3 ticks for a
+     * maximum of 30 ticks. If the player disconnects during the animation it is cancelled without
+     * awarding any prize. Once finished, the winning prize is displayed in the centre slot
+     * (slot 13) and delivered to the player's inventory 40 ticks later.</p>
      *
-     * @param player    jugador que está viendo la animación
-     * @param inv       inventario donde se reproduce la animación
-     * @param crateType tipo de crate para seleccionar premios de la tabla correcta
+     * @param player    the player watching the animation
+     * @param inv       the inventory in which the animation plays
+     * @param crateType the crate type used to select prizes from the correct reward table
      */
     private void startSpinAnimation(Player player, Inventory inv, CrateType crateType) {
         player.openInventory(inv);
@@ -123,11 +123,11 @@ public class CrateInventory {
     }
 
     /**
-     * Rellena los 9 slots de la fila central del inventario con premios aleatorios,
-     * creando el efecto visual de ruleta durante la animación de giro.
+     * Fills the 9 slots of the inventory's middle row with random prizes,
+     * creating the visual roulette effect during the spin animation.
      *
-     * @param inv       inventario donde se actualizan los slots centrales
-     * @param crateType tipo de crate para determinar qué premios mostrar en la animación
+     * @param inv       inventory whose middle slots are being updated
+     * @param crateType crate type used to determine which prizes to display during animation
      */
     private void randomizeMiddleRow(Inventory inv, CrateType crateType) {
         int[] middleSlots = {9, 10, 11, 12, 13, 14, 15, 16, 17};
@@ -137,10 +137,10 @@ public class CrateInventory {
     }
 
     /**
-     * Selecciona aleatoriamente un premio de la tabla de recompensas del tipo de crate dado.
+     * Randomly selects a prize from the reward table of the given crate type.
      *
-     * @param crateType tipo de crate cuya tabla de premios se usará para la selección
-     * @return ítem de Bukkit seleccionado aleatoriamente como premio
+     * @param crateType crate type whose reward table will be used for the selection
+     * @return a Bukkit ItemStack randomly chosen as the prize
      */
     private ItemStack selectPrize(CrateType crateType) {
         List<ItemStack> prizes = getPrizesFor(crateType);
@@ -148,14 +148,14 @@ public class CrateInventory {
     }
 
     /**
-     * Construye y devuelve la tabla de premios posibles para el tipo de crate especificado.
+     * Builds and returns the possible prize pool for the specified crate type.
      *
-     * <p>Cada tipo de crate tiene su propia selección de ítems temáticos:
-     * KOTH otorga ítems de combate de alto nivel, VOTE otorga recursos básicos,
-     * RANK otorga ítems de rango especial y EVENT otorga ítems exclusivos de eventos.</p>
+     * <p>Each crate type has its own themed item selection: KOTH awards high-tier combat
+     * items, VOTE awards basic resources, RANK awards special rank items, and EVENT awards
+     * exclusive event-only items.</p>
      *
-     * @param crateType tipo de crate cuya tabla de premios se quiere obtener
-     * @return lista de ítems posibles como premio para este tipo de crate
+     * @param crateType crate type whose prize pool should be retrieved
+     * @return list of possible prize items for this crate type
      */
     private List<ItemStack> getPrizesFor(CrateType crateType) {
         List<ItemStack> prizes = new ArrayList<>();
@@ -186,11 +186,11 @@ public class CrateInventory {
     }
 
     /**
-     * Crea un ítem de Bukkit con el material y nombre para mostrar indicados.
+     * Creates a Bukkit ItemStack with the given material and display name.
      *
-     * @param material material del ítem a crear
-     * @param name     nombre para mostrar en el ítem (con colores de chat de Bukkit)
-     * @return ítem de Bukkit con el metadata configurado
+     * @param material material of the item to create
+     * @param name     display name for the item (may include Bukkit ChatColor codes)
+     * @return Bukkit ItemStack with its metadata configured
      */
     private ItemStack createItem(Material material, String name) {
         ItemStack item = new ItemStack(material);

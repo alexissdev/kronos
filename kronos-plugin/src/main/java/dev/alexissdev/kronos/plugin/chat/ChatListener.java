@@ -18,18 +18,18 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
- * Listener de Bukkit que intercepta los mensajes de chat de los jugadores y los enruta
- * al canal correspondiente según el {@link ChatMode} activo del remitente.
+ * Bukkit listener that intercepts player chat messages and routes them to the correct
+ * channel based on the sender's active {@link ChatMode}.
  *
- * <p>Este listener cancela el evento de chat nativo de Bukkit ({@link org.bukkit.event.player.AsyncPlayerChatEvent})
- * y gestiona manualmente el envío del mensaje al conjunto correcto de destinatarios:
+ * <p>This listener cancels the native Bukkit chat event ({@link org.bukkit.event.player.AsyncPlayerChatEvent})
+ * and manually dispatches the message to the appropriate set of recipients:
  * <ul>
- *   <li>{@link ChatMode#GLOBAL} — todos los jugadores en línea.</li>
- *   <li>{@link ChatMode#FACTION} — únicamente los miembros de la facción del remitente.</li>
- *   <li>{@link ChatMode#ALLY} — los miembros de la facción del remitente y de sus aliadas.</li>
+ *   <li>{@link ChatMode#GLOBAL} — all online players.</li>
+ *   <li>{@link ChatMode#FACTION} — only the members of the sender's faction.</li>
+ *   <li>{@link ChatMode#ALLY} — the members of the sender's faction and all of its allied factions.</li>
  * </ul>
  *
- * <p>La consulta de la facción se realiza de forma asíncrona para no bloquear el hilo del evento.
+ * <p>The faction lookup is performed asynchronously so that the event thread is never blocked.
  */
 @Singleton
 public class ChatListener implements Listener {

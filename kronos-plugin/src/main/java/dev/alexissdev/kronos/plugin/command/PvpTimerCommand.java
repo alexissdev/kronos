@@ -11,11 +11,11 @@ import org.bukkit.command.CommandSender;
 import java.util.Set;
 
 /**
- * Comando principal {@code /pvptimer} que agrupa los sub-comandos de gestión
- * del temporizador de protección PvP para jugadores nuevos o recientes.
- * El PvP Timer evita que los jugadores reciban daño de otros jugadores durante
- * un período inicial. Requiere el permiso {@code hcf.admin} y delega a los
- * sub-comandos {@code give} y {@code remove}.
+ * Root command {@code /pvptimer} that groups the sub-commands for managing the
+ * PvP protection timer for new or returning players. The PvP Timer prevents
+ * players from taking damage from other players during an initial grace period.
+ * Requires the {@code hcf.admin} permission and delegates to the {@code give}
+ * and {@code remove} sub-commands.
  */
 @Singleton
 public class PvpTimerCommand extends DispatchCommand {
@@ -23,11 +23,11 @@ public class PvpTimerCommand extends DispatchCommand {
     private final MessagesConfig messages;
 
     /**
-     * Construye el comando registrando los sub-comandos del grupo {@code pvptimer}
-     * inyectados por Guice.
+     * Constructs the command by registering the {@code pvptimer} group sub-commands
+     * injected by Guice.
      *
-     * @param subs     conjunto de sub-comandos anotado con {@code @Named("pvptimer")}
-     * @param messages configuración de mensajes localizados
+     * @param subs     set of sub-commands annotated with {@code @Named("pvptimer")}
+     * @param messages localised message configuration
      */
     @Inject
     public PvpTimerCommand(@Named("pvptimer") Set<SubCommand> subs, MessagesConfig messages) {
@@ -37,10 +37,10 @@ public class PvpTimerCommand extends DispatchCommand {
     }
 
     /**
-     * Envía al ejecutor el menú de ayuda del comando {@code /pvptimer} con los
-     * sub-comandos disponibles y su sintaxis.
+     * Sends the {@code /pvptimer} help menu to the executor, listing the available
+     * sub-commands and their usage syntax.
      *
-     * @param sender ejecutor del comando que recibirá los mensajes de ayuda
+     * @param sender command executor who will receive the help messages
      */
     @Override
     protected void sendUsage(CommandSender sender) {

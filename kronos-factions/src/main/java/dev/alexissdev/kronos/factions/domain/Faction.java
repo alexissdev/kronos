@@ -4,21 +4,21 @@ import java.time.Instant;
 import java.util.*;
 
 /**
- * Agregado raíz que representa una facción en el sistema HCF (Hardcore Factions).
+ * Root aggregate representing a faction in the HCF (Hardcore Factions) system.
  *
- * <p>Una facción agrupa a un conjunto de jugadores bajo un nombre único y un líder.
- * Gestiona su economía interna (balance), relaciones con otras facciones (aliados y enemigos),
- * estadísticas de combate (kills y deaths), el contador DTK (Deaths To Kick) y el estado
- * de raideable que determina si sus claims pueden ser sobrereclamados por enemigos.
+ * <p>A faction groups a set of players under a unique name and a leader.
+ * It manages its internal economy (balance), relationships with other factions (allies and enemies),
+ * combat statistics (kills and deaths), the DTK (Deaths To Kick) counter, and the
+ * raidable state that determines whether its claims can be overclaimed by enemies.
  *
- * <p>Reglas de negocio clave:
+ * <p>Key business rules:
  * <ul>
- *   <li>Cuando {@code dtkRemaining} llega a 0, la facción se vuelve <em>raideable</em>.</li>
- *   <li>Una facción <em>congelada</em> no puede recibir nuevos miembros ni depósitos.</li>
- *   <li>Al acumular {@value #MAX_STRIKES} strikes la facción es disuelta automáticamente.</li>
+ *   <li>When {@code dtkRemaining} reaches 0, the faction becomes <em>raidable</em>.</li>
+ *   <li>A <em>frozen</em> faction cannot receive new members or deposits.</li>
+ *   <li>Accumulating {@value #MAX_STRIKES} strikes causes the faction to be automatically disbanded.</li>
  * </ul>
  *
- * <p>Las instancias de esta clase son persistidas en MongoDB mediante
+ * <p>Instances of this class are persisted in MongoDB via
  * {@link dev.alexissdev.kronos.factions.persistence.MongoFactionRepository}.
  */
 public final class Faction {
@@ -43,16 +43,16 @@ public final class Faction {
     private boolean raidable;
 
     /**
-     * Constructor de creación: inicializa una facción nueva con valores por defecto.
+     * Creation constructor: initialises a brand-new faction with default values.
      *
-     * <p>El contador DTK arranca en {@code maxDtk}, el balance en 0, sin aliados ni enemigos
-     * y en estado normal (no congelada, no raideable).
+     * <p>The DTK counter starts at {@code maxDtk}, balance at 0, with no allies or enemies
+     * and in a normal state (not frozen, not raidable).
      *
-     * @param id        identificador único de la facción (UUID como cadena)
-     * @param name      nombre visible de la facción
-     * @param leaderId  UUID del jugador que crea y lidera la facción
-     * @param maxDtk    número máximo de DTK (Deaths To Kick) que puede absorber la facción
-     * @param createdAt instante de creación de la facción
+     * @param id        unique faction identifier (UUID as a string)
+     * @param name      visible faction name
+     * @param leaderId  UUID of the player who creates and leads the faction
+     * @param maxDtk    maximum number of DTK (Deaths To Kick) the faction can absorb
+     * @param createdAt instant at which the faction was created
      */
     public Faction(String id, String name, UUID leaderId, int maxDtk, Instant createdAt) {
         this.id = id;
@@ -73,28 +73,28 @@ public final class Faction {
     }
 
     /**
-     * Constructor de reconstitución: restaura una facción desde la base de datos con todos
-     * sus campos ya persistidos.
+     * Reconstitution constructor: restores a faction from the database with all
+     * of its already-persisted fields.
      *
-     * <p>Este constructor es utilizado exclusivamente por
-     * {@link dev.alexissdev.kronos.factions.persistence.MongoFactionRepository} al
-     * deserializar documentos MongoDB, por lo que acepta el estado completo del agregado.
+     * <p>This constructor is used exclusively by
+     * {@link dev.alexissdev.kronos.factions.persistence.MongoFactionRepository} when
+     * deserialising MongoDB documents, and therefore accepts the full aggregate state.
      *
-     * @param id           identificador único de la facción
-     * @param name         nombre de la facción
-     * @param leaderId     UUID del líder actual
-     * @param maxDtk       DTK máximo configurado al crear la facción
-     * @param dtkRemaining DTK restantes en el momento de la persistencia
-     * @param kills        total de kills acumuladas por la facción
-     * @param deaths       total de muertes acumuladas por la facción
-     * @param balance      balance económico actual de la facción
-     * @param createdAt    instante de creación original
-     * @param members      mapa de miembros (UUID → FactionMember) ya reconstituidos
-     * @param allies       conjunto de IDs de facciones aliadas
-     * @param enemies      conjunto de IDs de facciones enemigas
-     * @param strikes      número de strikes acumulados
-     * @param frozen       indica si la facción está congelada
-     * @param raidable     indica si la facción es actualmente raideable
+     * @param id           unique faction identifier
+     * @param name         faction name
+     * @param leaderId     UUID of the current leader
+     * @param maxDtk       maximum DTK configured at faction creation
+     * @param dtkRemaining DTK remaining at the time of persistence
+     * @param kills        total kills accumulated by the faction
+     * @param deaths       total deaths accumulated by the faction
+     * @param balance      current economic balance of the faction
+     * @param createdAt    original creation instant
+     * @param members      member map (UUID → FactionMember) already reconstituted
+     * @param allies       set of allied faction IDs
+     * @param enemies      set of enemy faction IDs
+     * @param strikes      number of accumulated strikes
+     * @param frozen       whether the faction is frozen
+     * @param raidable     whether the faction is currently raidable
      */
     public Faction(String id, String name, UUID leaderId, int maxDtk, int dtkRemaining,
                    int kills, int deaths, double balance, Instant createdAt,
@@ -118,69 +118,69 @@ public final class Faction {
     }
 
     /**
-     * Agrega un miembro a la facción.
+     * Adds a member to the faction.
      *
-     * <p>Si ya existía un miembro con el mismo UUID, este método lo reemplaza.
+     * <p>If a member with the same UUID already exists, this method replaces them.
      *
-     * @param member objeto que encapsula UUID, rol y fecha de ingreso del nuevo miembro
+     * @param member object encapsulating the new member's UUID, role, and join date
      */
     public void addMember(FactionMember member) {
         members.put(member.getUuid(), member);
     }
 
     /**
-     * Elimina al miembro con el UUID indicado de la facción.
+     * Removes the member with the given UUID from the faction.
      *
-     * <p>Si el UUID no pertenece a ningún miembro, la operación no tiene efecto.
+     * <p>If the UUID does not belong to any member, the operation has no effect.
      *
-     * @param uuid UUID del jugador a eliminar
+     * @param uuid UUID of the player to remove
      */
     public void removeMember(UUID uuid) {
         members.remove(uuid);
     }
 
     /**
-     * Busca y devuelve el miembro de la facción con el UUID dado.
+     * Finds and returns the faction member with the given UUID.
      *
-     * @param uuid UUID del jugador a buscar
-     * @return {@link Optional} con el {@link FactionMember} si existe, o vacío si no pertenece
+     * @param uuid UUID of the player to look up
+     * @return {@link Optional} containing the {@link FactionMember} if found, or empty if not a member
      */
     public Optional<FactionMember> getMember(UUID uuid) {
         return Optional.ofNullable(members.get(uuid));
     }
 
     /**
-     * Indica si el jugador con el UUID dado es miembro activo de esta facción.
+     * Returns whether the player with the given UUID is an active member of this faction.
      *
-     * @param uuid UUID del jugador
-     * @return {@code true} si el jugador pertenece a la facción
+     * @param uuid UUID of the player
+     * @return {@code true} if the player belongs to the faction
      */
     public boolean hasMember(UUID uuid) {
         return members.containsKey(uuid);
     }
 
     /**
-     * Incrementa en uno el contador de kills de la facción.
+     * Increments the faction's kill counter by one.
      *
-     * <p>Se invoca cuando un miembro de esta facción mata a un jugador enemigo.
+     * <p>Invoked when a member of this faction kills an enemy player.
      */
     public void incrementKills() { kills++; }
 
     /**
-     * Incrementa en uno el contador de muertes de la facción.
+     * Increments the faction's death counter by one.
      *
-     * <p>Se invoca cuando cualquier miembro de la facción muere, independientemente
-     * de si esa muerte también consume un DTK.
+     * <p>Invoked whenever any member of the faction dies, regardless of
+     * whether that death also consumes a DTK.
      */
     public void incrementDeaths() { deaths++; }
 
     /**
-     * Decrementa en uno el contador de DTK (Deaths To Kick) restantes.
+     * Decrements the remaining DTK (Deaths To Kick) counter by one.
      *
-     * <p>El DTK es el número de muertes de miembros que la facción puede absorber antes de
-     * volverse raideable. Si el contador ya está en 0, no se realiza ningún cambio.
+     * <p>DTK is the number of member deaths the faction can absorb before becoming raidable.
+     * If the counter is already at 0, no change is made.
      *
-     * @return {@code true} si el decremento fue exitoso; {@code false} si el DTK ya era 0
+     * @return {@code true} if the decrement succeeded; {@code false} if DTK was already 0
      */
     public boolean decrementDtk() {
         if (dtkRemaining > 0) {
@@ -191,262 +191,262 @@ public final class Faction {
     }
 
     /**
-     * Indica si la facción ha agotado todos sus DTK restantes.
+     * Returns whether the faction has exhausted all of its remaining DTK.
      *
-     * <p>Cuando este método devuelve {@code true}, el servicio de facciones marcará la
-     * facción como raideable y publicará el evento {@link dev.alexissdev.kronos.factions.event.FactionRaidableDomainEvent}.
+     * <p>When this method returns {@code true}, the faction service will mark the
+     * faction as raidable and publish the {@link dev.alexissdev.kronos.factions.event.FactionRaidableDomainEvent}.
      *
-     * @return {@code true} si {@code dtkRemaining} es 0 o menor
+     * @return {@code true} if {@code dtkRemaining} is 0 or less
      */
     public boolean isAtDtk() { return dtkRemaining <= 0; }
 
     /**
-     * Registra a la facción con el ID dado como aliada de esta facción.
+     * Registers the faction with the given ID as an ally of this faction.
      *
-     * @param factionId ID de la facción aliada
+     * @param factionId ID of the allied faction
      */
     public void addAlly(String factionId) { allies.add(factionId); }
 
     /**
-     * Elimina a la facción con el ID dado del conjunto de aliados.
+     * Removes the faction with the given ID from the set of allies.
      *
-     * @param factionId ID de la facción a desvincular
+     * @param factionId ID of the faction to unlink
      */
     public void removeAlly(String factionId) { allies.remove(factionId); }
 
     /**
-     * Indica si la facción con el ID dado es aliada de esta facción.
+     * Returns whether the faction with the given ID is an ally of this faction.
      *
-     * @param factionId ID de la facción a consultar
-     * @return {@code true} si ambas facciones son aliadas
+     * @param factionId ID of the faction to check
+     * @return {@code true} if both factions are allies
      */
     public boolean isAlly(String factionId) { return allies.contains(factionId); }
 
     /**
-     * Registra a la facción con el ID dado como enemiga de esta facción.
+     * Registers the faction with the given ID as an enemy of this faction.
      *
-     * @param factionId ID de la facción enemiga
+     * @param factionId ID of the enemy faction
      */
     public void addEnemy(String factionId) { enemies.add(factionId); }
 
     /**
-     * Elimina a la facción con el ID dado del conjunto de enemigos.
+     * Removes the faction with the given ID from the set of enemies.
      *
-     * @param factionId ID de la facción a desvincular
+     * @param factionId ID of the faction to unlink
      */
     public void removeEnemy(String factionId) { enemies.remove(factionId); }
 
     /**
-     * Indica si la facción con el ID dado es enemiga de esta facción.
+     * Returns whether the faction with the given ID is an enemy of this faction.
      *
-     * @param factionId ID de la facción a consultar
-     * @return {@code true} si ambas facciones son enemigas
+     * @param factionId ID of the faction to check
+     * @return {@code true} if both factions are enemies
      */
     public boolean isEnemy(String factionId) { return enemies.contains(factionId); }
 
     /**
-     * Aumenta el balance de la facción en la cantidad indicada.
+     * Increases the faction's balance by the specified amount.
      *
-     * <p>Este método no valida si la facción está congelada; dicha validación
-     * es responsabilidad del servicio de facciones.
+     * <p>This method does not validate whether the faction is frozen; that validation
+     * is the responsibility of the faction service.
      *
-     * @param amount cantidad a depositar (debe ser mayor a 0)
+     * @param amount amount to deposit (must be greater than 0)
      */
     public void deposit(double amount) { balance += amount; }
 
     /**
-     * Reduce el balance de la facción en la cantidad indicada.
+     * Reduces the faction's balance by the specified amount.
      *
-     * <p>No valida si el balance resultante sería negativo; la validación
-     * previa es responsabilidad del servicio de facciones.
+     * <p>Does not validate whether the resulting balance would be negative; prior
+     * validation is the responsibility of the faction service.
      *
-     * @param amount cantidad a retirar (debe ser mayor a 0 y menor o igual al balance actual)
+     * @param amount amount to withdraw (must be greater than 0 and no more than the current balance)
      */
     public void withdraw(double amount) { balance -= amount; }
 
     /**
-     * Agrega un strike administrativo a la facción.
+     * Adds an administrative strike to the faction.
      *
-     * <p>Al alcanzar {@value #MAX_STRIKES} strikes, el servicio de facciones
-     * disuelve la facción automáticamente.
+     * <p>Upon reaching {@value #MAX_STRIKES} strikes, the faction service
+     * will automatically disband the faction.
      */
     public void addStrike() { strikes++; }
 
     /**
-     * Indica si la facción ha alcanzado el número máximo de strikes permitidos.
+     * Returns whether the faction has reached the maximum allowed number of strikes.
      *
-     * @return {@code true} si los strikes acumulados son iguales o superiores a {@value #MAX_STRIKES}
+     * @return {@code true} if accumulated strikes are equal to or greater than {@value #MAX_STRIKES}
      */
     public boolean isAtMaxStrikes() { return strikes >= MAX_STRIKES; }
 
     /**
-     * Devuelve el identificador único de la facción.
+     * Returns the unique identifier of the faction.
      *
-     * @return ID de la facción como cadena (representación de UUID)
+     * @return faction ID as a string (UUID representation)
      */
     public String getId() { return id; }
 
     /**
-     * Devuelve el nombre visible de la facción.
+     * Returns the visible name of the faction.
      *
-     * @return nombre de la facción
+     * @return faction name
      */
     public String getName() { return name; }
 
     /**
-     * Cambia el nombre visible de la facción.
+     * Changes the visible name of the faction.
      *
-     * <p>El nombre nuevo debe ser único en el servidor; la validación de unicidad
-     * es responsabilidad del servicio de facciones.
+     * <p>The new name must be unique on the server; uniqueness validation
+     * is the responsibility of the faction service.
      *
-     * @param name nuevo nombre de la facción
+     * @param name new faction name
      */
     public void setName(String name) { this.name = name; }
 
     /**
-     * Devuelve el UUID del líder actual de la facción.
+     * Returns the UUID of the current faction leader.
      *
-     * @return UUID del líder
+     * @return UUID of the leader
      */
     public UUID getLeaderId() { return leaderId; }
 
     /**
-     * Actualiza el líder de la facción.
+     * Updates the leader of the faction.
      *
-     * <p>Debe invocarse junto con los cambios de rol correspondientes en los miembros
-     * afectados. Véase {@link dev.alexissdev.kronos.factions.FactionApplicationService#setLeader}.
+     * <p>Must be invoked together with the corresponding role changes on the affected members.
+     * See {@link dev.alexissdev.kronos.factions.FactionApplicationService#setLeader}.
      *
-     * @param leaderId UUID del nuevo líder
+     * @param leaderId UUID of the new leader
      */
     public void setLeaderId(UUID leaderId) { this.leaderId = leaderId; }
 
     /**
-     * Devuelve una vista inmutable del mapa de miembros de la facción.
+     * Returns an immutable view of the faction's member map.
      *
-     * @return mapa UUID → FactionMember (no modificable)
+     * @return UUID → FactionMember map (unmodifiable)
      */
     public Map<UUID, FactionMember> getMembers() { return Collections.unmodifiableMap(members); }
 
     /**
-     * Devuelve una vista inmutable del conjunto de IDs de facciones aliadas.
+     * Returns an immutable view of the set of allied faction IDs.
      *
-     * @return conjunto de IDs de aliados (no modificable)
+     * @return set of ally IDs (unmodifiable)
      */
     public Set<String> getAllies() { return Collections.unmodifiableSet(allies); }
 
     /**
-     * Devuelve una vista inmutable del conjunto de IDs de facciones enemigas.
+     * Returns an immutable view of the set of enemy faction IDs.
      *
-     * @return conjunto de IDs de enemigos (no modificable)
+     * @return set of enemy IDs (unmodifiable)
      */
     public Set<String> getEnemies() { return Collections.unmodifiableSet(enemies); }
 
     /**
-     * Devuelve el balance económico actual de la facción.
+     * Returns the current economic balance of the faction.
      *
-     * @return balance en la moneda del servidor
+     * @return balance in the server's currency
      */
     public double getBalance() { return balance; }
 
     /**
-     * Devuelve el total de kills acumuladas por los miembros de la facción.
+     * Returns the total kills accumulated by the faction's members.
      *
-     * @return número de kills
+     * @return number of kills
      */
     public int getKills() { return kills; }
 
     /**
-     * Devuelve el total de muertes acumuladas por los miembros de la facción.
+     * Returns the total deaths accumulated by the faction's members.
      *
-     * @return número de muertes
+     * @return number of deaths
      */
     public int getDeaths() { return deaths; }
 
     /**
-     * Devuelve los DTK restantes antes de que la facción se vuelva raideable.
+     * Returns the DTK remaining before the faction becomes raidable.
      *
-     * @return DTK restantes (0 indica estado raideable)
+     * @return remaining DTK (0 indicates raidable state)
      */
     public int getDtkRemaining() { return dtkRemaining; }
 
     /**
-     * Devuelve el número máximo de DTK con que la facción fue configurada.
+     * Returns the maximum DTK the faction was configured with.
      *
-     * @return DTK máximo
+     * @return maximum DTK
      */
     public int getMaxDtk() { return maxDtk; }
 
     /**
-     * Devuelve el instante en que la facción fue creada.
+     * Returns the instant at which the faction was created.
      *
-     * @return marca temporal de creación
+     * @return creation timestamp
      */
     public Instant getCreatedAt() { return createdAt; }
 
     /**
-     * Devuelve el punto de hogar de la facción, o {@code null} si no se ha definido ninguno.
+     * Returns the faction's home location, or {@code null} if none has been set.
      *
-     * @return ubicación del hogar, o {@code null}
+     * @return home location, or {@code null}
      */
     public FactionHome getHome() { return home; }
 
     /**
-     * Establece un nuevo punto de hogar para la facción.
+     * Sets a new home location for the faction.
      *
-     * @param home nueva ubicación de hogar; puede ser {@code null} para eliminar el hogar
+     * @param home new home location; may be {@code null} to clear the home
      */
     public void setHome(FactionHome home) { this.home = home; }
 
     /**
-     * Elimina el hogar de la facción, dejando el campo en {@code null}.
+     * Clears the faction's home, leaving the field as {@code null}.
      */
     public void clearHome() { this.home = null; }
 
     /**
-     * Devuelve el número de strikes administrativos acumulados por la facción.
+     * Returns the number of administrative strikes accumulated by the faction.
      *
-     * @return número de strikes actuales
+     * @return current number of strikes
      */
     public int getStrikes() { return strikes; }
 
     /**
-     * Devuelve el número máximo de strikes que puede acumular una facción antes de ser disuelta.
+     * Returns the maximum number of strikes a faction can accumulate before being disbanded.
      *
-     * @return límite de strikes ({@value #MAX_STRIKES})
+     * @return strike limit ({@value #MAX_STRIKES})
      */
     public int getMaxStrikes() { return MAX_STRIKES; }
 
     /**
-     * Indica si la facción está congelada.
+     * Returns whether the faction is frozen.
      *
-     * <p>Una facción congelada no puede recibir nuevos miembros ni depósitos económicos.
+     * <p>A frozen faction cannot receive new members or economic deposits.
      *
-     * @return {@code true} si la facción está congelada
+     * @return {@code true} if the faction is frozen
      */
     public boolean isFrozen() { return frozen; }
 
     /**
-     * Cambia el estado de congelamiento de la facción.
+     * Changes the frozen state of the faction.
      *
-     * @param frozen {@code true} para congelar la facción; {@code false} para descongelarla
+     * @param frozen {@code true} to freeze the faction; {@code false} to unfreeze it
      */
     public void setFrozen(boolean frozen) { this.frozen = frozen; }
 
     /**
-     * Indica si la facción es actualmente raideable, es decir, si sus claims
-     * pueden ser sobrereclamados por facciones enemigas.
+     * Returns whether the faction is currently raidable, meaning its claims
+     * can be overclaimed by enemy factions.
      *
-     * @return {@code true} si la facción es raideable
+     * @return {@code true} if the faction is raidable
      */
     public boolean isRaidable() { return raidable; }
 
     /**
-     * Cambia el estado de raideabilidad de la facción.
+     * Changes the raidable state of the faction.
      *
-     * <p>Este método se invoca cuando el DTK llega a 0 (para activar el estado)
-     * o cuando un administrador restaura manualmente los DTK de la facción.
+     * <p>This method is called when the DTK reaches 0 (to activate the state)
+     * or when an administrator manually restores the faction's DTK.
      *
-     * @param raidable {@code true} para marcar la facción como raideable
+     * @param raidable {@code true} to mark the faction as raidable
      */
     public void setRaidable(boolean raidable) { this.raidable = raidable; }
 }

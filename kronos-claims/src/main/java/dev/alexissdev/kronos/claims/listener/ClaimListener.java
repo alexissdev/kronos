@@ -31,27 +31,27 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 
 /**
- * Listener central del subsistema de claims en el plugin HCF.
+ * Central listener for the claims subsystem in the HCF plugin.
  *
- * <p>Combina un {@link Listener} de Bukkit con un suscriptor del EventBus de Guava para
- * cumplir dos responsabilidades principales:</p>
+ * <p>Combines a Bukkit {@link Listener} with a Guava EventBus subscriber to fulfil
+ * two main responsibilities:</p>
  * <ol>
- *   <li><strong>Protección de bloques:</strong> cancela eventos de rotura y colocación de
- *       bloques cuando el jugador no tiene permiso sobre el territorio.</li>
- *   <li><strong>Notificación de movimiento:</strong> informa al jugador cuando cruza el
- *       límite de un claim, mostrando el nombre del territorio o de la facción propietaria.</li>
+ *   <li><strong>Block protection:</strong> cancels block-break and block-place events
+ *       when the player does not have permission over the territory.</li>
+ *   <li><strong>Movement notification:</strong> informs the player when they cross a
+ *       claim boundary, showing the territory name or the owning faction's name.</li>
  * </ol>
  *
- * <p>Mantiene tres cachés en memoria para evitar consultas frecuentes a MongoDB:</p>
+ * <p>Maintains three in-memory caches to avoid frequent queries to MongoDB:</p>
  * <ul>
- *   <li>{@code claimCache}: mapea {@code "mundo:chunkX:chunkZ"} → {@link Claim}.</li>
- *   <li>{@code playerFactionMap}: mapea UUID del jugador → ID de su facción actual.</li>
- *   <li>{@code playerChunkCache}: mapea UUID del jugador → clave del último chunk visitado.</li>
+ *   <li>{@code claimCache}: maps {@code "world:chunkX:chunkZ"} → {@link Claim}.</li>
+ *   <li>{@code playerFactionMap}: maps player UUID → their current faction ID.</li>
+ *   <li>{@code playerChunkCache}: maps player UUID → the key of the last visited chunk.</li>
  * </ul>
  *
- * <p>También escucha eventos de dominio del EventBus (facción reclamada, disuelta,
- * jugador que entra/sale de facción, facción en estado raidable) para mantener los
- * cachés actualizados en tiempo real sin necesidad de recargas manuales.</p>
+ * <p>Also listens to domain events from the EventBus (faction claimed, faction disbanded,
+ * player joined/left faction, faction became raidable) to keep the caches updated in
+ * real time without requiring manual reloads.</p>
  */
 @Singleton
 public class ClaimListener implements Listener {
@@ -68,13 +68,13 @@ public class ClaimListener implements Listener {
     private final Set<String>         raidableFactions  = ConcurrentHashMap.newKeySet();
 
     /**
-     * Construye el listener inyectando sus dependencias y lo registra en el EventBus de Guava.
+     * Constructs the listener by injecting its dependencies and registers it on the Guava EventBus.
      *
-     * @param claimService   servicio de aplicación de claims para consultas de territorio
-     * @param factionService servicio de facciones para resolver nombres de facción al notificar
-     * @param sotwService    servicio de estado SOTW/EOTW; durante EOTW se permite construir en todos los claims
-     * @param plugin         instancia del plugin principal, necesaria para programar tareas en el hilo principal
-     * @param eventBus       bus de eventos de Guava donde se registran los suscriptores {@link Subscribe}
+     * @param claimService   claim application service used for territory queries
+     * @param factionService faction service used to resolve faction names in notifications
+     * @param sotwService    SOTW/EOTW state service; when EOTW is active, building is allowed everywhere
+     * @param plugin         main plugin instance, required for scheduling tasks on the server thread
+     * @param eventBus       Guava event bus where {@link Subscribe} handlers are registered
      */
     @Inject
     public ClaimListener(ClaimService claimService, FactionService factionService,
@@ -88,14 +88,14 @@ public class ClaimListener implements Listener {
     }
 
     /**
-     * Cancela la rotura de bloques en territorios protegidos cuando el jugador no tiene autorización.
+     * Cancels block-breaking in protected territories when the player is not authorised.
      *
-     * <p>Los operadores y jugadores con el permiso {@code hcf.bypass.claimprotection} pueden
-     * romper bloques en cualquier territorio. En claims de tipo {@link ClaimType#FACTION}, solo
-     * los miembros de la facción propietaria o las facciones que la estén raideando pueden modificar
-     * el territorio, a menos que EOTW esté activo.</p>
+     * <p>Operators and players with the {@code hcf.bypass.claimprotection} permission may
+     * break blocks in any territory. In {@link ClaimType#FACTION} claims, only members of
+     * the owning faction or factions currently raiding it can modify the territory, unless
+     * EOTW is active.</p>
      *
-     * @param event evento de rotura de bloque de Bukkit
+     * @param event Bukkit block-break event
      */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
@@ -114,12 +114,12 @@ public class ClaimListener implements Listener {
     }
 
     /**
-     * Cancela la colocación de bloques en territorios protegidos cuando el jugador no tiene autorización.
+     * Cancels block-placing in protected territories when the player is not authorised.
      *
-     * <p>Aplica las mismas reglas que {@link #onBlockBreak(BlockBreakEvent)}: los operadores
-     * y jugadores con permiso de bypass pueden colocar bloques en cualquier zona.</p>
+     * <p>Applies the same rules as {@link #onBlockBreak(BlockBreakEvent)}: operators and
+     * players with the bypass permission may place blocks anywhere.</p>
      *
-     * @param event evento de colocación de bloque de Bukkit
+     * @param event Bukkit block-place event
      */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent event) {
@@ -138,12 +138,12 @@ public class ClaimListener implements Listener {
     }
 
     /**
-     * Marca una facción como raidable en el caché local al recibir el evento de dominio correspondiente.
+     * Marks a faction as raidable in the local cache upon receiving the corresponding domain event.
      *
-     * <p>Una vez en estado raidable, cualquier jugador (incluso enemigos) puede romper y colocar
-     * bloques en el territorio de esa facción, simulando un saqueo durante el raid.</p>
+     * <p>Once a faction is raidable, any player — including enemies — may break and place
+     * blocks within that faction's territory, simulating a raid in progress.</p>
      *
-     * @param event evento de dominio que indica que la facción ha entrado en estado raidable
+     * @param event domain event indicating that the faction has entered a raidable state
      */
     @Subscribe
     public void onFactionRaidable(FactionRaidableDomainEvent event) {
@@ -161,14 +161,14 @@ public class ClaimListener implements Listener {
     }
 
     /**
-     * Detecta cuando un jugador cruza el límite entre chunks y le notifica el territorio al que ingresó.
+     * Detects when a player crosses a chunk boundary and notifies them of the territory they entered.
      *
-     * <p>Para minimizar el impacto en el rendimiento, solo procesa el evento si el jugador
-     * ha cruzado realmente la frontera de un chunk (cambio en X o Z del chunk). Cuando el
-     * jugador entra en un territorio reclamado llama a {@link #notifyClaimEntry(Player, Claim)};
-     * cuando sale de uno hacia tierra libre muestra el mensaje correspondiente.</p>
+     * <p>To minimise performance impact, the event is only processed when the player has
+     * actually crossed a chunk border (change in chunk X or Z). When the player enters a
+     * claimed territory, {@link #notifyClaimEntry(Player, Claim)} is called; when they leave
+     * one for open land, the corresponding message is displayed.</p>
      *
-     * @param event evento de movimiento de Bukkit
+     * @param event Bukkit player-move event
      */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onMove(PlayerMoveEvent event) {
@@ -191,15 +191,14 @@ public class ClaimListener implements Listener {
     }
 
     /**
-     * Envía al jugador el mensaje de bienvenida al entrar en un territorio.
+     * Sends the player a welcome message upon entering a territory.
      *
-     * <p>Si el claim es de tipo {@link ClaimType#FACTION}, resuelve de forma asíncrona
-     * el nombre de la facción y lo muestra en el hilo principal del servidor.
-     * Para cualquier otro tipo de claim (KOTH, WARZONE, SAFEZONE, etc.) muestra
-     * directamente el nombre del tipo.</p>
+     * <p>If the claim is of type {@link ClaimType#FACTION}, the faction name is resolved
+     * asynchronously and displayed on the server's main thread. For any other claim type
+     * (KOTH, WARZONE, SAFEZONE, etc.) the type name is shown directly.</p>
      *
-     * @param player jugador que ha entrado en el territorio
-     * @param claim  claim al que ha ingresado el jugador
+     * @param player the player who entered the territory
+     * @param claim  the claim the player has entered
      */
     private void notifyClaimEntry(Player player, Claim claim) {
         if (claim.getType() == ClaimType.FACTION) {
@@ -213,12 +212,12 @@ public class ClaimListener implements Listener {
     }
 
     /**
-     * Carga el ID de facción del jugador en el caché local cuando se conecta al servidor.
+     * Loads the player's faction ID into the local cache when they connect to the server.
      *
-     * <p>Permite que las comprobaciones de permiso en los eventos de bloque sean instantáneas
-     * sin necesidad de consultar la base de datos en cada acción.</p>
+     * <p>Allows block-permission checks in block events to be instant without needing
+     * to query the database on every action.</p>
      *
-     * @param event evento de conexión del jugador
+     * @param event player join event
      */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent event) {
@@ -228,12 +227,12 @@ public class ClaimListener implements Listener {
     }
 
     /**
-     * Elimina los datos del jugador de ambos cachés cuando se desconecta del servidor.
+     * Removes the player's data from both caches when they disconnect from the server.
      *
-     * <p>Evita fugas de memoria al limpiar las entradas del mapa de facciones y del
-     * mapa de chunks visitados para el jugador que abandonó la sesión.</p>
+     * <p>Prevents memory leaks by cleaning up entries in the faction map and the chunk
+     * cache for the player whose session has ended.</p>
      *
-     * @param event evento de desconexión del jugador
+     * @param event player quit event
      */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent event) {
@@ -242,14 +241,14 @@ public class ClaimListener implements Listener {
     }
 
     /**
-     * Actualiza el caché de claims en memoria cuando se registra un nuevo territorio.
+     * Updates the in-memory claim cache when a new territory is registered.
      *
-     * <p>Al recibir el evento de dominio {@link FactionClaimedDomainEvent}, reconstruye
-     * la entidad {@link Claim} y la inserta en el {@code claimCache} para todos los chunks
-     * que abarca el nuevo territorio. Esto garantiza que las comprobaciones de permisos
-     * y las notificaciones de movimiento funcionen sin acceder a MongoDB.</p>
+     * <p>Upon receiving a {@link FactionClaimedDomainEvent}, rebuilds the {@link Claim}
+     * entity and inserts it into the {@code claimCache} for every chunk covered by the
+     * new territory. This ensures that permission checks and movement notifications work
+     * without hitting MongoDB.</p>
      *
-     * @param event evento de dominio que describe el territorio recién reclamado
+     * @param event domain event describing the newly claimed territory
      */
     @Subscribe
     public void onClaimed(FactionClaimedDomainEvent event) {
@@ -269,12 +268,12 @@ public class ClaimListener implements Listener {
     }
 
     /**
-     * Elimina todos los claims de una facción del caché en memoria cuando esta es disuelta.
+     * Removes all claims belonging to a disbanded faction from the in-memory cache.
      *
-     * <p>Sin esta limpieza, los chunks del caché seguirían considerándose territorio de la
-     * facción disuelta, impidiendo que otros jugadores los reclamen en tiempo real.</p>
+     * <p>Without this cleanup, the cached chunks would continue to be treated as territory
+     * of the disbanded faction, preventing other players from claiming them in real time.</p>
      *
-     * @param event evento de dominio que indica qué facción fue disuelta
+     * @param event domain event indicating which faction was disbanded
      */
     @Subscribe
     public void onDisbanded(FactionDisbandedDomainEvent event) {
@@ -283,12 +282,12 @@ public class ClaimListener implements Listener {
     }
 
     /**
-     * Registra la facción de un jugador en el caché local cuando este se une a ella.
+     * Records a player's faction in the local cache when they join a faction.
      *
-     * <p>Garantiza que las comprobaciones de propiedad de claims sean correctas para
-     * los jugadores que cambien de facción sin necesidad de reconectarse.</p>
+     * <p>Ensures that claim ownership checks are correct for players who change factions
+     * without reconnecting to the server.</p>
      *
-     * @param event evento de dominio con el UUID del jugador y el ID de su nueva facción
+     * @param event domain event containing the player's UUID and their new faction ID
      */
     @Subscribe
     public void onPlayerJoined(PlayerJoinedFactionDomainEvent event) {
@@ -296,12 +295,12 @@ public class ClaimListener implements Listener {
     }
 
     /**
-     * Elimina la asociación de facción de un jugador del caché local cuando abandona su facción.
+     * Removes a player's faction association from the local cache when they leave their faction.
      *
-     * <p>Tras esta limpieza, el jugador es tratado como sin facción en las comprobaciones
-     * de permiso sobre territorios hasta que vuelva a unirse a una.</p>
+     * <p>After this cleanup, the player is treated as faction-less in territory permission
+     * checks until they join a new faction.</p>
      *
-     * @param event evento de dominio con el UUID del jugador que abandonó la facción
+     * @param event domain event containing the UUID of the player who left the faction
      */
     @Subscribe
     public void onPlayerLeft(PlayerLeftFactionDomainEvent event) {
@@ -309,12 +308,12 @@ public class ClaimListener implements Listener {
     }
 
     /**
-     * Precarga todos los claims y las facciones raidables desde MongoDB al caché en memoria.
+     * Preloads all claims and raidable factions from MongoDB into the in-memory caches.
      *
-     * <p>Debe invocarse una sola vez durante la inicialización del plugin, después de que
-     * el injector de Guice haya construido el listener. Ejecuta las consultas de forma
-     * asíncrona y registra los resultados en los cachés correspondientes. Los errores se
-     * registran en el log del servidor sin interrumpir el arranque.</p>
+     * <p>Should be called exactly once during plugin initialisation, after Guice has
+     * constructed the listener. Queries are executed asynchronously and results are stored
+     * in their respective caches. Errors are logged to the server log without interrupting
+     * the startup sequence.</p>
      */
     public void preloadCache() {
         claimService.getAllClaims().thenAccept(claims -> {
@@ -340,13 +339,13 @@ public class ClaimListener implements Listener {
     }
 
     /**
-     * Determina si el jugador cruzó la frontera entre dos chunks distintos.
+     * Determines whether the player has crossed the boundary between two different chunks.
      *
-     * <p>Se usa como filtro rápido en {@link #onMove(PlayerMoveEvent)} para descartar
-     * los movimientos dentro del mismo chunk sin procesar lógica adicional.</p>
+     * <p>Used as a fast filter in {@link #onMove(PlayerMoveEvent)} to discard movement
+     * within the same chunk without processing any additional logic.</p>
      *
-     * @param event evento de movimiento a evaluar
-     * @return {@code true} si el chunk de origen y el de destino son diferentes
+     * @param event the player-move event to evaluate
+     * @return {@code true} if the source and destination chunks are different
      */
     private boolean crossedChunkBorder(PlayerMoveEvent event) {
         return event.getFrom().getChunk().getX() != event.getTo().getChunk().getX()
@@ -354,15 +353,15 @@ public class ClaimListener implements Listener {
     }
 
     /**
-     * Genera la clave compuesta usada para indexar claims en el caché en memoria.
+     * Generates the composite key used to index claims in the in-memory cache.
      *
-     * <p>El formato es {@code "mundo:chunkX:chunkZ"}, lo que garantiza unicidad global
-     * entre mundos con coordenadas de chunk idénticas.</p>
+     * <p>The format is {@code "world:chunkX:chunkZ"}, which guarantees global uniqueness
+     * across worlds that share identical chunk coordinates.</p>
      *
-     * @param world  nombre del mundo de Minecraft
-     * @param chunkX coordenada X del chunk
-     * @param chunkZ coordenada Z del chunk
-     * @return clave de caché en formato {@code "mundo:X:Z"}
+     * @param world  Minecraft world name
+     * @param chunkX chunk X coordinate
+     * @param chunkZ chunk Z coordinate
+     * @return cache key in the format {@code "world:X:Z"}
      */
     private String chunkKey(String world, int chunkX, int chunkZ) {
         return world + ":" + chunkX + ":" + chunkZ;

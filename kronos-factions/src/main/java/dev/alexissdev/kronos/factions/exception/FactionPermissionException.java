@@ -6,32 +6,32 @@ import dev.alexissdev.kronos.factions.domain.FactionRole;
 import java.util.UUID;
 
 /**
- * Excepción lanzada cuando un jugador intenta ejecutar una operación de facción
- * para la que no tiene el rango mínimo requerido, o cuando el actor no es
- * miembro de la facción en cuestión.
+ * Exception thrown when a player attempts to execute a faction operation for which
+ * they do not hold the minimum required rank, or when the actor is not a member
+ * of the target faction at all.
  *
- * <p>Esta excepción es producida por el método {@code requireRole} interno del
- * servicio de facciones, que actúa como guardián de permisos antes de cualquier
- * operación privilegiada (expulsar, retirar fondos, cambiar roles, etc.).
+ * <p>This exception is produced by the internal {@code requireRole} method of the
+ * faction service, which acts as a permission guard before any privileged operation
+ * (kick, withdraw funds, change roles, etc.).
  *
- * <p>El mensaje de error es legible por el jugador y se muestra directamente
- * en el chat como parte del manejo estándar de {@code HCFException}.
+ * <p>The error message is player-readable and is displayed directly in the chat
+ * as part of the standard {@code HCFException} handling.
  */
 public class FactionPermissionException extends HCFException {
 
     /**
-     * Crea la excepción indicando el rango mínimo necesario para la operación.
+     * Creates the exception indicating the minimum rank required for the operation.
      *
-     * @param required rol mínimo requerido que el actor no posee
+     * @param required minimum role required that the actor does not possess
      */
     public FactionPermissionException(FactionRole required) {
         super("Necesitas rango " + required.name() + " o superior para esto");
     }
 
     /**
-     * Crea la excepción cuando el actor no es miembro de la facción objetivo.
+     * Creates the exception for when the actor is not a member of the target faction.
      *
-     * @param actorUuid UUID del jugador que intentó la operación sin ser miembro
+     * @param actorUuid UUID of the player who attempted the operation without being a member
      */
     public FactionPermissionException(UUID actorUuid) {
         super("No eres miembro de esta facción");

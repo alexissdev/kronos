@@ -17,11 +17,10 @@ import org.bukkit.plugin.Plugin;
 import java.util.List;
 
 /**
- * Comando {@code /kit} que entrega al jugador el kit correspondiente a su clase
- * activa en el sistema HCF (por ejemplo, Archer, Bard, Rogue, etc.).
- * Antes de aplicar el kit verifica si el jugador tiene un cooldown de clase
- * activo ({@link TimerType#CLASS_COOLDOWN}) e inicia uno nuevo de 60 segundos
- * tras la entrega exitosa.
+ * Command {@code /kit} that delivers the kit corresponding to the player's active
+ * HCF class (e.g. Archer, Bard, Rogue, etc.). Before applying the kit it checks
+ * whether the player has an active class cooldown ({@link TimerType#CLASS_COOLDOWN})
+ * and starts a new 60-second cooldown after a successful kit delivery.
  */
 @Singleton
 public class KitCommand extends BaseCommand {
@@ -35,13 +34,13 @@ public class KitCommand extends BaseCommand {
     private final Plugin         plugin;
 
     /**
-     * Construye el comando inyectando sus dependencias mediante Guice.
+     * Constructs the command by injecting its dependencies via Guice.
      *
-     * @param playerService servicio para obtener o crear el perfil HCF del jugador
-     * @param kitService    servicio que aplica los ítems del kit al inventario
-     * @param timerService  servicio de temporizadores para gestionar el cooldown de clase
-     * @param messages      configuración de mensajes localizados
-     * @param plugin        instancia del plugin, usada para programar tareas en el hilo principal
+     * @param playerService service used to retrieve or create the player's HCF profile
+     * @param kitService    service that applies kit items to the player's inventory
+     * @param timerService  timer service used to manage the class cooldown
+     * @param messages      localised message configuration
+     * @param plugin        plugin instance used to schedule tasks on the main thread
      */
     @Inject
     public KitCommand(PlayerService playerService, KitService kitService,
@@ -56,12 +55,13 @@ public class KitCommand extends BaseCommand {
     }
 
     /**
-     * Verifica que el ejecutor sea un jugador sin cooldown activo, obtiene su clase
-     * activa, comprueba que tenga permiso para ella y aplica el kit correspondiente.
-     * El proceso es asíncrono; la aplicación del kit ocurre en el hilo principal de Bukkit.
+     * Verifies that the executor is a player with no active class cooldown, retrieves
+     * their active class, checks that they hold the required permission for it, and
+     * applies the corresponding kit. The operation is asynchronous; the actual kit
+     * application is scheduled on the Bukkit main thread.
      *
-     * @param sender ejecutor del comando; debe ser un {@link org.bukkit.entity.Player}
-     * @param args   argumentos adicionales (no utilizados por este comando)
+     * @param sender command executor; must be a {@link org.bukkit.entity.Player}
+     * @param args   additional arguments (not used by this command)
      */
     @Override
     protected void execute(CommandSender sender, String[] args) {
@@ -88,12 +88,11 @@ public class KitCommand extends BaseCommand {
     }
 
     /**
-     * Devuelve una lista vacía de sugerencias de autocompletado, ya que este
-     * comando no acepta argumentos.
+     * Returns an empty tab-completion list because this command accepts no arguments.
      *
-     * @param sender ejecutor del comando
-     * @param args   fragmento de argumento actualmente escrito
-     * @return lista vacía
+     * @param sender command executor
+     * @param args   argument fragment currently typed
+     * @return empty list
      */
     @Override
     protected List<String> tabComplete(CommandSender sender, String[] args) {

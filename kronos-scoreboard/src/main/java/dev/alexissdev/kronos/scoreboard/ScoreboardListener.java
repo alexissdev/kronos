@@ -9,18 +9,17 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 /**
- * Listener de Bukkit responsable de gestionar el ciclo de vida de los scoreboards
- * individuales de cada jugador en el plugin HCF Kronos.
+ * Bukkit listener responsible for managing the lifecycle of each player's individual
+ * scoreboard in the HCF Kronos plugin.
  * <p>
- * Cuando un jugador entra al servidor, crea su marcador lateral mediante
+ * When a player joins the server, it creates their sidebar scoreboard via
  * {@link ScoreboardManager#createBoard(org.bukkit.entity.Player)}.
- * Cuando abandona la sesión, libera los recursos asociados mediante
+ * When they leave the session, it releases the associated resources via
  * {@link ScoreboardManager#removeBoard(org.bukkit.entity.Player)}.
  * </p>
  * <p>
- * Ambos eventos se escuchan con prioridad {@link EventPriority#MONITOR} para
- * garantizar que los demás plugins hayan procesado el evento antes de que
- * este listener actúe.
+ * Both events are listened to at {@link EventPriority#MONITOR} priority to
+ * ensure all other plugins have processed the event before this listener acts.
  * </p>
  */
 @Singleton
@@ -29,9 +28,9 @@ public class ScoreboardListener implements Listener {
     private final ScoreboardManager manager;
 
     /**
-     * Construye el listener inyectando el gestor central de scoreboards.
+     * Constructs the listener by injecting the central scoreboard manager.
      *
-     * @param manager gestor que administra los {@link PlayerBoard} de todos los jugadores
+     * @param manager the manager that administers the {@link PlayerBoard} for every online player
      */
     @Inject
     public ScoreboardListener(ScoreboardManager manager) {
@@ -39,14 +38,13 @@ public class ScoreboardListener implements Listener {
     }
 
     /**
-     * Crea el marcador lateral para el jugador que acaba de conectarse al servidor.
+     * Creates the sidebar scoreboard for a player who has just connected to the server.
      * <p>
-     * Se ejecuta con prioridad {@link EventPriority#MONITOR} para asegurarse de que
-     * el jugador ya fue validado y aceptado por el resto de listeners antes de asignarle
-     * el scoreboard.
+     * Runs at {@link EventPriority#MONITOR} priority to ensure the player has already
+     * been validated and accepted by all other listeners before the scoreboard is assigned.
      * </p>
      *
-     * @param event evento de conexión del jugador emitido por Bukkit
+     * @param event the player join event emitted by Bukkit
      */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent event) {
@@ -54,10 +52,10 @@ public class ScoreboardListener implements Listener {
     }
 
     /**
-     * Elimina el marcador lateral y los datos cacheados del jugador que abandona el servidor,
-     * liberando la memoria asociada en el {@link ScoreboardManager}.
+     * Removes the sidebar scoreboard and cached data of a player who is leaving the server,
+     * freeing the memory held by their entry in the {@link ScoreboardManager}.
      *
-     * @param event evento de desconexión del jugador emitido por Bukkit
+     * @param event the player quit event emitted by Bukkit
      */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent event) {

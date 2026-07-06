@@ -1,15 +1,15 @@
 package dev.alexissdev.kronos.factions.domain;
 
 /**
- * Punto de teletransporte hogar de una facción.
+ * Teleport home location for a faction.
  *
- * <p>Almacena la posición exacta (mundo, coordenadas XYZ y rotación) a la que
- * serán teleportados los miembros cuando usen el comando {@code /f home}.
- * Una facción puede tener como máximo un hogar activo; si no tiene ninguno,
- * el campo {@code home} en {@link Faction} es {@code null}.
+ * <p>Stores the exact position (world, XYZ coordinates, and rotation) to which
+ * members will be teleported when they use the {@code /f home} command.
+ * A faction can have at most one active home; if none has been set,
+ * the {@code home} field in {@link Faction} is {@code null}.
  *
- * <p>Esta clase es inmutable: una vez creada, la ubicación no puede cambiar.
- * Para mover el hogar se debe reemplazar la instancia completa mediante
+ * <p>This class is immutable: once created, the location cannot change.
+ * To move the home, the entire instance must be replaced via
  * {@link Faction#setHome(FactionHome)}.
  */
 public final class FactionHome {
@@ -22,14 +22,14 @@ public final class FactionHome {
     private final float pitch;
 
     /**
-     * Crea una nueva ubicación de hogar para la facción.
+     * Creates a new home location for the faction.
      *
-     * @param world nombre del mundo de Bukkit donde se ubica el hogar
-     * @param x     coordenada X (este/oeste)
-     * @param y     coordenada Y (altura)
-     * @param z     coordenada Z (norte/sur)
-     * @param yaw   rotación horizontal del jugador al ser teleportado (en grados)
-     * @param pitch rotación vertical del jugador al ser teleportado (en grados)
+     * @param world name of the Bukkit world where the home is located
+     * @param x     X coordinate (east/west)
+     * @param y     Y coordinate (height)
+     * @param z     Z coordinate (north/south)
+     * @param yaw   horizontal rotation of the player when teleported (in degrees)
+     * @param pitch vertical rotation of the player when teleported (in degrees)
      */
     public FactionHome(String world, double x, double y, double z, float yaw, float pitch) {
         this.world = world;
@@ -41,46 +41,46 @@ public final class FactionHome {
     }
 
     /**
-     * Devuelve el nombre del mundo donde se encuentra el hogar.
+     * Returns the name of the world where the home is located.
      *
-     * @return nombre del mundo de Bukkit
+     * @return Bukkit world name
      */
     public String getWorld() { return world; }
 
     /**
-     * Devuelve la coordenada X del hogar.
+     * Returns the X coordinate of the home.
      *
-     * @return coordenada X
+     * @return X coordinate
      */
     public double getX()     { return x; }
 
     /**
-     * Devuelve la coordenada Y (altura) del hogar.
+     * Returns the Y coordinate (height) of the home.
      *
-     * @return coordenada Y
+     * @return Y coordinate
      */
     public double getY()     { return y; }
 
     /**
-     * Devuelve la coordenada Z del hogar.
+     * Returns the Z coordinate of the home.
      *
-     * @return coordenada Z
+     * @return Z coordinate
      */
     public double getZ()     { return z; }
 
     /**
-     * Devuelve la rotación horizontal (yaw) con la que el jugador
-     * quedará orientado al ser teleportado al hogar.
+     * Returns the horizontal rotation (yaw) the player will face
+     * upon being teleported to the home.
      *
-     * @return yaw en grados
+     * @return yaw in degrees
      */
     public float getYaw()    { return yaw; }
 
     /**
-     * Devuelve la rotación vertical (pitch) con la que el jugador
-     * quedará orientado al ser teleportado al hogar.
+     * Returns the vertical rotation (pitch) the player will face
+     * upon being teleported to the home.
      *
-     * @return pitch en grados
+     * @return pitch in degrees
      */
     public float getPitch()  { return pitch; }
 }

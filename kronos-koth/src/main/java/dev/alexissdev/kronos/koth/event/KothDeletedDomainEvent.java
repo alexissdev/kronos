@@ -1,28 +1,27 @@
 package dev.alexissdev.kronos.koth.event;
 
 /**
- * Evento de dominio publicado vía Guava {@code EventBus} cuando una zona KOTH es eliminada
- * permanentemente del sistema.
+ * Domain event published via Guava {@code EventBus} when a KOTH zone is permanently
+ * deleted from the system.
  *
- * <p>Los módulos que mantienen estado asociado a un KOTH (como temporizadores activos o
- * marcadores en el scoreboard) deben suscribirse a este evento para limpiar sus recursos
- * de forma desacoplada.</p>
+ * <p>Modules that maintain state tied to a KOTH (such as active timers or scoreboard
+ * entries) should subscribe to this event to clean up their resources in a decoupled way.</p>
  */
 public final class KothDeletedDomainEvent {
 
     private final String kothName;
 
     /**
-     * Construye el evento con el nombre del KOTH eliminado.
+     * Constructs the event with the name of the deleted KOTH.
      *
-     * @param kothName nombre único del KOTH que fue eliminado
+     * @param kothName unique name of the KOTH that was deleted
      */
     public KothDeletedDomainEvent(String kothName) {
         this.kothName = kothName;
     }
 
     /**
-     * @return nombre único del KOTH que fue eliminado del sistema
+     * @return unique name of the KOTH that was removed from the system
      */
     public String getKothName() { return kothName; }
 }

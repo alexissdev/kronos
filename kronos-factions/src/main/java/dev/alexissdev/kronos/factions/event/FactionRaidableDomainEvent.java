@@ -1,18 +1,18 @@
 package dev.alexissdev.kronos.factions.event;
 
 /**
- * Evento de dominio publicado en el {@code EventBus} cuando una facción se vuelve
- * <em>raideable</em>, es decir, cuando su contador DTK llega a 0.
+ * Domain event published on the {@code EventBus} when a faction becomes
+ * <em>raidable</em>, that is, when its DTK counter reaches 0.
  *
- * <p>Una facción raideable tiene sus claims vulnerables: otras facciones enemigas
- * pueden sobrereclamar su territorio sin restricciones. Este evento marca el inicio
- * de una "raid" oficial contra la facción afectada.
+ * <p>A raidable faction has its claims exposed: enemy factions can overclaim
+ * its territory without restrictions. This event marks the beginning of an
+ * official raid against the affected faction.
  *
- * <p>Los listeners típicos de este evento incluyen:
+ * <p>Typical listeners of this event include:
  * <ul>
- *   <li>Anuncios globales al servidor indicando que la facción puede ser raideada.</li>
- *   <li>Actualización de indicadores visuales en el mapa del servidor.</li>
- *   <li>Notificaciones push a los miembros de la facción en peligro.</li>
+ *   <li>Server-wide announcements indicating that the faction can be raided.</li>
+ *   <li>Updates to visual indicators on the server map.</li>
+ *   <li>Push notifications to the members of the faction under threat.</li>
  * </ul>
  */
 public class FactionRaidableDomainEvent {
@@ -21,10 +21,10 @@ public class FactionRaidableDomainEvent {
     private final String factionName;
 
     /**
-     * Crea el evento con los datos de identificación de la facción raideable.
+     * Creates the event with the identifying data of the raidable faction.
      *
-     * @param factionId   ID de la facción que se ha vuelto raideable
-     * @param factionName nombre visible de la facción afectada
+     * @param factionId   ID of the faction that has become raidable
+     * @param factionName visible name of the affected faction
      */
     public FactionRaidableDomainEvent(String factionId, String factionName) {
         this.factionId   = factionId;
@@ -32,16 +32,16 @@ public class FactionRaidableDomainEvent {
     }
 
     /**
-     * Devuelve el ID de la facción que se ha vuelto raideable.
+     * Returns the ID of the faction that has become raidable.
      *
-     * @return ID de la facción
+     * @return faction ID
      */
     public String getFactionId()   { return factionId; }
 
     /**
-     * Devuelve el nombre de la facción que se ha vuelto raideable.
+     * Returns the name of the faction that has become raidable.
      *
-     * @return nombre de la facción
+     * @return faction name
      */
     public String getFactionName() { return factionName; }
 }

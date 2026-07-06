@@ -1,16 +1,16 @@
 package dev.alexissdev.kronos.factions.event;
 
 /**
- * Evento de dominio publicado en el {@code EventBus} cuando una facción
- * reclama un nuevo territorio (claim) en el mundo.
+ * Domain event published on the {@code EventBus} when a faction claims a new
+ * territory (claim) in the world.
  *
- * <p>Los listeners de este evento pueden, por ejemplo, actualizar el mapa
- * visual del servidor, registrar el claim en la base de datos de territorios
- * o notificar a los miembros de la facción que ganaron terreno.
+ * <p>Listeners of this event can, for example, update the server's visual map,
+ * register the claim in the territory database, or notify faction members
+ * that they have gained new land.
  *
- * <p>El territorio reclamado se describe como un rectángulo de chunks delimitado
- * por las coordenadas ({@code minChunkX}, {@code minChunkZ}) y
- * ({@code maxChunkX}, {@code maxChunkZ}) dentro del mundo indicado.
+ * <p>The claimed territory is described as a rectangle of chunks bounded by the
+ * coordinates ({@code minChunkX}, {@code minChunkZ}) and
+ * ({@code maxChunkX}, {@code maxChunkZ}) within the specified world.
  */
 public final class FactionClaimedDomainEvent {
 
@@ -24,16 +24,16 @@ public final class FactionClaimedDomainEvent {
     private final int maxChunkZ;
 
     /**
-     * Crea el evento con todos los datos del claim recién establecido.
+     * Creates the event with all data for the newly established claim.
      *
-     * @param factionId  ID de la facción que realizó el claim
-     * @param claimId    identificador único del claim creado
-     * @param claimType  tipo de claim (p.ej. {@code "FACTION"}, {@code "WARZONE"}, {@code "ROAD"})
-     * @param world      nombre del mundo de Bukkit donde se ubica el claim
-     * @param minChunkX  coordenada X mínima del chunk en el rectángulo del claim
-     * @param minChunkZ  coordenada Z mínima del chunk en el rectángulo del claim
-     * @param maxChunkX  coordenada X máxima del chunk en el rectángulo del claim
-     * @param maxChunkZ  coordenada Z máxima del chunk en el rectángulo del claim
+     * @param factionId  ID of the faction that performed the claim
+     * @param claimId    unique identifier of the created claim
+     * @param claimType  type of claim (e.g. {@code "FACTION"}, {@code "WARZONE"}, {@code "ROAD"})
+     * @param world      name of the Bukkit world where the claim is located
+     * @param minChunkX  minimum chunk X coordinate of the claim rectangle
+     * @param minChunkZ  minimum chunk Z coordinate of the claim rectangle
+     * @param maxChunkX  maximum chunk X coordinate of the claim rectangle
+     * @param maxChunkZ  maximum chunk Z coordinate of the claim rectangle
      */
     public FactionClaimedDomainEvent(String factionId, String claimId, String claimType,
                                       String world, int minChunkX, int minChunkZ,
@@ -49,58 +49,58 @@ public final class FactionClaimedDomainEvent {
     }
 
     /**
-     * Devuelve el ID de la facción que realizó el claim.
+     * Returns the ID of the faction that performed the claim.
      *
-     * @return ID de la facción
+     * @return faction ID
      */
     public String getFactionId() { return factionId; }
 
     /**
-     * Devuelve el identificador único del claim recién creado.
+     * Returns the unique identifier of the newly created claim.
      *
-     * @return ID del claim
+     * @return claim ID
      */
     public String getClaimId() { return claimId; }
 
     /**
-     * Devuelve el tipo de claim (p.ej. {@code "FACTION"}, {@code "WARZONE"}).
+     * Returns the type of claim (e.g. {@code "FACTION"}, {@code "WARZONE"}).
      *
-     * @return tipo de claim
+     * @return claim type
      */
     public String getClaimType() { return claimType; }
 
     /**
-     * Devuelve el nombre del mundo donde se ubica el claim.
+     * Returns the name of the world where the claim is located.
      *
-     * @return nombre del mundo
+     * @return world name
      */
     public String getWorld() { return world; }
 
     /**
-     * Devuelve la coordenada X mínima del chunk que delimita el claim.
+     * Returns the minimum chunk X coordinate bounding the claim.
      *
-     * @return coordenada X mínima del chunk
+     * @return minimum chunk X coordinate
      */
     public int getMinChunkX() { return minChunkX; }
 
     /**
-     * Devuelve la coordenada Z mínima del chunk que delimita el claim.
+     * Returns the minimum chunk Z coordinate bounding the claim.
      *
-     * @return coordenada Z mínima del chunk
+     * @return minimum chunk Z coordinate
      */
     public int getMinChunkZ() { return minChunkZ; }
 
     /**
-     * Devuelve la coordenada X máxima del chunk que delimita el claim.
+     * Returns the maximum chunk X coordinate bounding the claim.
      *
-     * @return coordenada X máxima del chunk
+     * @return maximum chunk X coordinate
      */
     public int getMaxChunkX() { return maxChunkX; }
 
     /**
-     * Devuelve la coordenada Z máxima del chunk que delimita el claim.
+     * Returns the maximum chunk Z coordinate bounding the claim.
      *
-     * @return coordenada Z máxima del chunk
+     * @return maximum chunk Z coordinate
      */
     public int getMaxChunkZ() { return maxChunkZ; }
 }

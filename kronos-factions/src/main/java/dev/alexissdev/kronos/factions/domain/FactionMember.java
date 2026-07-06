@@ -4,16 +4,16 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Representa a un jugador que pertenece a una facción, junto con su rol y
- * la fecha en que se unió.
+ * Represents a player who belongs to a faction, along with their role and
+ * the date on which they joined.
  *
- * <p>Esta clase es parte del agregado {@link Faction}: las instancias viven
- * dentro del mapa interno de miembros de la facción y no se persisten de forma
- * independiente, sino embebidas en el documento de la facción en MongoDB.
+ * <p>This class is part of the {@link Faction} aggregate: instances live
+ * inside the faction's internal member map and are not persisted independently —
+ * they are embedded in the faction's MongoDB document.
  *
- * <p>El rol determina qué operaciones puede realizar el miembro sobre la facción
- * (invitar, expulsar, cambiar alias, retirar fondos, etc.). El rol puede ser
- * promovido o degradado en cualquier momento por un miembro con suficiente autoridad.
+ * <p>The role determines which operations the member can perform on the faction
+ * (invite, kick, rename, withdraw funds, etc.). The role can be promoted or
+ * demoted at any time by a member with sufficient authority.
  */
 public final class FactionMember {
 
@@ -22,11 +22,11 @@ public final class FactionMember {
     private final Instant joinedAt;
 
     /**
-     * Crea un nuevo miembro de facción.
+     * Creates a new faction member.
      *
-     * @param uuid     identificador único del jugador en Minecraft
-     * @param role     rol inicial del miembro dentro de la facción
-     * @param joinedAt momento en que el jugador se unió a la facción
+     * @param uuid     unique identifier of the player in Minecraft
+     * @param role     initial role of the member within the faction
+     * @param joinedAt instant at which the player joined the faction
      */
     public FactionMember(UUID uuid, FactionRole role, Instant joinedAt) {
         this.uuid = uuid;
@@ -35,33 +35,33 @@ public final class FactionMember {
     }
 
     /**
-     * Devuelve el UUID del jugador asociado a este miembro.
+     * Returns the UUID of the player associated with this member.
      *
-     * @return UUID del jugador
+     * @return UUID of the player
      */
     public UUID getUuid() { return uuid; }
 
     /**
-     * Devuelve el rol actual del miembro dentro de la facción.
+     * Returns the current role of the member within the faction.
      *
-     * @return rol del miembro
+     * @return member's role
      */
     public FactionRole getRole() { return role; }
 
     /**
-     * Actualiza el rol del miembro dentro de la facción.
+     * Updates the role of the member within the faction.
      *
-     * <p>Solo debe invocarse desde el servicio de facciones tras verificar
-     * que el actor tiene suficiente autoridad para promover o degradar al objetivo.
+     * <p>Should only be invoked from the faction service after verifying
+     * that the acting member has sufficient authority to promote or demote the target.
      *
-     * @param role nuevo rol a asignar
+     * @param role new role to assign
      */
     public void setRole(FactionRole role) { this.role = role; }
 
     /**
-     * Devuelve el instante exacto en que el jugador ingresó a la facción.
+     * Returns the exact instant at which the player joined the faction.
      *
-     * @return marca temporal de ingreso
+     * @return join timestamp
      */
     public Instant getJoinedAt() { return joinedAt; }
 }

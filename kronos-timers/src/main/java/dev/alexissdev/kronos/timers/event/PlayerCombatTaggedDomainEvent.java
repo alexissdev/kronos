@@ -3,14 +3,14 @@ package dev.alexissdev.kronos.timers.event;
 import java.util.UUID;
 
 /**
- * Evento de dominio publicado en el Guava {@code EventBus} cuando un jugador
- * es marcado en combate (combat tag) al recibir o infligir daño a otro jugador.
+ * Domain event published on the Guava {@code EventBus} when a player is combat-tagged
+ * after dealing or receiving damage from another player.
  *
- * <p>Al publicarse este evento, ambos jugadores involucrados en el combate reciben
- * un timer de tipo {@link dev.alexissdev.kronos.timers.domain.TimerType#COMBAT_TAG}
- * que les impide desconectarse del servidor sin consecuencias durante su duración.
- * Los listeners suscritos al {@code EventBus} pueden reaccionar a este evento para
- * mostrar notificaciones o aplicar lógica adicional de combate.</p>
+ * <p>When this event is posted, both players involved in the exchange receive a timer
+ * of type {@link dev.alexissdev.kronos.timers.domain.TimerType#COMBAT_TAG} that
+ * prevents them from disconnecting safely for the timer's duration.
+ * Subscribers on the {@code EventBus} can react to this event to display notifications
+ * or apply additional combat-related logic.</p>
  */
 public final class PlayerCombatTaggedDomainEvent {
 
@@ -19,11 +19,11 @@ public final class PlayerCombatTaggedDomainEvent {
     private final long durationMillis;
 
     /**
-     * Crea el evento de combat tag con los jugadores involucrados y la duración del timer.
+     * Creates a combat-tag event with the players involved and the timer duration.
      *
-     * @param taggedUuid    UUID del jugador que fue marcado en combate (recibió el tag)
-     * @param taggerUuid    UUID del jugador que inició el combate y provocó el tag
-     * @param durationMillis duración del timer de combat tag en milisegundos
+     * @param taggedUuid     UUID of the player who was tagged (received the combat mark)
+     * @param taggerUuid     UUID of the player who initiated combat and triggered the tag
+     * @param durationMillis duration of the combat-tag timer in milliseconds
      */
     public PlayerCombatTaggedDomainEvent(UUID taggedUuid, UUID taggerUuid, long durationMillis) {
         this.taggedUuid = taggedUuid;
@@ -32,23 +32,23 @@ public final class PlayerCombatTaggedDomainEvent {
     }
 
     /**
-     * Obtiene el UUID del jugador que fue marcado en combate y al que se le aplicó el timer.
+     * Returns the UUID of the player who was marked in combat and had the timer applied.
      *
-     * @return UUID del jugador marcado en combate
+     * @return UUID of the tagged player
      */
     public UUID getTaggedUuid() { return taggedUuid; }
 
     /**
-     * Obtiene el UUID del jugador que inició el combate y provocó el marcado.
+     * Returns the UUID of the player who initiated combat and caused the tagging.
      *
-     * @return UUID del jugador que realizó el ataque o inició el combate
+     * @return UUID of the player who dealt the attack or started the fight
      */
     public UUID getTaggerUuid() { return taggerUuid; }
 
     /**
-     * Obtiene la duración del timer de combat tag aplicado a ambos jugadores.
+     * Returns the duration of the combat-tag timer applied to both players.
      *
-     * @return duración del combat tag en milisegundos (típicamente 30 000 ms)
+     * @return combat-tag duration in milliseconds (typically 30 000 ms)
      */
     public long getDurationMillis() { return durationMillis; }
 }

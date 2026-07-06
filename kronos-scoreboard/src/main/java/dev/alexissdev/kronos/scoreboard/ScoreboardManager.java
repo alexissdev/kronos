@@ -25,19 +25,18 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 
 /**
- * Gestor central del sistema de scoreboards del plugin HCF Kronos.
+ * Central manager for the scoreboard system in the HCF Kronos plugin.
  * <p>
- * Mantiene un mapa de {@link PlayerBoard} (representación Bukkit del marcador) y
- * {@link PlayerBoardData} (snapshot de datos) indexados por UUID de jugador.
- * Coordina las actualizaciones periódicas con {@link ScoreboardTask} y reacciona
- * a eventos del dominio (timers de jugador y ciclo de vida de KOTHs) a través
- * del EventBus de Guava.
+ * Maintains a map of {@link PlayerBoard} (the Bukkit scoreboard wrapper) and
+ * {@link PlayerBoardData} (the data snapshot), both indexed by player UUID.
+ * Coordinates periodic updates with {@link ScoreboardTask} and reacts to
+ * domain events (player timers and KOTH lifecycle) through Guava's EventBus.
  * </p>
  * <p>
- * Las estadísticas lentas (kills, deaths, balance, facción) se refrescan de forma
- * asíncrona cada 5 segundos para evitar bloquear el hilo principal del servidor.
- * Los conteos de timers y el estado SOTW/EOTW se actualizan en el hilo principal
- * cada segundo para garantizar que la cuenta regresiva del marcador sea precisa.
+ * Slow statistics (kills, deaths, balance, faction) are refreshed asynchronously
+ * every 5 seconds to avoid blocking the server's main thread. Timer countdowns
+ * and SOTW/EOTW state are updated on the main thread every second to keep the
+ * scoreboard countdown accurate.
  * </p>
  */
 @Singleton
@@ -61,18 +60,17 @@ public class ScoreboardManager {
     private volatile boolean lastEotwActive = false;
 
     /**
-     * Construye el gestor de scoreboards inyectando sus dependencias y registrándose
-     * en el EventBus de Guava para recibir eventos de timers y KOTH.
+     * Constructs the scoreboard manager by injecting its dependencies and registering
+     * itself on Guava's EventBus to receive timer and KOTH events.
      *
-     * @param eventBus       bus de eventos compartido por todos los módulos del plugin
-     * @param renderer       renderizador que genera las líneas del marcador lateral
-     * @param plugin         instancia principal del plugin, necesaria para programar
-     *                       tareas en el scheduler de Bukkit
-     * @param playerService  servicio para consultar las estadísticas del jugador (kills/deaths)
-     * @param factionService servicio para consultar la facción y los DTK restantes del jugador
-     * @param economyService servicio para consultar el balance económico del jugador
-     * @param sotwService    servicio que provee el tiempo restante de SOTW y EOTW globales
-     * @param messages       configuración de mensajes y plantillas de texto del plugin
+     * @param eventBus       the event bus shared by all modules of the plugin
+     * @param renderer       the renderer that builds the sidebar lines for each player
+     * @param plugin         the main plugin instance, needed to schedule tasks on Bukkit's scheduler
+     * @param playerService  service for querying player statistics (kills / deaths)
+     * @param factionService service for querying the player's faction and remaining DTK
+     * @param economyService service for querying the player's economic balance
+     * @param sotwService    service that provides the global remaining SOTW and EOTW times
+     * @param messages       plugin message configuration and text templates
      */
     @Inject
     public ScoreboardManager(EventBus eventBus,
@@ -96,14 +94,14 @@ public class ScoreboardManager {
     // ── lifecycle ─────────────────────────────────────────────────────────
 
     /**
-     * Inicializa el marcador lateral de un jugador recién conectado al servidor.
+     * Initialises the sidebar scoreboard for a player who has just joined the server.
      * <p>
-     * Crea un {@link PlayerBoardData} vacío, instancia el {@link PlayerBoard} que
-     * asigna el scoreboard al jugador en Bukkit y lanza el primer refresco asíncrono
-     * de sus estadísticas.
+     * Creates an empty {@link PlayerBoardData}, instantiates the {@link PlayerBoard}
+     * that assigns the Bukkit scoreboard to the player, and triggers the first
+     * asynchronous stats refresh for that player.
      * </p>
      *
-     * @param player jugador que acaba de unirse al servidor
+     * @param player the player who just joined the server
      */
     public void createBoard(Player player) {
         PlayerBoardData data = new PlayerBoardData();
@@ -113,10 +111,10 @@ public class ScoreboardManager {
     }
 
     /**
-     * Elimina el marcador lateral y los datos cacheados de un jugador que se desconecta,
-     * liberando los recursos asociados en los mapas internos del gestor.
+     * Removes the sidebar scoreboard and cached data of a disconnecting player,
+     * freeing the resources held in the manager's internal maps.
      *
-     * @param player jugador que abandona el servidor
+     * @param player the player who is leaving the server
      */
     public void removeBoard(Player player) {
         boards.remove(player.getUniqueId());
@@ -126,15 +124,15 @@ public class ScoreboardManager {
     // ── periodic updates ──────────────────────────────────────────────────
 
     /**
-     * Actualiza todos los scoreboards desde el hilo principal del servidor.
+     * Updates all scoreboards from the server's main thread.
      * <p>
-     * Obtiene los tiempos restantes de SOTW y EOTW, los propaga a cada
-     * {@link PlayerBoardData} y redibuja el marcador de todos los jugadores en línea.
-     * Adicionalmente, detecta la transición de SOTW/EOTW de activo a inactivo para
-     * enviar el mensaje de finalización a todo el servidor.
+     * Retrieves the current SOTW and EOTW remaining times, propagates them to every
+     * {@link PlayerBoardData}, and redraws the scoreboard for all online players.
+     * Additionally detects the transition from an active SOTW/EOTW to an inactive one
+     * and broadcasts the corresponding end message to the entire server.
      * </p>
      * <p>
-     * Este método es invocado cada segundo por {@link ScoreboardTask}.
+     * This method is invoked every second by {@link ScoreboardTask}.
      * </p>
      */
     public void tickAll() {
@@ -165,15 +163,15 @@ public class ScoreboardManager {
     }
 
     /**
-     * Refresca de forma asíncrona las estadísticas lentas de todos los jugadores en línea.
+     * Asynchronously refreshes the slow statistics of all online players.
      * <p>
-     * Consulta kills, deaths, balance económico, nombre de facción y DTK para cada jugador
-     * mediante sus respectivos servicios. Al ejecutarse en un hilo asíncrono, no bloquea
-     * el tick del servidor. Los datos se escriben en {@link PlayerBoardData} con campos
-     * {@code volatile} para garantizar visibilidad en el hilo principal.
+     * Queries kills, deaths, economic balance, faction name, and DTK for each
+     * player through their respective services. Running on an async thread ensures
+     * the server's main tick is never blocked. Data is written to {@link PlayerBoardData}
+     * via {@code volatile} fields to guarantee visibility on the main thread.
      * </p>
      * <p>
-     * Este método es invocado cada 5 segundos por {@link ScoreboardTask}.
+     * This method is invoked every 5 seconds by {@link ScoreboardTask}.
      * </p>
      */
     public void refreshAllStats() {
@@ -185,15 +183,15 @@ public class ScoreboardManager {
     // ── EventBus: per-player timers ────────────────────────────────────────
 
     /**
-     * Reacciona al inicio de un timer individual de jugador (ej. combat tag, PvP timer,
+     * Reacts to the start of a per-player timer (e.g. combat tag, PvP timer,
      * enderpearl, gapple, etc.).
      * <p>
-     * Calcula el timestamp de expiración y lo almacena en el {@link PlayerBoardData}
-     * del jugador. Luego programa un redibujado inmediato del scoreboard en el hilo
-     * principal para que el timer aparezca sin esperar al siguiente tick.
+     * Calculates the expiry timestamp and stores it in the player's {@link PlayerBoardData}.
+     * Then schedules an immediate scoreboard redraw on the main thread so the timer
+     * appears without waiting for the next tick.
      * </p>
      *
-     * @param event evento con el UUID del jugador, el tipo de timer y su duración en milisegundos
+     * @param event event carrying the player's UUID, the timer type, and its duration in milliseconds
      */
     @Subscribe
     public void onTimerStarted(PlayerTimerStartedDomainEvent event) {
@@ -204,14 +202,14 @@ public class ScoreboardManager {
     }
 
     /**
-     * Reacciona al vencimiento de un timer individual de jugador.
+     * Reacts to the expiry of a per-player timer.
      * <p>
-     * Elimina el timer del {@link PlayerBoardData} del jugador y fuerza un redibujado
-     * inmediato del scoreboard en el hilo principal para que la línea del timer
-     * desaparezca del marcador sin esperar al siguiente tick.
+     * Removes the timer from the player's {@link PlayerBoardData} and forces an
+     * immediate scoreboard redraw on the main thread so the timer line disappears
+     * from the sidebar without waiting for the next tick.
      * </p>
      *
-     * @param event evento con el UUID del jugador y el tipo de timer que expiró
+     * @param event event carrying the player's UUID and the timer type that expired
      */
     @Subscribe
     public void onTimerExpired(PlayerTimerExpiredDomainEvent event) {
@@ -224,14 +222,14 @@ public class ScoreboardManager {
     // ── EventBus: KOTH ─────────────────────────────────────────────────────
 
     /**
-     * Reacciona al inicio de un evento KOTH en el servidor.
+     * Reacts to the start of a KOTH event on the server.
      * <p>
-     * Crea una {@link KothEntry} con los datos del KOTH y la registra en el mapa de
-     * KOTHs activos. A continuación ejecuta un {@link #tickAll()} inmediato en el hilo
-     * principal para que el KOTH aparezca en el marcador de todos los jugadores sin demora.
+     * Creates a {@link KothEntry} with the KOTH data and registers it in the
+     * active-KOTH map. Then immediately executes {@link #tickAll()} on the main
+     * thread so the KOTH appears on all players' scoreboards without delay.
      * </p>
      *
-     * @param event evento con el nombre, las coordenadas del centro y el tiempo de captura del KOTH
+     * @param event event carrying the KOTH name, centre coordinates, and capture time
      */
     @Subscribe
     public void onKothStarted(KothStartedDomainEvent event) {
@@ -242,13 +240,13 @@ public class ScoreboardManager {
     }
 
     /**
-     * Reacciona a la captura exitosa de un KOTH por parte de una facción.
+     * Reacts to the successful capture of a KOTH by a faction.
      * <p>
-     * Elimina el KOTH del mapa de activos y actualiza los scoreboards de todos
-     * los jugadores para que la entrada del KOTH desaparezca del marcador lateral.
+     * Removes the KOTH from the active map and updates all players' scoreboards
+     * so the KOTH entry disappears from the sidebar.
      * </p>
      *
-     * @param event evento con el nombre del KOTH que fue capturado
+     * @param event event carrying the name of the KOTH that was captured
      */
     @Subscribe
     public void onKothCaptured(KothCapturedDomainEvent event) {
@@ -257,13 +255,13 @@ public class ScoreboardManager {
     }
 
     /**
-     * Reacciona al fin de un KOTH sin que haya sido capturado (tiempo agotado).
+     * Reacts to a KOTH ending without being captured (time ran out).
      * <p>
-     * Elimina el KOTH del mapa de activos y actualiza los scoreboards de todos
-     * los jugadores para reflejar que el KOTH ya no está disponible.
+     * Removes the KOTH from the active map and updates all players' scoreboards
+     * to reflect that the KOTH is no longer available.
      * </p>
      *
-     * @param event evento con el nombre del KOTH que finalizó sin ser capturado
+     * @param event event carrying the name of the KOTH that ended without being captured
      */
     @Subscribe
     public void onKothEnded(KothEndedDomainEvent event) {
@@ -274,16 +272,16 @@ public class ScoreboardManager {
     // ── KOTH capture progress (called from KothListener) ─────────────────
 
     /**
-     * Actualiza el progreso de captura de KOTH para un jugador específico.
+     * Updates the KOTH capture progress for a specific player.
      * <p>
-     * Llamado desde el listener de KOTH cada vez que el jugador permanece dentro
-     * de la zona de captura. El dato se almacena en su {@link PlayerBoardData} para
-     * que el {@link ScoreboardRenderer} muestre la cuenta regresiva personalizada.
+     * Called from the KOTH listener each time the player remains inside the capture zone.
+     * The data is stored in their {@link PlayerBoardData} so that {@link ScoreboardRenderer}
+     * can display a personalised countdown.
      * </p>
      *
-     * @param uuid        UUID del jugador que está capturando el KOTH
-     * @param kothName    nombre del KOTH en proceso de captura
-     * @param remainingMs milisegundos restantes para completar la captura
+     * @param uuid        UUID of the player who is capturing the KOTH
+     * @param kothName    name of the KOTH being captured
+     * @param remainingMs milliseconds remaining to complete the capture
      */
     public void updateKothCapture(UUID uuid, String kothName, long remainingMs) {
         PlayerBoardData data = cache.get(uuid);
@@ -292,14 +290,13 @@ public class ScoreboardManager {
     }
 
     /**
-     * Elimina el progreso de captura de KOTH registrado para un jugador.
+     * Clears the KOTH capture progress recorded for a player.
      * <p>
-     * Llamado cuando el jugador sale de la zona de captura o el KOTH finaliza,
-     * de modo que el marcador del jugador deje de mostrar la cuenta regresiva
-     * de captura personalizada.
+     * Called when the player leaves the capture zone or the KOTH ends,
+     * so the player's scoreboard stops showing the personalised capture countdown.
      * </p>
      *
-     * @param uuid UUID del jugador cuyo progreso de captura debe eliminarse
+     * @param uuid UUID of the player whose capture progress should be removed
      */
     public void clearKothCapture(UUID uuid) {
         PlayerBoardData data = cache.get(uuid);

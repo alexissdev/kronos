@@ -13,10 +13,10 @@ import org.bukkit.plugin.Plugin;
 import java.util.List;
 
 /**
- * Sub-comando {@code /f ally <faccion>} que establece una relación de alianza
- * entre la facción del ejecutor y la facción indicada. Los aliados no pueden
- * atacarse entre sí y comparten canal de chat especial. El ejecutor debe ser
- * miembro de una facción y tener rango suficiente para modificar relaciones.
+ * Sub-command {@code /f ally <faction>} that establishes an alliance relationship
+ * between the executor's faction and the specified faction. Allies cannot attack
+ * each other and share a dedicated ally chat channel. The executor must be a
+ * faction member with sufficient rank to modify diplomatic relations.
  */
 @Singleton
 public class AllyFactionSub extends FactionSubCommand {
@@ -26,11 +26,11 @@ public class AllyFactionSub extends FactionSubCommand {
     private final Plugin         plugin;
 
     /**
-     * Construye el sub-comando inyectando sus dependencias mediante Guice.
+     * Constructs the sub-command by injecting its dependencies via Guice.
      *
-     * @param factionService servicio de facciones para gestionar relaciones entre ellas
-     * @param messages       configuración de mensajes localizados
-     * @param plugin         instancia del plugin, usada para programar tareas en el hilo principal
+     * @param factionService faction service used to manage inter-faction relationships
+     * @param messages       localised message configuration
+     * @param plugin         plugin instance used to schedule tasks on the main thread
      */
     @Inject
     public AllyFactionSub(FactionService factionService, MessagesConfig messages, Plugin plugin) {
@@ -39,16 +39,16 @@ public class AllyFactionSub extends FactionSubCommand {
         this.plugin         = plugin;
     }
 
-    /** @return el nombre del sub-comando: {@code "ally"} */
+    /** @return the sub-command name: {@code "ally"} */
     @Override public String name() { return "ally"; }
 
     /**
-     * Proporciona sugerencias de autocompletado con los nombres de los jugadores
-     * en línea para el segundo argumento (nombre de facción objetivo).
+     * Provides tab-completion suggestions with the names of online players for the
+     * second argument (target faction name).
      *
-     * @param sender ejecutor del comando
-     * @param args   argumentos escritos hasta el momento
-     * @return lista de jugadores en línea filtrada por prefijo
+     * @param sender command executor
+     * @param args   arguments typed so far
+     * @return list of online player names filtered by the current prefix
      */
     @Override
     public List<String> tabComplete(CommandSender sender, String[] args) {
@@ -56,12 +56,12 @@ public class AllyFactionSub extends FactionSubCommand {
     }
 
     /**
-     * Obtiene la facción del ejecutor y la facción objetivo por nombre, y establece
-     * la relación de alianza entre ambas de forma asíncrona. Notifica al ejecutor
-     * en caso de éxito o de error de dominio.
+     * Retrieves the executor's faction and the target faction by name, then
+     * asynchronously establishes an alliance between them. The executor is notified
+     * on success or on any domain error.
      *
-     * @param sender ejecutor del comando; debe ser un {@link org.bukkit.entity.Player}
-     * @param args   argumentos; {@code args[1]} es el nombre de la facción con la que aliarse
+     * @param sender command executor; must be a {@link org.bukkit.entity.Player}
+     * @param args   arguments; {@code args[1]} is the name of the faction to ally with
      */
     @Override
     public void execute(CommandSender sender, String[] args) {

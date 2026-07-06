@@ -9,69 +9,68 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Contrato de acceso asíncrono a los timers activos de jugadores, respaldado por Redis con TTL.
+ * Asynchronous access contract for active player timers, backed by Redis with native TTL.
  *
- * <p>Define las operaciones de lectura, escritura y eliminación sobre entidades {@link Timer}.
- * La implementación predeterminada ({@code RedisTimerRepository}) usa Redis como almacenamiento
- * primario aprovechando el TTL nativo para que los timers expiren automáticamente sin
- * necesidad de tareas programadas. Cada timer se almacena con la clave
- * {@code timer:{uuid}:{timerType}}.</p>
+ * <p>Defines read, write, and delete operations on {@link Timer} entities.
+ * The default implementation ({@code RedisTimerRepository}) uses Redis as the primary store,
+ * relying on the native TTL so timers expire automatically without any scheduled cleanup.
+ * Each timer is stored under the key {@code timer:{uuid}:{timerType}}.</p>
  *
- * <p>Todas las operaciones son no bloqueantes y devuelven {@link CompletableFuture}
- * para integrarse con el modelo asíncrono del plugin.</p>
+ * <p>All operations are non-blocking and return a {@link CompletableFuture} to integrate
+ * with the plugin's asynchronous execution model.</p>
  */
 public interface TimerRepository {
 
     /**
-     * Busca el timer activo de un jugador para el tipo de timer especificado.
-     * Si el timer existe pero ya expiró según su instante de expiración, se devuelve vacío.
+     * Looks up the active timer for a player and the specified timer type.
+     * If the timer exists but has already passed its expiration instant, an empty result is returned.
      *
-     * @param playerUuid UUID del jugador cuyo timer se quiere consultar
-     * @param type       tipo del timer a buscar
-     * @return future que se resuelve con un {@link Optional} que contiene el timer activo
-     *         si existe y no ha expirado, o vacío si no existe o ya expiró
+     * @param playerUuid UUID of the player whose timer should be queried
+     * @param type       type of the timer to look up
+     * @return future that resolves with an {@link Optional} containing the active timer
+     *         if it exists and has not expired, or empty if absent or already expired
      */
     CompletableFuture<Optional<Timer>> findTimer(UUID playerUuid, TimerType type);
 
     /**
-     * Obtiene todos los timers activos de un jugador consultando cada tipo de timer existente.
-     * Solo incluye en el resultado los timers que aún no han expirado.
+     * Retrieves all active timers for a player by querying every known timer type.
+     * Only timers that have not yet expired are included in the result.
      *
-     * @param playerUuid UUID del jugador cuyos timers activos se quieren obtener
-     * @return future que se resuelve con la lista de timers activos del jugador;
-     *         la lista estará vacía si el jugador no tiene ningún timer activo
+     * @param playerUuid UUID of the player whose active timers should be retrieved
+     * @return future that resolves with the list of active timers for the player;
+     *         the list will be empty if the player has no active timers
      */
     CompletableFuture<List<Timer>> findAllTimers(UUID playerUuid);
 
     /**
-     * Guarda un timer en Redis con su tiempo de vida restante como TTL.
-     * El TTL se calcula en segundos a partir de los milisegundos restantes del timer.
-     * Redis eliminará automáticamente la clave cuando el TTL llegue a cero.
+     * Saves a timer in Redis with its remaining lifetime as the TTL.
+     * The TTL is computed in seconds from the timer's remaining milliseconds.
+     * Redis will automatically delete the key once the TTL reaches zero.
      *
-     * @param timer entidad {@link Timer} con la información del timer a persistir
-     * @return future que se resuelve cuando el timer ha sido almacenado en Redis
+     * @param timer {@link Timer} entity holding the information to persist
+     * @return future that resolves once the timer has been stored in Redis
      */
     CompletableFuture<Void> saveTimer(Timer timer);
 
     /**
-     * Elimina el timer de un jugador para el tipo especificado antes de que su TTL expire.
-     * Se usa al cancelar un timer manualmente o al reiniciarlo con una nueva duración.
+     * Deletes a player's timer for the specified type before its TTL expires.
+     * Called when cancelling a timer manually or restarting it with a new duration.
      *
-     * @param playerUuid UUID del jugador cuyo timer se quiere eliminar
-     * @param type       tipo del timer a eliminar de Redis
-     * @return future que se resuelve cuando el timer ha sido eliminado
+     * @param playerUuid UUID of the player whose timer should be deleted
+     * @param type       type of the timer to remove from Redis
+     * @return future that resolves once the timer has been deleted
      */
     CompletableFuture<Void> deleteTimer(UUID playerUuid, TimerType type);
 
     /**
-     * Verifica rápidamente si existe una clave en Redis para el timer del jugador indicado.
-     * A diferencia de {@link #findTimer}, no deserializa el timer completo; simplemente
-     * comprueba la existencia de la clave con el comando {@code EXISTS} de Redis.
+     * Quickly checks whether a Redis key exists for the specified player's timer.
+     * Unlike {@link #findTimer}, this does not deserialize the full timer — it simply
+     * checks for the key's presence using the Redis {@code EXISTS} command.
      *
-     * @param playerUuid UUID del jugador a verificar
-     * @param type       tipo del timer cuya existencia se quiere comprobar
-     * @return future que se resuelve con {@code true} si la clave existe en Redis,
-     *         {@code false} si no existe o ya expiró su TTL
+     * @param playerUuid UUID of the player to check
+     * @param type       type of the timer whose existence should be verified
+     * @return future that resolves with {@code true} if the key exists in Redis,
+     *         {@code false} if the key does not exist or its TTL has expired
      */
     CompletableFuture<Boolean> hasTimer(UUID playerUuid, TimerType type);
 }

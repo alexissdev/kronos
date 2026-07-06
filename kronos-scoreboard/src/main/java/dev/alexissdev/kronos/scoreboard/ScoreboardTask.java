@@ -6,38 +6,38 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
 /**
- * Tarea periódica que gestiona las actualizaciones automáticas de los scoreboards
- * de todos los jugadores conectados al servidor.
+ * Periodic task that drives the automatic scoreboard updates for all players
+ * connected to the server.
  * <p>
- * Al ser instanciada por Guice, registra dos {@link BukkitRunnable} independientes
- * con frecuencias distintas:
+ * When instantiated by Guice, it registers two independent {@link BukkitRunnable}
+ * instances with different frequencies:
  * </p>
  * <ul>
- *   <li><b>Tarea en hilo principal (cada 20 ticks / 1 segundo):</b> redibuja los
- *       conteos de timers activos, los contadores SOTW/EOTW y el estado de los KOTHs
- *       mediante {@link ScoreboardManager#tickAll()}.</li>
- *   <li><b>Tarea asíncrona (cada 100 ticks / 5 segundos):</b> refresca las estadísticas
- *       lentas —kills, deaths, balance económico y facción— sin bloquear el hilo del
- *       servidor, mediante {@link ScoreboardManager#refreshAllStats()}.</li>
+ *   <li><b>Main-thread task (every 20 ticks / 1 second):</b> redraws active timer
+ *       countdowns, SOTW/EOTW counters, and KOTH state via
+ *       {@link ScoreboardManager#tickAll()}.</li>
+ *   <li><b>Async task (every 100 ticks / 5 seconds):</b> refreshes slow statistics
+ *       — kills, deaths, economic balance, and faction — without blocking the server
+ *       thread, via {@link ScoreboardManager#refreshAllStats()}.</li>
  * </ul>
  * <p>
- * Guice instancia esta clase automáticamente como singleton al arrancar el plugin
- * a través de {@link ScoreboardModule}.
+ * Guice instantiates this class automatically as a singleton at plugin startup
+ * through {@link ScoreboardModule}.
  * </p>
  */
 @Singleton
 public class ScoreboardTask {
 
     /**
-     * Registra las tareas periódicas de actualización de scoreboards en el scheduler de Bukkit.
+     * Registers the periodic scoreboard update tasks on Bukkit's scheduler.
      * <p>
-     * La tarea de redibujado se inicia con un retardo de 20 ticks y se repite cada 20 ticks
-     * (1 segundo) en el hilo principal. La tarea de refresco de estadísticas se inicia
-     * con un retardo de 40 ticks y se repite cada 100 ticks (5 segundos) de forma asíncrona.
+     * The redraw task starts with a 20-tick delay and repeats every 20 ticks
+     * (1 second) on the main thread. The stats-refresh task starts with a 40-tick
+     * delay and repeats every 100 ticks (5 seconds) asynchronously.
      * </p>
      *
-     * @param plugin  instancia principal del plugin, necesaria para acceder al scheduler de Bukkit
-     * @param manager gestor central del sistema de scoreboards que provee los métodos de actualización
+     * @param plugin  the main plugin instance, needed to access Bukkit's scheduler
+     * @param manager the central scoreboard manager that provides the update methods
      */
     @Inject
     public ScoreboardTask(JavaPlugin plugin, ScoreboardManager manager) {

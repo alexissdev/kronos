@@ -9,121 +9,122 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Puerto de aplicación que expone las operaciones de alto nivel sobre territorios (claims).
+ * Application port exposing the high-level operations over territories (claims).
  *
- * <p>Define el contrato que deben implementar los servicios de claims en el sistema HCF.
- * La implementación principal es
- * {@link dev.alexissdev.kronos.claims.ClaimApplicationService}, inyectada por Guice.
- * Todas las operaciones son asíncronas y retornan {@link CompletableFuture} para no
- * bloquear el hilo principal del servidor Bukkit.</p>
+ * <p>Defines the contract that claim services must implement in the HCF system.
+ * The primary implementation is
+ * {@link dev.alexissdev.kronos.claims.ClaimApplicationService}, injected by Guice.
+ * All operations are asynchronous and return a {@link CompletableFuture} to avoid
+ * blocking the main Bukkit server thread.</p>
  */
 public interface ClaimService {
 
     /**
-     * Reclama un área rectangular de chunks en nombre de una facción.
+     * Claims a rectangular area of chunks on behalf of a faction.
      *
-     * <p>Valida que el actor tenga rango de {@code CAPTAIN} o superior dentro de la
-     * facción y que ningún chunk del área esté previamente reclamado. Si la validación
-     * es exitosa, persiste el nuevo claim y publica un
-     * {@link dev.alexissdev.kronos.factions.event.FactionClaimedDomainEvent}.</p>
+     * <p>Validates that the actor holds a {@code CAPTAIN} rank or higher within the
+     * faction and that no chunk in the area is already claimed. If validation succeeds,
+     * the new claim is persisted and a
+     * {@link dev.alexissdev.kronos.factions.event.FactionClaimedDomainEvent} is published.</p>
      *
      * @param factionId identificador de la facción que reclama el territorio
-     * @param actorUuid UUID del jugador que ejecuta la acción
-     * @param world     nombre del mundo donde se reclama
-     * @param minChunkX coordenada X mínima del área (inclusive)
-     * @param minChunkZ coordenada Z mínima del área (inclusive)
-     * @param maxChunkX coordenada X máxima del área (inclusive)
-     * @param maxChunkZ coordenada Z máxima del área (inclusive)
-     * @return futuro con el {@link Claim} creado y persistido
-     * @throws dev.alexissdev.kronos.claims.exception.ClaimConflictException si algún chunk del área ya está ocupado
-     * @throws dev.alexissdev.kronos.factions.exception.FactionPermissionException si el actor no tiene el rango requerido
-     * @throws dev.alexissdev.kronos.factions.exception.FactionNotFoundException    si la facción no existe
+     * @param actorUuid UUID of the player performing the action
+     * @param world     name of the world where the territory is being claimed
+     * @param minChunkX minimum X coordinate of the area (inclusive)
+     * @param minChunkZ minimum Z coordinate of the area (inclusive)
+     * @param maxChunkX maximum X coordinate of the area (inclusive)
+     * @param maxChunkZ maximum Z coordinate of the area (inclusive)
+     * @return future with the created and persisted {@link Claim}
+     * @throws dev.alexissdev.kronos.claims.exception.ClaimConflictException if any chunk in the area is already occupied
+     * @throws dev.alexissdev.kronos.factions.exception.FactionPermissionException if the actor does not hold the required rank
+     * @throws dev.alexissdev.kronos.factions.exception.FactionNotFoundException    if the faction does not exist
      */
     CompletableFuture<Claim> claim(String factionId, UUID actorUuid, String world,
                                    int minChunkX, int minChunkZ, int maxChunkX, int maxChunkZ);
 
     /**
-     * Libera el territorio del chunk indicado, eliminando el claim que lo ocupa.
+     * Releases the territory of the specified chunk by removing the claim that occupies it.
      *
-     * <p>Solo el propietario del claim puede desreclamarlo. El actor debe pertenecer
-     * a la facción propietaria del chunk.</p>
+     * <p>Only the claim's owner may unclaim it. The actor must be a member of the faction
+     * that owns the chunk.</p>
      *
-     * @param factionId identificador de la facción que intenta desreclamar
-     * @param actorUuid UUID del jugador que ejecuta la acción
-     * @param world     nombre del mundo donde se ubica el chunk
-     * @param chunkX    coordenada X del chunk a liberar
-     * @param chunkZ    coordenada Z del chunk a liberar
-     * @return futuro que se completa cuando el claim ha sido eliminado
-     * @throws dev.alexissdev.kronos.claims.exception.ClaimConflictException       si el chunk no tiene ningún claim
-     * @throws dev.alexissdev.kronos.factions.exception.FactionPermissionException si la facción no es propietaria
+     * @param factionId identifier of the faction attempting to unclaim
+     * @param actorUuid UUID of the player performing the action
+     * @param world     name of the world where the chunk is located
+     * @param chunkX    X coordinate of the chunk to release
+     * @param chunkZ    Z coordinate of the chunk to release
+     * @return future that completes when the claim has been deleted
+     * @throws dev.alexissdev.kronos.claims.exception.ClaimConflictException       if the chunk has no claim
+     * @throws dev.alexissdev.kronos.factions.exception.FactionPermissionException if the faction does not own the chunk
      */
     CompletableFuture<Void> unclaim(String factionId, UUID actorUuid, String world, int chunkX, int chunkZ);
 
     /**
-     * Elimina todos los claims de una facción de forma masiva.
+     * Deletes all claims belonging to a faction in a single bulk operation.
      *
-     * <p>Se utiliza principalmente al disolver una facción para liberar todo su territorio.</p>
+     * <p>Used primarily when disbanding a faction to release all of its territory at once.</p>
      *
-     * @param factionId identificador de la facción cuyo territorio se libera
-     * @return futuro que se completa cuando todos los claims han sido eliminados
+     * @param factionId identifier of the faction whose territory is being released
+     * @return future that completes when all claims have been deleted
      */
     CompletableFuture<Void> unclaimAll(String factionId);
 
     /**
-     * Retorna el claim que ocupa el chunk especificado, si existe.
+     * Returns the claim occupying the specified chunk, if one exists.
      *
-     * @param world  nombre del mundo donde se busca
-     * @param chunkX coordenada X del chunk
-     * @param chunkZ coordenada Z del chunk
-     * @return futuro con el claim encontrado, o vacío si el chunk es tierra libre
+     * @param world  name of the world to search in
+     * @param chunkX chunk X coordinate
+     * @param chunkZ chunk Z coordinate
+     * @return future with the claim found, or empty if the chunk is unclaimed wilderness
      */
     CompletableFuture<Optional<Claim>> getClaimAt(String world, int chunkX, int chunkZ);
 
     /**
-     * Retorna el tipo de territorio en las coordenadas de chunk indicadas.
+     * Returns the territory type at the given chunk coordinates.
      *
-     * <p>Si el chunk no tiene ningún claim, retorna {@link ClaimType#WILDERNESS}.</p>
+     * <p>If the chunk has no claim, {@link ClaimType#WILDERNESS} is returned as the default.</p>
      *
-     * @param world  nombre del mundo donde se consulta
-     * @param chunkX coordenada X del chunk
-     * @param chunkZ coordenada Z del chunk
-     * @return futuro con el {@link ClaimType} del territorio
+     * @param world  name of the world to query
+     * @param chunkX chunk X coordinate
+     * @param chunkZ chunk Z coordinate
+     * @return future with the {@link ClaimType} of the territory
      */
     CompletableFuture<ClaimType> getClaimTypeAt(String world, int chunkX, int chunkZ);
 
     /**
-     * Recupera la lista completa de claims de una facción.
+     * Retrieves the complete list of claims owned by a faction.
      *
-     * @param factionId identificador de la facción
-     * @return futuro con todos los claims de la facción; lista vacía si no tiene territorio
+     * @param factionId faction identifier
+     * @return future with all claims of the faction; empty list if it has no territory
      */
     CompletableFuture<List<Claim>> getFactionClaims(String factionId);
 
     /**
-     * Recupera todos los claims existentes en el servidor.
+     * Retrieves every claim currently registered on the server.
      *
-     * <p>Principalmente utilizado para precargar el caché en memoria al iniciar el plugin.</p>
+     * <p>Primarily used to preload the in-memory cache when the plugin starts up.</p>
      *
-     * @return futuro con la lista de todos los claims
+     * @return future with the list of all claims
      */
     CompletableFuture<List<Claim>> getAllClaims();
 
     /**
-     * Permite a una facción conquistar el territorio de una facción enemiga o en estado raidable.
+     * Allows a faction to conquer the territory of an enemy or raidable faction.
      *
-     * <p>El actor debe tener rango de {@code CAPTAIN} o superior. El chunk objetivo debe
-     * pertenecer a una facción que sea enemiga del actor o que esté siendo raideada.
-     * El claim existente se elimina y se crea uno nuevo a nombre de la facción atacante.</p>
+     * <p>The actor must hold a {@code CAPTAIN} rank or higher. The target chunk must
+     * belong to a faction that is either an enemy of the attacker or currently in a
+     * raidable state. The existing claim is deleted and a new one is created under the
+     * attacking faction's ownership.</p>
      *
-     * @param factionId identificador de la facción que conquista el territorio
-     * @param actorUuid UUID del jugador que ejecuta la acción
-     * @param world     nombre del mundo donde se ubica el chunk
-     * @param chunkX    coordenada X del chunk a conquistar
-     * @param chunkZ    coordenada Z del chunk a conquistar
-     * @return futuro que se completa cuando la conquista ha sido registrada
-     * @throws dev.alexissdev.kronos.claims.exception.ClaimConflictException       si el chunk es propio o no cumple las condiciones
-     * @throws dev.alexissdev.kronos.factions.exception.FactionPermissionException si el actor no tiene el rango requerido
-     * @throws dev.alexissdev.kronos.factions.exception.FactionNotFoundException   si la facción atacante no existe
+     * @param factionId identifier of the faction conquering the territory
+     * @param actorUuid UUID of the player performing the action
+     * @param world     name of the world where the chunk is located
+     * @param chunkX    X coordinate of the chunk to conquer
+     * @param chunkZ    Z coordinate of the chunk to conquer
+     * @return future that completes when the conquest has been recorded
+     * @throws dev.alexissdev.kronos.claims.exception.ClaimConflictException       if the chunk is already owned or conditions are not met
+     * @throws dev.alexissdev.kronos.factions.exception.FactionPermissionException if the actor does not hold the required rank
+     * @throws dev.alexissdev.kronos.factions.exception.FactionNotFoundException   if the attacking faction does not exist
      */
     CompletableFuture<Void> overclaim(String factionId, UUID actorUuid, String world, int chunkX, int chunkZ);
 }

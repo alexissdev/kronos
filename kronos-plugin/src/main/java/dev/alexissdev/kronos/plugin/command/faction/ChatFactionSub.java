@@ -9,10 +9,10 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 /**
- * Sub-comando {@code /f chat} que permite al jugador alternar entre los modos
- * de chat disponibles: global, facción y aliados. Cada ejecución avanza al
- * siguiente modo en el ciclo gestionado por el {@link ChatManager}, notificando
- * al jugador el modo activo resultante.
+ * Sub-command {@code /f chat} that allows the player to cycle through the available
+ * chat modes: global, faction, and ally. Each execution advances to the next mode
+ * in the cycle managed by {@link ChatManager}, and notifies the player of the
+ * resulting active mode.
  */
 @Singleton
 public class ChatFactionSub extends FactionSubCommand {
@@ -21,10 +21,10 @@ public class ChatFactionSub extends FactionSubCommand {
     private final MessagesConfig messages;
 
     /**
-     * Construye el sub-comando inyectando sus dependencias mediante Guice.
+     * Constructs the sub-command by injecting its dependencies via Guice.
      *
-     * @param chatManager gestor de modos de chat por jugador
-     * @param messages    configuración de mensajes localizados
+     * @param chatManager per-player chat mode manager
+     * @param messages    localised message configuration
      */
     @Inject
     public ChatFactionSub(ChatManager chatManager, MessagesConfig messages) {
@@ -32,15 +32,15 @@ public class ChatFactionSub extends FactionSubCommand {
         this.messages    = messages;
     }
 
-    /** @return el nombre del sub-comando: {@code "chat"} */
+    /** @return the sub-command name: {@code "chat"} */
     @Override public String name() { return "chat"; }
 
     /**
-     * Cicla al siguiente modo de chat del jugador y le notifica el modo resultante.
-     * Los modos disponibles son: {@code GLOBAL} → {@code FACTION} → {@code ALLY} → (ciclo).
+     * Advances the player to the next chat mode and notifies them of the result.
+     * The cycle order is: {@code GLOBAL} → {@code FACTION} → {@code ALLY} → (repeat).
      *
-     * @param sender ejecutor del comando; debe ser un {@link org.bukkit.entity.Player}
-     * @param args   argumentos adicionales (no utilizados por este sub-comando)
+     * @param sender command executor; must be a {@link org.bukkit.entity.Player}
+     * @param args   additional arguments (not used by this sub-command)
      */
     @Override
     public void execute(CommandSender sender, String[] args) {

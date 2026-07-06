@@ -5,14 +5,13 @@ import dev.alexissdev.kronos.timers.domain.TimerType;
 import java.util.UUID;
 
 /**
- * Evento de dominio publicado en el Guava {@code EventBus} cuando se inicia
- * un nuevo timer para un jugador.
+ * Domain event published on the Guava {@code EventBus} when a new timer is started
+ * for a player.
  *
- * <p>Se publica al llamar a {@code TimerService#startTimer} y también durante la
- * carga inicial de timers en caché al conectarse el jugador (si existen timers
- * vigentes en Redis o MongoDB). Los listeners pueden reaccionar a este evento para
- * aplicar efectos visuales, mostrar mensajes al jugador o activar restricciones
- * específicas del tipo de timer iniciado.</p>
+ * <p>Posted both when {@code TimerService#startTimer} is called and during the initial
+ * cache warm-up on player login, if timers are found still active in Redis or MongoDB.
+ * Listeners can react to this event to apply visual effects, display messages to the
+ * player, or activate restrictions specific to the timer type that was started.</p>
  */
 public final class PlayerTimerStartedDomainEvent {
 
@@ -21,11 +20,11 @@ public final class PlayerTimerStartedDomainEvent {
     private final long durationMillis;
 
     /**
-     * Crea el evento de inicio de timer con el jugador, el tipo y la duración del timer.
+     * Creates a timer-started event with the player, the timer type, and the remaining duration.
      *
-     * @param playerUuid     UUID del jugador al que se le ha iniciado el timer
-     * @param timerType      tipo del timer que acaba de iniciarse
-     * @param durationMillis duración restante del timer en milisegundos desde el momento del evento
+     * @param playerUuid     UUID of the player for whom the timer has been started
+     * @param timerType      type of the timer that has just been started
+     * @param durationMillis remaining duration of the timer in milliseconds from the moment of the event
      */
     public PlayerTimerStartedDomainEvent(UUID playerUuid, TimerType timerType, long durationMillis) {
         this.playerUuid = playerUuid;
@@ -34,25 +33,25 @@ public final class PlayerTimerStartedDomainEvent {
     }
 
     /**
-     * Obtiene el UUID del jugador al que se le ha iniciado el timer.
+     * Returns the UUID of the player for whom the timer has been started.
      *
-     * @return UUID del jugador afectado por el nuevo timer
+     * @return UUID of the player affected by the new timer
      */
     public UUID getPlayerUuid() { return playerUuid; }
 
     /**
-     * Obtiene el tipo del timer que acaba de iniciarse.
+     * Returns the type of the timer that has just been started.
      *
-     * @return tipo del timer iniciado
+     * @return type of the started timer
      */
     public TimerType getTimerType() { return timerType; }
 
     /**
-     * Obtiene la duración restante del timer en milisegundos.
-     * En timers nuevos corresponde a la duración total; en timers restaurados
-     * desde Redis o MongoDB corresponde al tiempo restante en el momento de la carga.
+     * Returns the remaining duration of the timer in milliseconds.
+     * For brand-new timers this equals the total duration; for timers restored
+     * from Redis or MongoDB it represents the time left at the moment of loading.
      *
-     * @return duración o tiempo restante del timer en milisegundos
+     * @return remaining duration of the timer in milliseconds
      */
     public long getDurationMillis() { return durationMillis; }
 }

@@ -1,45 +1,46 @@
 package dev.alexissdev.kronos.timers.domain;
 
 /**
- * Enumeración de los tipos de timers disponibles en el sistema HCF.
+ * Enumeration of all timer types available in the HCF system.
  *
- * <p>Cada tipo representa una restricción temporal distinta aplicada sobre un jugador.
- * Los timers se persisten en Redis con TTL y se respaldan en MongoDB. El tipo de timer
- * determina qué acciones están restringidas mientras está activo y qué eventos de dominio
- * se publican al iniciarse o expirar.</p>
+ * <p>Each constant represents a distinct temporary restriction applied to a player.
+ * Timers are persisted in Redis with a native TTL and backed up in MongoDB.
+ * The timer type determines which player actions are restricted while the timer is
+ * active, and which domain events are published when the timer starts or expires.</p>
  */
 public enum TimerType {
 
     /**
-     * Timer de combat tag: se aplica cuando un jugador entra en combate PvP.
-     * Mientras está activo impide que el jugador se desconecte del servidor sin consecuencias;
-     * si cierra sesión con este timer activo, puede recibir una penalización (kill automático).
-     * Duración predeterminada: 30 segundos tras el último golpe recibido o dado.
+     * Combat-tag timer: applied when a player enters PvP combat.
+     * While active, the player cannot disconnect from the server without consequences;
+     * logging out with this timer running may trigger an automatic kill penalty.
+     * Default duration: 30 seconds after the last hit dealt or received.
      */
     COMBAT_TAG,
 
     /**
-     * Timer de protección PvP: se otorga a los jugadores al conectarse por primera vez
-     * o al revivir tras un Deathban. Mientras está activo el jugador no puede recibir
-     * ni infligir daño a otros jugadores, protegiendo a los recién conectados de emboscadas.
+     * PvP protection timer: granted to players upon first joining the server or
+     * upon reviving after a Deathban. While active, the player cannot receive or deal
+     * damage to other players, shielding newcomers and revivers from ambushes.
      */
     PVP_TIMER,
 
     /**
-     * Cooldown de enderpearl: tiempo de espera obligatorio entre lanzamientos de enderpearl.
-     * Impide el abuso de la teletransportación instantánea en combate PvP.
+     * Enderpearl cooldown: mandatory wait time between enderpearl throws.
+     * Prevents abuse of instant teleportation during PvP combat.
      */
     ENDERPEARL,
 
     /**
-     * Cooldown de manzana dorada (Golden Apple): tiempo de espera entre el uso de manzanas
-     * doradas de regeneración. Limita la curación rápida durante el combate.
+     * Golden Apple (gapple) cooldown: mandatory wait time between golden apple uses.
+     * Limits rapid healing during combat to keep fights balanced.
      */
     GAPPLE,
 
     /**
-     * Timer de uso del comando /home: tiempo de espera antes de poder teletransportarse
-     * al hogar del jugador. Se cancela si el jugador entra en combate durante la espera.
+     * Home teleport timer: countdown before the player is teleported to their home
+     * via the {@code /home} command. Cancelled immediately if the player enters combat
+     * during the wait.
      */
     HOME,
 

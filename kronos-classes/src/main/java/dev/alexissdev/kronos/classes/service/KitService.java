@@ -7,56 +7,56 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Puerto de aplicación que define las operaciones disponibles sobre las clases (kits) de jugadores.
+ * Application port defining the operations available over player classes (kits).
  *
- * <p>Abstrae la lógica de detección del kit activo, la gestión del cooldown de habilidades y
- * la persistencia del kit seleccionado. La implementación principal es
- * {@link dev.alexissdev.kronos.classes.KitApplicationService}, inyectada por Guice.
- * Todas las operaciones son asíncronas.</p>
+ * <p>Abstracts the logic for detecting the active kit, managing ability cooldowns, and
+ * persisting the selected kit. The primary implementation is
+ * {@link dev.alexissdev.kronos.classes.KitApplicationService}, injected by Guice.
+ * All operations are asynchronous.</p>
  */
 public interface KitService {
 
     /**
-     * Recupera el kit actualmente activo del jugador consultando su perfil persistido.
+     * Retrieves the player's currently active kit by querying their persisted profile.
      *
-     * <p>Se usa al conectar el jugador para inicializar el caché local de
+     * <p>Called when the player joins the server to initialise the local cache of
      * {@link dev.alexissdev.kronos.classes.listener.ClassListener}.</p>
      *
-     * @param playerUuid UUID del jugador
-     * @return futuro con el {@link KitType} activo, o vacío si el jugador no tiene kit asignado
+     * @param playerUuid UUID of the player
+     * @return future with the active {@link KitType}, or empty if the player has no kit assigned
      */
     CompletableFuture<Optional<KitType>> detectKit(UUID playerUuid);
 
     /**
-     * Registra la activación de la habilidad activa de una clase e inicia su cooldown.
+     * Records the activation of a class's active ability and starts its cooldown timer.
      *
-     * <p>Arranca el temporizador {@code CLASS_COOLDOWN} para el jugador, impidiendo que
-     * la habilidad vuelva a usarse hasta que el cooldown expire.</p>
+     * <p>Starts the {@code CLASS_COOLDOWN} timer for the player, preventing the ability
+     * from being used again until the cooldown expires.</p>
      *
-     * @param playerUuid UUID del jugador que activa la habilidad
-     * @param kitType    clase cuya habilidad se activó
-     * @return futuro que se completa cuando el cooldown ha sido registrado
+     * @param playerUuid UUID of the player activating the ability
+     * @param kitType    the class whose ability was activated
+     * @return future that completes when the cooldown has been registered
      */
     CompletableFuture<Void> activateClassAbility(UUID playerUuid, KitType kitType);
 
     /**
-     * Comprueba si la habilidad activa del jugador está actualmente en cooldown.
+     * Checks whether the player's active ability is currently on cooldown.
      *
-     * @param playerUuid UUID del jugador a consultar
-     * @return futuro con {@code true} si el cooldown está activo; {@code false} en caso contrario
+     * @param playerUuid UUID of the player to query
+     * @return future with {@code true} if the cooldown is active; {@code false} otherwise
      */
     CompletableFuture<Boolean> isClassAbilityOnCooldown(UUID playerUuid);
 
     /**
-     * Actualiza y persiste el kit activo del jugador.
+     * Updates and persists the player's active kit.
      *
-     * <p>Se invoca cuando el jugador cambia de casco para sincronizar el cambio de clase
-     * detectado en tiempo real con el perfil almacenado en la base de datos.</p>
+     * <p>Called when the player changes their helmet to synchronise the class change
+     * detected in real time with their stored profile in the database.</p>
      *
-     * @param playerUuid UUID del jugador
-     * @param kitType    nuevo kit que el jugador ha equipado
-     * @return futuro que se completa cuando el perfil ha sido actualizado
-     * @throws dev.alexissdev.kronos.players.exception.PlayerNotFoundException si el jugador no tiene perfil registrado
+     * @param playerUuid UUID of the player
+     * @param kitType    the new kit the player has equipped
+     * @return future that completes when the profile has been updated
+     * @throws dev.alexissdev.kronos.players.exception.PlayerNotFoundException if the player has no registered profile
      */
     CompletableFuture<Void> updateActiveKit(UUID playerUuid, KitType kitType);
 }

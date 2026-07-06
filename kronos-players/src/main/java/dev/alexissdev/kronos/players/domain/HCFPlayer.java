@@ -3,17 +3,16 @@ package dev.alexissdev.kronos.players.domain;
 import java.util.UUID;
 
 /**
- * Entidad de dominio que representa el perfil de un jugador dentro del sistema HCF.
+ * Domain entity representing a player's persistent profile within the HCF system.
  *
- * <p>Almacena todos los datos persistentes de un jugador: estadísticas de combate
- * (kills y muertes), número de vidas disponibles, el kit activo seleccionado,
- * el inventario guardado en formato JSON y el estado del timer de PvP.
- * Esta entidad se persiste en MongoDB a través de {@code PlayerRepository}.</p>
+ * <p>Stores all persistent data for a player: combat statistics (kills and deaths),
+ * the number of available lives, the currently selected active kit, the saved inventory
+ * serialized as JSON, and the PvP protection timer state. This entity is persisted in
+ * MongoDB through {@code PlayerRepository}.</p>
  *
- * <p>En el sistema HCF las vidas son un recurso limitado: cuando un jugador muere
- * con el timer de Deathban activo pierde una vida. Al llegar a cero vidas queda
- * baneado temporalmente del servidor (Deathban). Las vidas se regeneran
- * automáticamente con el paso del tiempo.</p>
+ * <p>In the HCF system, lives are a limited resource: when a player dies while the
+ * Deathban timer is active they lose one life. Upon reaching zero lives the player is
+ * temporarily banned from the server (Deathban). Lives regenerate automatically over time.</p>
  */
 public final class HCFPlayer {
 
@@ -28,14 +27,14 @@ public final class HCFPlayer {
     private long lastLifeRegenAt;
 
     /**
-     * Crea un nuevo perfil de jugador con valores predeterminados para la primera
-     * vez que el jugador se conecta al servidor.
+     * Creates a new player profile with default values for the very first time the
+     * player connects to the server.
      *
-     * <p>Los valores iniciales son: 0 kills, 0 muertes, 3 vidas, sin timer de PvP
-     * y kit {@link KitType#DIAMOND} como kit activo.</p>
+     * <p>Initial values are: 0 kills, 0 deaths, 3 lives, no PvP timer granted,
+     * and {@link KitType#DIAMOND} as the active kit.</p>
      *
-     * @param uuid UUID único del jugador de Minecraft
-     * @param name nombre de usuario del jugador en el momento del registro
+     * @param uuid unique Minecraft UUID of the player
+     * @param name username of the player at the time of registration
      */
     public HCFPlayer(UUID uuid, String name) {
         this.uuid = uuid;
@@ -49,19 +48,19 @@ public final class HCFPlayer {
     }
 
     /**
-     * Reconstruye un perfil de jugador con todos sus datos desde la base de datos.
-     * Este constructor es utilizado exclusivamente por la capa de persistencia
-     * al deserializar un documento de MongoDB.
+     * Reconstructs a full player profile with all its data as loaded from the database.
+     * This constructor is used exclusively by the persistence layer when deserializing
+     * a MongoDB document back into a domain entity.
      *
-     * @param uuid               UUID único del jugador
-     * @param name               nombre de usuario actual del jugador
-     * @param kills              número total de kills registradas
-     * @param deaths             número total de muertes registradas
-     * @param activeKit          kit activo seleccionado por el jugador
-     * @param savedInventoryJson inventario guardado serializado en formato JSON, puede ser {@code null}
-     * @param lives              número de vidas restantes del jugador
-     * @param pvpTimerGiven      {@code true} si ya se le otorgó el timer de protección PvP al conectarse
-     * @param lastLifeRegenAt    timestamp en milisegundos de la última regeneración de vida
+     * @param uuid               unique UUID of the player
+     * @param name               current username of the player
+     * @param kills              total number of registered kills
+     * @param deaths             total number of registered deaths
+     * @param activeKit          the active kit selected by the player
+     * @param savedInventoryJson saved inventory serialized as JSON; may be {@code null}
+     * @param lives              number of lives remaining for the player
+     * @param pvpTimerGiven      {@code true} if the PvP protection timer was already granted on login
+     * @param lastLifeRegenAt    Unix timestamp in milliseconds of the last life regeneration
      */
     public HCFPlayer(UUID uuid, String name, int kills, int deaths,
                      KitType activeKit, String savedInventoryJson, int lives,
@@ -78,24 +77,24 @@ public final class HCFPlayer {
     }
 
     /**
-     * Incrementa en uno el contador de kills del jugador.
-     * Se invoca cuando este jugador mata a otro jugador en combate PvP.
+     * Increments the player's kill counter by one.
+     * Called when this player kills another player in PvP combat.
      */
     public void incrementKills() { kills++; }
 
     /**
-     * Incrementa en uno el contador de muertes del jugador.
-     * Se invoca cuando este jugador es asesinado por otro jugador en combate PvP.
+     * Increments the player's death counter by one.
+     * Called when this player is killed by another player in PvP combat.
      */
     public void incrementDeaths() { deaths++; }
 
     /**
-     * Decrementa en uno el número de vidas del jugador, sin bajar de cero.
-     * Se llama cuando el jugador muere con el timer de Deathban activo.
-     * Si el resultado es cero, el jugador quedará sujeto al Deathban en el
-     * próximo ciclo de verificación.
+     * Decrements the player's life count by one, without going below zero.
+     * Called when the player dies while the Deathban timer is active.
+     * If the result reaches zero, the player will be subject to Deathban
+     * on the next verification cycle.
      *
-     * @return el número de vidas restantes tras el decremento (mínimo 0)
+     * @return the number of remaining lives after the decrement (minimum 0)
      */
     public int decrementLives() {
         if (lives > 0) lives--;
@@ -103,15 +102,14 @@ public final class HCFPlayer {
     }
 
     /**
-     * Intenta regenerar una vida al jugador si se cumplen las condiciones necesarias.
+     * Attempts to regenerate one life for the player if all required conditions are met.
      *
-     * <p>La regeneración ocurre únicamente si: (1) el jugador tiene menos vidas
-     * que el máximo permitido y (2) ha transcurrido el intervalo mínimo de tiempo
-     * desde la última regeneración.</p>
+     * <p>Regeneration occurs only if: (1) the player has fewer lives than the allowed
+     * maximum, and (2) the minimum time interval has elapsed since the last regeneration.</p>
      *
-     * @param maxLives         número máximo de vidas que puede tener el jugador
-     * @param regenIntervalMs  tiempo mínimo en milisegundos que debe transcurrir entre regeneraciones
-     * @return {@code true} si se regeneró una vida exitosamente, {@code false} si no se cumplieron las condiciones
+     * @param maxLives        maximum number of lives the player is allowed to have
+     * @param regenIntervalMs minimum time in milliseconds that must elapse between regenerations
+     * @return {@code true} if a life was successfully regenerated, {@code false} if conditions were not met
      */
     public boolean tryRegenLife(int maxLives, long regenIntervalMs) {
         if (lives >= maxLives) return false;
@@ -122,112 +120,112 @@ public final class HCFPlayer {
     }
 
     /**
-     * Establece directamente el número de vidas del jugador.
-     * Utilizado para restaurar vidas después de que expire un Deathban.
+     * Directly sets the player's life count.
+     * Used to restore lives after a Deathban has expired.
      *
-     * @param lives nuevo número de vidas a asignar al jugador
+     * @param lives new life count to assign to the player
      */
     public void setLives(int lives) { this.lives = lives; }
 
     /**
-     * Obtiene el timestamp en milisegundos de la última vez que el jugador regeneró una vida.
+     * Returns the Unix timestamp in milliseconds of the last time this player regenerated a life.
      *
-     * @return timestamp Unix en milisegundos de la última regeneración de vida
+     * @return Unix timestamp in milliseconds of the last life regeneration
      */
     public long getLastLifeRegenAt()          { return lastLifeRegenAt; }
 
     /**
-     * Actualiza el timestamp de la última regeneración de vida.
+     * Updates the timestamp of the last life regeneration.
      *
-     * @param t nuevo timestamp Unix en milisegundos
+     * @param t new Unix timestamp in milliseconds
      */
     public void setLastLifeRegenAt(long t)    { this.lastLifeRegenAt = t; }
 
     /**
-     * Indica si ya se le otorgó al jugador el timer de protección PvP al conectarse.
-     * El timer PvP protege a los recién conectados de recibir daño por un tiempo determinado.
+     * Returns whether the PvP protection timer has already been granted to the player on login.
+     * The PvP timer shields newly connected players from taking damage for a set duration.
      *
-     * @return {@code true} si el timer de PvP ya fue otorgado en la sesión actual
+     * @return {@code true} if the PvP protection timer has already been granted in the current session
      */
     public boolean isPvpTimerGiven()          { return pvpTimerGiven; }
 
     /**
-     * Establece el estado del timer de protección PvP del jugador.
+     * Sets the state of the player's PvP protection timer.
      *
-     * @param v {@code true} para marcar que el timer ya fue otorgado, {@code false} para reiniciarlo
+     * @param v {@code true} to mark the timer as already granted, {@code false} to reset it
      */
     public void setPvpTimerGiven(boolean v)   { this.pvpTimerGiven = v; }
 
     /**
-     * Obtiene el UUID único de Minecraft del jugador.
+     * Returns the player's unique Minecraft UUID.
      *
-     * @return UUID del jugador
+     * @return the player's UUID
      */
     public UUID   getUuid()   { return uuid; }
 
     /**
-     * Obtiene el nombre de usuario actual del jugador.
+     * Returns the player's current username.
      *
-     * @return nombre de usuario del jugador
+     * @return the player's username
      */
     public String getName()   { return name; }
 
     /**
-     * Actualiza el nombre de usuario del jugador.
-     * Se invoca cuando el jugador se reconecta con un nombre diferente al registrado.
+     * Updates the player's username.
+     * Called when the player reconnects with a different name than the one on record.
      *
-     * @param name nuevo nombre de usuario del jugador
+     * @param name new username of the player
      */
     public void   setName(String name) { this.name = name; }
 
     /**
-     * Obtiene el total de kills registradas del jugador en el servidor.
+     * Returns the total number of kills registered for this player on the server.
      *
-     * @return número total de kills
+     * @return total kill count
      */
     public int  getKills()  { return kills; }
 
     /**
-     * Obtiene el total de muertes registradas del jugador en el servidor.
+     * Returns the total number of deaths registered for this player on the server.
      *
-     * @return número total de muertes
+     * @return total death count
      */
     public int  getDeaths() { return deaths; }
 
     /**
-     * Obtiene el número de vidas restantes del jugador.
-     * Un valor de cero indica que el jugador está sujeto al sistema de Deathban.
+     * Returns the player's remaining life count.
+     * A value of zero indicates that the player is subject to the Deathban system.
      *
-     * @return número de vidas restantes
+     * @return number of remaining lives
      */
     public int  getLives()  { return lives; }
 
     /**
-     * Obtiene el kit activo actualmente seleccionado por el jugador.
+     * Returns the kit type currently active for this player.
      *
-     * @return tipo de kit activo del jugador
+     * @return the player's active kit type
      */
     public KitType getActiveKit()                { return activeKit; }
 
     /**
-     * Establece el kit activo del jugador.
+     * Sets the player's active kit.
      *
-     * @param activeKit nuevo tipo de kit a activar
+     * @param activeKit new kit type to activate
      */
     public void    setActiveKit(KitType activeKit) { this.activeKit = activeKit; }
 
     /**
-     * Obtiene el inventario del jugador serializado en formato JSON.
-     * Se usa para guardar y restaurar el inventario entre sesiones.
+     * Returns the player's inventory serialized as a JSON string.
+     * Used to save and restore the player's inventory across sessions.
      *
-     * @return cadena JSON con el inventario guardado, o {@code null} si no hay ninguno guardado
+     * @return JSON string of the saved inventory, or {@code null} if none has been saved yet
      */
     public String getSavedInventoryJson() { return savedInventoryJson; }
 
     /**
-     * Establece el inventario del jugador serializado en formato JSON.
+     * Sets the player's inventory as a serialized JSON string.
      *
-     * @param savedInventoryJson cadena JSON con el inventario a guardar
+     * @param savedInventoryJson JSON string representing the inventory to save
      */
     public void setSavedInventoryJson(String savedInventoryJson) {
         this.savedInventoryJson = savedInventoryJson;

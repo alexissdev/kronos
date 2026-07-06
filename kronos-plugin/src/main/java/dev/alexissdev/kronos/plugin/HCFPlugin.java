@@ -15,22 +15,22 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Clase principal del plugin KronosHCF.
+ * Main class of the KronosHCF plugin.
  *
- * <p>Extiende {@link JavaPlugin} y actúa como punto de entrada del plugin en el ciclo de vida
- * de Bukkit. Se encarga de inicializar el contenedor de inyección de dependencias Guice a través
- * de {@link RootModule} y delega la lógica de arranque y apagado a
- * {@link PluginEnableHandler} y {@link PluginDisableHandler} respectivamente.
+ * <p>Extends {@link JavaPlugin} and serves as the plugin's entry point in the Bukkit lifecycle.
+ * It initialises the Guice dependency-injection container through {@link RootModule} and
+ * delegates startup and shutdown logic to {@link PluginEnableHandler} and
+ * {@link PluginDisableHandler} respectively.
  */
 public final class HCFPlugin extends JavaPlugin {
 
     private Injector injector;
 
     /**
-     * Se invoca antes de que el servidor registre el plugin como activo.
+     * Called before the server registers the plugin as active.
      *
-     * <p>Guarda la configuración predeterminada ({@code config.yml}) y el archivo de mensajes
-     * ({@code messages.yml}) en la carpeta de datos del plugin si aún no existen.
+     * <p>Writes the default configuration ({@code config.yml}) and the messages file
+     * ({@code messages.yml}) to the plugin's data folder if they do not already exist.
      */
     @Override
     public void onLoad() {
@@ -39,12 +39,12 @@ public final class HCFPlugin extends JavaPlugin {
     }
 
     /**
-     * Punto de entrada principal del plugin al habilitarse.
+     * Main plugin entry point called when the plugin is enabled.
      *
-     * <p>Carga los mensajes, construye el inyector Guice con el {@link RootModule} raíz y
-     * delega toda la lógica de inicialización (registro de comandos, listeners, servicios, etc.)
-     * a {@link PluginEnableHandler#enable()}. Si ocurre cualquier excepción durante este proceso,
-     * el plugin se deshabilita automáticamente para evitar un estado inconsistente.
+     * <p>Loads the messages file, builds the Guice injector with the root {@link RootModule}, and
+     * delegates all initialisation logic (command registration, listeners, services, etc.) to
+     * {@link PluginEnableHandler#enable()}. If any exception occurs during this process, the plugin
+     * is automatically disabled to prevent an inconsistent state.
      */
     @Override
     public void onEnable() {
@@ -61,10 +61,10 @@ public final class HCFPlugin extends JavaPlugin {
     }
 
     /**
-     * Se invoca cuando el plugin es deshabilitado por el servidor o por un error.
+     * Called when the plugin is disabled by the server or due to an error.
      *
-     * <p>Si el inyector fue inicializado correctamente, delega el proceso de apagado
-     * (cierre de conexiones de base de datos, desactivación de KOTHs, etc.) a
+     * <p>If the injector was initialised successfully, delegates the shutdown process
+     * (closing database connections, deactivating KOTHs, etc.) to
      * {@link PluginDisableHandler#disable()}.
      */
     @Override
@@ -80,25 +80,25 @@ public final class HCFPlugin extends JavaPlugin {
     }
 
     /**
-     * Devuelve el inyector Guice creado durante {@link #onEnable()}.
+     * Returns the Guice injector created during {@link #onEnable()}.
      *
-     * <p>Puede ser utilizado por componentes externos (por ejemplo, otros plugins o comandos
-     * de administración) que necesiten obtener instancias gestionadas por Guice.
+     * <p>May be used by external components (for example, other plugins or admin commands)
+     * that need to retrieve Guice-managed instances.
      *
-     * @return el {@link Injector} de Guice, o {@code null} si el plugin no se inicializó correctamente
+     * @return the Guice {@link Injector}, or {@code null} if the plugin did not initialise correctly
      */
     public Injector getInjector() {
         return injector;
     }
 
     /**
-     * Lee el archivo {@code messages.yml} desde la carpeta de datos del plugin y construye
-     * un {@link MessagesConfig} con todas las claves y valores encontrados.
+     * Reads {@code messages.yml} from the plugin's data folder and constructs a
+     * {@link MessagesConfig} populated with all keys and values found in that file.
      *
-     * <p>Solo se procesan las claves que representan valores concretos (no secciones de
-     * configuración), lo que garantiza que el mapa resultante contenga únicamente cadenas de texto.
+     * <p>Only keys that represent scalar values (not configuration sections) are processed,
+     * ensuring the resulting map contains plain strings exclusively.
      *
-     * @return un {@link MessagesConfig} poblado con los mensajes definidos en {@code messages.yml}
+     * @return a {@link MessagesConfig} populated with the messages defined in {@code messages.yml}
      */
     private MessagesConfig loadMessages() {
         File file = new File(getDataFolder(), "messages.yml");

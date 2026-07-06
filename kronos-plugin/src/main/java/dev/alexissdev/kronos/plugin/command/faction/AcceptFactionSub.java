@@ -11,10 +11,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
 /**
- * Sub-comando {@code /f accept <faccion>} (alias: {@code /f join}) que permite
- * a un jugador aceptar una invitación pendiente y unirse a la facción especificada.
- * El jugador debe haber recibido previamente una invitación de esa facción;
- * de lo contrario el servicio lanzará una excepción de dominio.
+ * Sub-command {@code /f accept <faction>} (alias: {@code /f join}) that allows a
+ * player to accept a pending invitation and join the specified faction. The player
+ * must have previously received an invitation from that faction; otherwise the
+ * service will throw a domain exception.
  */
 @Singleton
 public class AcceptFactionSub extends FactionSubCommand {
@@ -24,11 +24,11 @@ public class AcceptFactionSub extends FactionSubCommand {
     private final Plugin         plugin;
 
     /**
-     * Construye el sub-comando inyectando sus dependencias mediante Guice.
+     * Constructs the sub-command by injecting its dependencies via Guice.
      *
-     * @param factionService servicio de facciones para validar y aceptar invitaciones
-     * @param messages       configuración de mensajes localizados
-     * @param plugin         instancia del plugin, usada para programar tareas en el hilo principal
+     * @param factionService faction service used to validate and accept invitations
+     * @param messages       localised message configuration
+     * @param plugin         plugin instance used to schedule tasks on the main thread
      */
     @Inject
     public AcceptFactionSub(FactionService factionService, MessagesConfig messages, Plugin plugin) {
@@ -37,19 +37,19 @@ public class AcceptFactionSub extends FactionSubCommand {
         this.plugin         = plugin;
     }
 
-    /** @return el nombre del sub-comando: {@code "accept"} */
+    /** @return the sub-command name: {@code "accept"} */
     @Override public String   name()    { return "accept"; }
 
-    /** @return alias del sub-comando: {@code ["join"]} */
+    /** @return sub-command aliases: {@code ["join"]} */
     @Override public String[] aliases() { return new String[]{"join"}; }
 
     /**
-     * Busca la facción por nombre y acepta la invitación del jugador ejecutor.
-     * En caso de error (facción no encontrada o invitación inexistente) notifica
-     * al jugador con el mensaje de la excepción de dominio.
+     * Looks up the faction by name and accepts the executing player's invitation to
+     * join it. On error (faction not found or no pending invitation) the player is
+     * notified with the domain exception message.
      *
-     * @param sender ejecutor del comando; debe ser un {@link org.bukkit.entity.Player}
-     * @param args   argumentos; {@code args[1]} es el nombre de la facción a unirse
+     * @param sender command executor; must be a {@link org.bukkit.entity.Player}
+     * @param args   arguments; {@code args[1]} is the name of the faction to join
      */
     @Override
     public void execute(CommandSender sender, String[] args) {

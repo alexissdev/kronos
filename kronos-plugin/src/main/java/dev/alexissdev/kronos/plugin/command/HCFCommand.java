@@ -11,10 +11,10 @@ import org.bukkit.command.CommandSender;
 import java.util.Set;
 
 /**
- * Comando de administración {@code /hcf} que agrupa las operaciones avanzadas
- * del servidor HCF reservadas para el staff. Requiere el permiso {@code hcf.admin}
- * y delega a sub-comandos como {@code reload}, {@code give-money}, {@code set-money},
- * {@code give-key}, {@code sotw}, {@code eotw} y {@code unban}.
+ * Admin command {@code /hcf} that groups the advanced server-management operations
+ * reserved for staff members. Requires the {@code hcf.admin} permission and delegates
+ * to sub-commands such as {@code reload}, {@code give-money}, {@code set-money},
+ * {@code give-key}, {@code sotw}, {@code eotw}, and {@code unban}.
  */
 @Singleton
 public class HCFCommand extends DispatchCommand {
@@ -22,11 +22,11 @@ public class HCFCommand extends DispatchCommand {
     private final MessagesConfig messages;
 
     /**
-     * Construye el comando registrando los sub-comandos del grupo {@code hcf}
-     * inyectados por Guice.
+     * Constructs the command by registering the {@code hcf} group sub-commands
+     * injected by Guice.
      *
-     * @param subs     conjunto de sub-comandos anotado con {@code @Named("hcf")}
-     * @param messages configuración de mensajes localizados
+     * @param subs     set of sub-commands annotated with {@code @Named("hcf")}
+     * @param messages localised message configuration
      */
     @Inject
     public HCFCommand(@Named("hcf") Set<SubCommand> subs, MessagesConfig messages) {
@@ -36,10 +36,10 @@ public class HCFCommand extends DispatchCommand {
     }
 
     /**
-     * Envía al ejecutor el menú de ayuda del comando {@code /hcf} con todos
-     * los sub-comandos administrativos disponibles y su sintaxis.
+     * Sends the {@code /hcf} help menu to the executor, listing all available
+     * administrative sub-commands and their usage syntax.
      *
-     * @param sender ejecutor del comando que recibirá los mensajes de ayuda
+     * @param sender command executor who will receive the help messages
      */
     @Override
     protected void sendUsage(CommandSender sender) {

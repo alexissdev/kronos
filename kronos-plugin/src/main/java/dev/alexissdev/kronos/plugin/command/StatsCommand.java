@@ -17,11 +17,11 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Comando {@code /stats} que muestra las estadísticas de combate de un jugador:
- * kills, muertes, vidas restantes y facción a la que pertenece. Si se ejecuta
- * sin argumentos muestra las estadísticas propias; si se especifica un nombre,
- * muestra las de ese jugador (que debe estar en línea). Las consultas se realizan
- * de forma asíncrona combinando los datos del perfil del jugador y su facción.
+ * Command {@code /stats} that displays a player's combat statistics: kills,
+ * deaths, remaining lives, and the faction they belong to. When executed without
+ * arguments it shows the executor's own stats; when a name is specified it shows
+ * that online player's stats instead. Queries are performed asynchronously,
+ * combining data from the player profile and faction services.
  */
 @Singleton
 public class StatsCommand extends BaseCommand {
@@ -32,12 +32,12 @@ public class StatsCommand extends BaseCommand {
     private final Plugin plugin;
 
     /**
-     * Construye el comando inyectando sus dependencias mediante Guice.
+     * Constructs the command by injecting its dependencies via Guice.
      *
-     * @param playerService  servicio para obtener el perfil HCF del jugador (kills, muertes, vidas)
-     * @param factionService servicio para obtener la facción a la que pertenece el jugador
-     * @param messages       configuración de mensajes localizados
-     * @param plugin         instancia del plugin, usada para programar tareas en el hilo principal
+     * @param playerService  service used to retrieve the player's HCF profile (kills, deaths, lives)
+     * @param factionService service used to retrieve the faction the player belongs to
+     * @param messages       localised message configuration
+     * @param plugin         plugin instance used to schedule tasks on the main thread
      */
     @Inject
     public StatsCommand(PlayerService playerService, FactionService factionService,
@@ -50,13 +50,13 @@ public class StatsCommand extends BaseCommand {
     }
 
     /**
-     * Proporciona sugerencias de autocompletado con los nombres de los jugadores
-     * en línea para el primer argumento del comando.
+     * Provides tab-completion suggestions with the names of online players for the
+     * first argument of the command.
      *
-     * @param sender ejecutor del comando
-     * @param args   argumentos escritos hasta el momento
-     * @return lista de nombres de jugadores en línea que comienzan con el prefijo indicado,
-     *         o lista vacía si ya se proporcionó el primer argumento
+     * @param sender command executor
+     * @param args   arguments typed so far
+     * @return list of online player names that match the current prefix, or an empty
+     *         list if the first argument has already been provided
      */
     @Override
     protected List<String> tabComplete(CommandSender sender, String[] args) {
@@ -65,13 +65,13 @@ public class StatsCommand extends BaseCommand {
     }
 
     /**
-     * Determina el jugador objetivo (el propio ejecutor o el especificado como argumento),
-     * consulta de forma asíncrona su perfil HCF y su facción, y muestra las estadísticas
-     * en el hilo principal de Bukkit.
+     * Resolves the target player (the executor themselves or the one specified as an
+     * argument), asynchronously queries their HCF profile and faction, then displays
+     * the stats output on the Bukkit main thread.
      *
-     * @param sender ejecutor del comando; debe ser un {@link org.bukkit.entity.Player}
-     *               si no se especifica un objetivo
-     * @param args   argumentos opcionales; {@code args[0]} puede ser el nombre de un jugador en línea
+     * @param sender command executor; must be a {@link org.bukkit.entity.Player} when
+     *               no target argument is provided
+     * @param args   optional arguments; {@code args[0]} may be the name of an online player
      */
     @Override
     protected void execute(CommandSender sender, String[] args) {

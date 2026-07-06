@@ -5,29 +5,28 @@ import dev.alexissdev.kronos.common.exception.HCFException;
 import java.util.UUID;
 
 /**
- * Excepción lanzada cuando se intenta acceder a un {@code HCFPlayer} que no existe
- * en la base de datos.
+ * Thrown when an attempt is made to access an {@code HCFPlayer} that does not exist
+ * in the database.
  *
- * <p>Se produce típicamente durante operaciones que requieren que ambos jugadores
- * (atacante y víctima) estén registrados en el sistema, como el registro de kills
- * o la aplicación de penalizaciones de deathban.</p>
+ * <p>Typically raised during operations that require both players (attacker and victim)
+ * to be registered in the system, such as recording kills or applying deathban penalties.</p>
  */
 public class PlayerNotFoundException extends HCFException {
 
     /**
-     * Crea la excepción con un mensaje descriptivo personalizado.
+     * Creates the exception with a custom descriptive message.
      *
-     * @param message descripción del error que indica qué jugador no fue encontrado y en qué contexto
+     * @param message description of the error indicating which player was not found and in what context
      */
     public PlayerNotFoundException(String message) {
         super(message);
     }
 
     /**
-     * Crea la excepción a partir del UUID del jugador no encontrado.
-     * Genera automáticamente un mensaje con el UUID para facilitar el diagnóstico.
+     * Creates the exception from the UUID of the missing player.
+     * Automatically generates a message containing the UUID to aid diagnosis.
      *
-     * @param uuid UUID del jugador que no existe en la base de datos
+     * @param uuid UUID of the player that does not exist in the database
      */
     public PlayerNotFoundException(UUID uuid) {
         super("Player not found: " + uuid);

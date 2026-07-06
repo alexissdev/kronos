@@ -6,27 +6,28 @@ import dev.alexissdev.kronos.classes.listener.ClassListener;
 import dev.alexissdev.kronos.classes.service.KitService;
 
 /**
- * Módulo Guice que configura las dependencias del subsistema de clases (kits) HCF.
+ * Guice module that configures the dependency bindings for the classes (kits) subsystem.
  *
- * <p>Registra las siguientes vinculaciones en el contenedor de inyección de dependencias:</p>
+ * <p>Registers the following bindings in the dependency-injection container:</p>
  * <ul>
- *   <li>{@link KitService} → {@link KitApplicationService} (singleton): servicio de
- *       aplicación que gestiona la detección, activación y actualización del kit activo
- *       de cada jugador.</li>
- *   <li>{@link dev.alexissdev.kronos.classes.listener.ClassListener} (singleton): listener de
- *       Bukkit que aplica las habilidades pasivas y activas de cada clase durante el juego.</li>
+ *   <li>{@link KitService} → {@link KitApplicationService} (singleton): application
+ *       service that handles the detection, activation, and update of each player's
+ *       active kit.</li>
+ *   <li>{@link dev.alexissdev.kronos.classes.listener.ClassListener} (singleton): Bukkit
+ *       listener that applies the passive and active abilities of each class during
+ *       gameplay.</li>
  * </ul>
  *
- * <p>Este módulo debe instalarse en el injector principal del plugin durante la
- * inicialización de Kronos.</p>
+ * <p>This module must be installed in the plugin's main injector during Kronos
+ * initialisation.</p>
  */
 public class ClassesModule extends AbstractModule {
 
     /**
-     * Declara todas las vinculaciones de tipos del módulo de clases/kits.
+     * Declares all type bindings for the classes/kits module.
      *
-     * <p>Guice llamará a este método automáticamente al construir el injector. No debe
-     * invocarse directamente desde código de aplicación.</p>
+     * <p>Guice will call this method automatically when building the injector. It should
+     * never be invoked directly from application code.</p>
      */
     @Override
     protected void configure() {

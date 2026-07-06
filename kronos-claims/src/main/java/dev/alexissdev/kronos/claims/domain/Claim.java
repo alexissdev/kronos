@@ -1,16 +1,16 @@
 package dev.alexissdev.kronos.claims.domain;
 
 /**
- * Entidad de dominio que representa un territorio (claim) en el mundo de Minecraft.
+ * Domain entity representing a claimed territory in the Minecraft world.
  *
- * <p>Un {@code Claim} delimita un área rectangular de chunks que pertenece a una
- * facción o a una zona especial del servidor (spawn, warzone, koth, etc.). La posición
- * se expresa en coordenadas de chunk, no de bloque, con el fin de simplificar las
- * consultas de pertenencia durante el movimiento de jugadores.</p>
+ * <p>A {@code Claim} delimits a rectangular area of chunks that belongs to a
+ * faction or to a special server zone (spawn, warzone, koth, etc.). Position
+ * is expressed in chunk coordinates rather than block coordinates to simplify
+ * ownership lookups during player movement.</p>
  *
- * <p>La clase es inmutable: una vez creada, sus atributos no cambian. Para modificar
- * el propietario o los límites de un territorio se debe eliminar el claim existente
- * y crear uno nuevo.</p>
+ * <p>This class is immutable: once created, its attributes do not change. To modify
+ * the owner or boundaries of a territory, the existing claim must be deleted and a
+ * new one created.</p>
  */
 public final class Claim {
 
@@ -24,16 +24,16 @@ public final class Claim {
     private final int maxChunkZ;
 
     /**
-     * Construye un nuevo claim con todos sus atributos.
+     * Constructs a new claim with all its attributes.
      *
-     * @param id        identificador único del claim (UUID en formato String)
-     * @param factionId identificador de la facción propietaria, o {@code null} para zonas del sistema
-     * @param type      categoría del territorio (ver {@link ClaimType})
-     * @param world     nombre del mundo de Minecraft donde se ubica el claim
-     * @param minChunkX coordenada X mínima del chunk que delimita el rectángulo
-     * @param minChunkZ coordenada Z mínima del chunk que delimita el rectángulo
-     * @param maxChunkX coordenada X máxima del chunk que delimita el rectángulo
-     * @param maxChunkZ coordenada Z máxima del chunk que delimita el rectángulo
+     * @param id        unique identifier of the claim (UUID as a String)
+     * @param factionId identifier of the owning faction, or {@code null} for system zones
+     * @param type      territory category (see {@link ClaimType})
+     * @param world     name of the Minecraft world where the claim is located
+     * @param minChunkX minimum X chunk coordinate bounding the rectangle
+     * @param minChunkZ minimum Z chunk coordinate bounding the rectangle
+     * @param maxChunkX maximum X chunk coordinate bounding the rectangle
+     * @param maxChunkZ maximum Z chunk coordinate bounding the rectangle
      */
     public Claim(String id, String factionId, ClaimType type, String world,
                  int minChunkX, int minChunkZ, int maxChunkX, int maxChunkZ) {
@@ -48,14 +48,14 @@ public final class Claim {
     }
 
     /**
-     * Comprueba si el chunk especificado se encuentra dentro de los límites de este claim.
+     * Checks whether the specified chunk falls within the bounds of this claim.
      *
-     * <p>Se usa principalmente en el listener de movimiento para determinar en qué
-     * territorio se encuentra un jugador.</p>
+     * <p>Used primarily in the movement listener to determine which territory
+     * a player is currently standing in.</p>
      *
-     * @param chunkX coordenada X del chunk a evaluar
-     * @param chunkZ coordenada Z del chunk a evaluar
-     * @return {@code true} si el chunk está contenido en el rectángulo del claim
+     * @param chunkX X coordinate of the chunk to evaluate
+     * @param chunkZ Z coordinate of the chunk to evaluate
+     * @return {@code true} if the chunk is contained within the claim's rectangle
      */
     public boolean containsChunk(int chunkX, int chunkZ) {
         return chunkX >= minChunkX && chunkX <= maxChunkX
@@ -63,70 +63,70 @@ public final class Claim {
     }
 
     /**
-     * Calcula el número total de chunks que abarca este claim.
+     * Calculates the total number of chunks covered by this claim.
      *
-     * <p>Se utiliza para validar límites de tamaño al reclamar territorio o para
-     * mostrar estadísticas de la facción.</p>
+     * <p>Used to validate size limits when claiming territory or to display
+     * faction statistics.</p>
      *
-     * @return cantidad de chunks en el área rectangular del claim
+     * @return number of chunks in the claim's rectangular area
      */
     public int getChunkCount() {
         return (maxChunkX - minChunkX + 1) * (maxChunkZ - minChunkZ + 1);
     }
 
     /**
-     * Retorna el identificador único de este claim.
+     * Returns the unique identifier of this claim.
      *
-     * @return UUID en formato String asignado al claim
+     * @return UUID as a String assigned to the claim
      */
     public String getId() { return id; }
 
     /**
-     * Retorna el identificador de la facción propietaria de este territorio.
+     * Returns the identifier of the faction that owns this territory.
      *
-     * @return ID de la facción, o {@code null} si el claim es de tipo sistema
+     * @return faction ID, or {@code null} if this is a system-owned claim
      */
     public String getFactionId() { return factionId; }
 
     /**
-     * Retorna la categoría de este territorio.
+     * Returns the category of this territory.
      *
-     * @return tipo de claim según {@link ClaimType}
+     * @return claim type as defined by {@link ClaimType}
      */
     public ClaimType getType() { return type; }
 
     /**
-     * Retorna el nombre del mundo de Minecraft donde se ubica el claim.
+     * Returns the name of the Minecraft world where this claim is located.
      *
-     * @return nombre del mundo (por ejemplo, {@code "world"})
+     * @return world name (for example, {@code "world"})
      */
     public String getWorld() { return world; }
 
     /**
-     * Retorna la coordenada X mínima del chunk que delimita el claim.
+     * Returns the minimum X chunk coordinate bounding this claim.
      *
-     * @return límite oeste del territorio en coordenadas de chunk
+     * @return western boundary of the territory in chunk coordinates
      */
     public int getMinChunkX() { return minChunkX; }
 
     /**
-     * Retorna la coordenada Z mínima del chunk que delimita el claim.
+     * Returns the minimum Z chunk coordinate bounding this claim.
      *
-     * @return límite norte del territorio en coordenadas de chunk
+     * @return northern boundary of the territory in chunk coordinates
      */
     public int getMinChunkZ() { return minChunkZ; }
 
     /**
-     * Retorna la coordenada X máxima del chunk que delimita el claim.
+     * Returns the maximum X chunk coordinate bounding this claim.
      *
-     * @return límite este del territorio en coordenadas de chunk
+     * @return eastern boundary of the territory in chunk coordinates
      */
     public int getMaxChunkX() { return maxChunkX; }
 
     /**
-     * Retorna la coordenada Z máxima del chunk que delimita el claim.
+     * Returns the maximum Z chunk coordinate bounding this claim.
      *
-     * @return límite sur del territorio en coordenadas de chunk
+     * @return southern boundary of the territory in chunk coordinates
      */
     public int getMaxChunkZ() { return maxChunkZ; }
 }

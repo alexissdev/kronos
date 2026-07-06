@@ -8,18 +8,17 @@ import org.bukkit.scoreboard.*;
 import java.util.List;
 
 /**
- * Representa el marcador lateral (sidebar) individual de un jugador en Bukkit.
+ * Represents the individual sidebar scoreboard assigned to a single player in Bukkit.
  * <p>
- * Utiliza el truco de Teams para actualizar el texto de cada línea sin producir
- * parpadeo visual: cada una de las 15 ranuras posibles tiene una entrada falsa
- * invisible (un código de color único como {@code §0}, {@code §1}, etc.) y un
- * {@link org.bukkit.scoreboard.Team} cuyo prefijo y sufijo contienen el texto real.
+ * Uses the Teams trick to update each line's text without causing visual flicker:
+ * each of the 15 possible slots has an invisible phantom entry (a unique colour code
+ * such as {@code §0}, {@code §1}, etc.) and a {@link org.bukkit.scoreboard.Team}
+ * whose prefix and suffix hold the actual visible text.
  * </p>
  * <p>
- * El marcador se asigna directamente al jugador al momento de su creación
- * (en {@link ScoreboardManager#createBoard(org.bukkit.entity.Player)}) y es
- * actualizado cada segundo desde {@link ScoreboardTask} a través de
- * {@link ScoreboardManager#tickAll()}.
+ * The scoreboard is assigned directly to the player at creation time
+ * (in {@link ScoreboardManager#createBoard(org.bukkit.entity.Player)}) and is
+ * redrawn every second by {@link ScoreboardTask} via {@link ScoreboardManager#tickAll()}.
  * </p>
  */
 final class PlayerBoard {
@@ -36,15 +35,15 @@ final class PlayerBoard {
     private int renderedCount = 0;
 
     /**
-     * Crea y asigna un nuevo marcador lateral al jugador indicado.
+     * Creates and assigns a new sidebar scoreboard to the given player.
      * <p>
-     * Inicializa el {@link org.bukkit.scoreboard.Scoreboard} de Bukkit con un objetivo
-     * en el slot {@code SIDEBAR}, registra los 15 equipos (uno por ranura) con sus
-     * entradas invisibles y asigna el marcador al jugador inmediatamente.
+     * Initialises Bukkit's {@link org.bukkit.scoreboard.Scoreboard} with a
+     * {@code SIDEBAR} objective, registers all 15 teams (one per slot) with their
+     * invisible phantom entries, and immediately assigns the scoreboard to the player.
      * </p>
      *
-     * @param player jugador al que se asignará el marcador
-     * @param title  texto que aparece como título en la cabecera del marcador lateral
+     * @param player the player who will receive the scoreboard
+     * @param title  text displayed as the header title of the sidebar scoreboard
      */
     PlayerBoard(Player player, String title) {
         scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
@@ -61,16 +60,16 @@ final class PlayerBoard {
     }
 
     /**
-     * Renderiza la lista de líneas proporcionada en el marcador lateral del jugador.
+     * Renders the provided list of lines onto the player's sidebar scoreboard.
      * <p>
-     * Actualiza únicamente las ranuras cuyo texto haya cambiado, evitando escrituras
-     * innecesarias en el scoreboard de Bukkit. Las ranuras que superaban el número de
-     * líneas del tick anterior son ocultadas reseteando su puntuación. Soporta hasta
-     * {@value MAX_LINES} líneas simultáneas.
+     * Only updates slots whose text has actually changed, avoiding unnecessary
+     * writes to Bukkit's scoreboard. Slots that exceeded the line count from the
+     * previous tick are hidden by resetting their score. Supports up to
+     * {@value MAX_LINES} simultaneous lines.
      * </p>
      *
-     * @param lines lista de cadenas a mostrar, en orden descendente; el primer elemento
-     *              aparece en la parte superior del marcador lateral
+     * @param lines list of strings to display, in descending order; the first element
+     *              appears at the top of the sidebar scoreboard
      */
     void render(List<String> lines) {
         int count = Math.min(lines.size(), MAX_LINES);

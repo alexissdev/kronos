@@ -16,10 +16,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
- * Comando {@code /baltop} que muestra el ranking de los 10 jugadores en línea
- * con mayor balance económico. Las consultas de saldo se realizan de forma
- * asíncrona usando {@link java.util.concurrent.CompletableFuture} y el resultado
- * se entrega en el hilo principal de Bukkit para garantizar la seguridad del hilo.
+ * Command {@code /baltop} that displays a ranking of the top 10 online players
+ * ordered by their economic balance in descending order. Balance queries are
+ * executed asynchronously using {@link java.util.concurrent.CompletableFuture},
+ * and the result is delivered back on the Bukkit main thread to ensure thread safety.
  */
 @Singleton
 public class BaltopCommand extends BaseCommand {
@@ -29,11 +29,11 @@ public class BaltopCommand extends BaseCommand {
     private final MessagesConfig messages;
 
     /**
-     * Construye el comando inyectando sus dependencias mediante Guice.
+     * Constructs the command by injecting its dependencies via Guice.
      *
-     * @param economyService servicio de economía para consultar balances de jugadores
-     * @param plugin         instancia del plugin, usada para programar tareas en el hilo principal
-     * @param messages       configuración de mensajes localizados
+     * @param economyService economy service used to query player balances
+     * @param plugin         plugin instance used to schedule tasks on the main thread
+     * @param messages       localised message configuration
      */
     @Inject
     public BaltopCommand(EconomyService economyService, Plugin plugin, MessagesConfig messages) {
@@ -44,12 +44,12 @@ public class BaltopCommand extends BaseCommand {
     }
 
     /**
-     * Consulta el saldo de todos los jugadores en línea de forma asíncrona,
-     * los ordena de mayor a menor y muestra al ejecutor el top 10.
-     * Si no hay jugadores en línea, envía el mensaje de error correspondiente.
+     * Asynchronously queries the balance of every online player, sorts them in
+     * descending order, and displays the top 10 results to the command executor.
+     * If no players are online, the corresponding error message is sent instead.
      *
-     * @param sender ejecutor del comando (jugador o consola)
-     * @param args   argumentos adicionales (no utilizados por este comando)
+     * @param sender command executor (player or console)
+     * @param args   additional arguments (not used by this command)
      */
     @Override
     protected void execute(CommandSender sender, String[] args) {

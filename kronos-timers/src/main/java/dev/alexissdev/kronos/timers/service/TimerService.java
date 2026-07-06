@@ -7,67 +7,67 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Interfaz de servicio de dominio para la gestión del ciclo de vida de timers en el sistema HCF.
+ * Domain service interface for managing the full lifecycle of player timers in the HCF system.
  *
- * <p>Define las operaciones fundamentales para iniciar, cancelar y consultar timers de jugadores.
- * Cada timer representa una restricción temporal (combat tag, PvP timer, cooldowns, etc.)
- * que condiciona las acciones disponibles para el jugador mientras está activo.</p>
+ * <p>Defines the fundamental operations to start, cancel, and query player timers.
+ * Each timer represents a temporary restriction (combat tag, PvP protection, cooldowns, etc.)
+ * that limits the actions available to a player for as long as it remains active.</p>
  *
- * <p>El parámetro de tipo genérico {@code T} representa el identificador del sujeto del timer
- * (generalmente {@link java.util.UUID}). La implementación principal es
+ * <p>The generic type parameter {@code T} represents the identifier of the timer's subject
+ * (typically {@link java.util.UUID}). The primary implementation is
  * {@code TimerApplicationService}.</p>
  *
- * @param <T> tipo del identificador del sujeto del timer
+ * @param <T> type of the timer subject's identifier
  */
 public interface TimerService<T> {
 
     /**
-     * Inicia un nuevo timer para el jugador con el tipo y duración especificados.
+     * Starts a new timer for the player with the specified type and duration.
      *
-     * <p>Persiste el timer en Redis con TTL, actualiza la caché en memoria, y publica
-     * un {@code PlayerTimerStartedDomainEvent} en el {@code EventBus} para notificar
-     * a los listeners interesados.</p>
+     * <p>Persists the timer in Redis with a TTL, updates the in-memory cache, and posts
+     * a {@code PlayerTimerStartedDomainEvent} on the {@code EventBus} to notify
+     * interested listeners.</p>
      *
-     * @param playerUuid     UUID del jugador al que se le inicia el timer
-     * @param type           tipo del timer que determina las restricciones a aplicar
-     * @param durationMillis duración del timer en milisegundos desde el momento de inicio
-     * @return future que se resuelve cuando el timer ha sido persistido en Redis
+     * @param playerUuid     UUID of the player for whom the timer is being started
+     * @param type           timer type that determines which restrictions to apply
+     * @param durationMillis duration of the timer in milliseconds from the moment it starts
+     * @return future that resolves once the timer has been persisted in Redis
      */
     CompletableFuture<Void> startTimer(UUID playerUuid, TimerType type, long durationMillis);
 
     /**
-     * Cancela y elimina el timer activo de un jugador para el tipo especificado.
+     * Cancels and removes the active timer for the specified player and type.
      *
-     * <p>Elimina el timer de Redis, lo marca como inactivo en la caché en memoria y
-     * publica un {@code PlayerTimerExpiredDomainEvent} si el timer estaba activo en caché.</p>
+     * <p>Deletes the timer from Redis, marks it as inactive in the in-memory cache, and
+     * posts a {@code PlayerTimerExpiredDomainEvent} if the timer was active in the cache.</p>
      *
-     * @param playerUuid UUID del jugador cuyo timer se quiere cancelar
-     * @param type       tipo del timer a cancelar
-     * @return future que se resuelve cuando el timer ha sido eliminado de Redis
+     * @param playerUuid UUID of the player whose timer should be cancelled
+     * @param type       type of the timer to cancel
+     * @return future that resolves once the timer has been deleted from Redis
      */
     CompletableFuture<Void> cancelTimer(UUID playerUuid, TimerType type);
 
     /**
-     * Verifica de forma asíncrona si un jugador tiene actualmente activo el timer del
-     * tipo especificado, consultando el estado real en Redis.
+     * Asynchronously checks whether a player currently has an active timer of the specified type
+     * by querying the real state in Redis.
      *
-     * <p>Actualiza la caché en memoria con el resultado de la consulta. Si el timer
-     * estaba en caché pero ya expiró en Redis, publica un {@code PlayerTimerExpiredDomainEvent}.</p>
+     * <p>Updates the in-memory cache with the query result. If the timer was present in the
+     * cache but has since expired in Redis, a {@code PlayerTimerExpiredDomainEvent} is posted.</p>
      *
-     * @param playerUuid UUID del jugador a verificar
-     * @param type       tipo del timer cuya actividad se quiere comprobar
-     * @return future que se resuelve con {@code true} si el timer está activo y no ha expirado,
-     *         {@code false} si el timer no existe o ya expiró
+     * @param playerUuid UUID of the player to check
+     * @param type       type of the timer whose activity should be verified
+     * @return future that resolves with {@code true} if the timer is active and has not expired,
+     *         {@code false} if the timer does not exist or has already expired
      */
     CompletableFuture<Boolean> hasActiveTimer(UUID playerUuid, TimerType type);
 
     /**
-     * Obtiene de forma asíncrona el tiempo restante en milisegundos del timer activo de un jugador.
+     * Asynchronously retrieves the remaining time in milliseconds for a player's active timer.
      *
-     * @param playerUuid UUID del jugador cuyo tiempo restante se quiere consultar
-     * @param type       tipo del timer a consultar
-     * @return future que se resuelve con un {@link OptionalLong} que contiene los milisegundos
-     *         restantes si el timer está activo, o vacío si el timer no existe o ya expiró
+     * @param playerUuid UUID of the player whose remaining time should be queried
+     * @param type       type of the timer to query
+     * @return future that resolves with an {@link OptionalLong} containing the remaining
+     *         milliseconds if the timer is active, or empty if the timer does not exist or has expired
      */
     CompletableFuture<OptionalLong> getRemainingMillis(UUID playerUuid, TimerType type);
 }

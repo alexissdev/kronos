@@ -3,11 +3,11 @@ package dev.alexissdev.kronos.factions.event;
 import java.util.UUID;
 
 /**
- * Evento de dominio publicado en el {@code EventBus} cuando se crea una nueva facción.
+ * Domain event published on the {@code EventBus} when a new faction is created.
  *
- * <p>Los listeners de este evento pueden usarlo para, entre otras cosas, enviar
- * anuncios globales en el servidor, registrar métricas de crecimiento de facciones
- * o inicializar recursos auxiliares asociados a la facción recién creada.
+ * <p>Listeners of this event can use it to, among other things, broadcast global
+ * announcements on the server, record faction growth metrics, or initialise
+ * auxiliary resources associated with the newly created faction.
  */
 public final class FactionCreatedDomainEvent {
 
@@ -16,11 +16,11 @@ public final class FactionCreatedDomainEvent {
     private final UUID leaderId;
 
     /**
-     * Crea el evento con los datos de la facción recién fundada.
+     * Creates the event with the data of the newly founded faction.
      *
-     * @param factionId   ID único asignado a la nueva facción
-     * @param factionName nombre visible elegido por el fundador
-     * @param leaderId    UUID del jugador que fundó y lidera la facción
+     * @param factionId   unique ID assigned to the new faction
+     * @param factionName visible name chosen by the founder
+     * @param leaderId    UUID of the player who founded and leads the faction
      */
     public FactionCreatedDomainEvent(String factionId, String factionName, UUID leaderId) {
         this.factionId = factionId;
@@ -29,23 +29,23 @@ public final class FactionCreatedDomainEvent {
     }
 
     /**
-     * Devuelve el ID único de la facción creada.
+     * Returns the unique ID of the created faction.
      *
-     * @return ID de la facción
+     * @return faction ID
      */
     public String getFactionId() { return factionId; }
 
     /**
-     * Devuelve el nombre de la facción creada.
+     * Returns the name of the created faction.
      *
-     * @return nombre de la facción
+     * @return faction name
      */
     public String getFactionName() { return factionName; }
 
     /**
-     * Devuelve el UUID del jugador que creó y lidera la facción.
+     * Returns the UUID of the player who created and leads the faction.
      *
-     * @return UUID del líder fundador
+     * @return UUID of the founding leader
      */
     public UUID getLeaderId() { return leaderId; }
 }

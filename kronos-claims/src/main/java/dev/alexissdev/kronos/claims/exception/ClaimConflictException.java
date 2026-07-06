@@ -3,25 +3,24 @@ package dev.alexissdev.kronos.claims.exception;
 import dev.alexissdev.kronos.common.exception.HCFException;
 
 /**
- * Excepción de dominio que se lanza cuando una operación sobre un territorio
- * viola las reglas de reclamación del sistema HCF.
+ * Domain exception thrown when a territory operation violates the HCF claiming rules.
  *
- * <p>Algunos escenarios típicos que la producen son:</p>
+ * <p>Typical scenarios that trigger this exception include:</p>
  * <ul>
- *   <li>Intentar reclamar chunks que ya están ocupados por otro claim.</li>
- *   <li>Intentar desreclamar un chunk que no pertenece a la propia facción.</li>
- *   <li>Intentar overclamar territorio propio o de una facción no enemiga.</li>
+ *   <li>Attempting to claim chunks that are already occupied by another claim.</li>
+ *   <li>Attempting to unclaim a chunk that does not belong to the requesting faction.</li>
+ *   <li>Attempting to overclaim territory owned by the same faction or a non-enemy faction.</li>
  * </ul>
  *
- * <p>Al extender {@code HCFException}, el mensaje de error es apto para mostrarse
- * directamente al jugador sin necesidad de traducción adicional.</p>
+ * <p>By extending {@code HCFException}, the error message is suitable for displaying
+ * directly to the player without any additional translation.</p>
  */
 public class ClaimConflictException extends HCFException {
 
     /**
-     * Construye la excepción con un mensaje descriptivo del conflicto.
+     * Constructs the exception with a descriptive message about the conflict.
      *
-     * @param message descripción del conflicto, apta para mostrar al jugador
+     * @param message description of the conflict, suitable for display to the player
      */
     public ClaimConflictException(String message) {
         super(message);

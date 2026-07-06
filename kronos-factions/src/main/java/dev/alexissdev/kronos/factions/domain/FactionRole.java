@@ -1,27 +1,27 @@
 package dev.alexissdev.kronos.factions.domain;
 
 /**
- * Jerarquía de roles dentro de una facción HCF.
+ * Role hierarchy within an HCF faction.
  *
- * <p>Los roles definen los permisos que tiene cada miembro sobre las
- * operaciones de la facción. El orden ascendente de autoridad es:
+ * <p>Roles define the permissions each member holds over faction
+ * operations. The ascending order of authority is:
  * {@link #MEMBER} &lt; {@link #CAPTAIN} &lt; {@link #CO_LEADER} &lt; {@link #LEADER}.
  *
- * <p>Cada rol tiene un valor numérico de prioridad que permite comparaciones
- * jerárquicas mediante {@link #isAtLeast(FactionRole)}.
+ * <p>Each role has a numeric priority value that allows hierarchical comparisons
+ * via {@link #isAtLeast(FactionRole)}.
  */
 public enum FactionRole {
 
-    /** Rango máximo; solo puede existir un líder por facción. */
+    /** Highest rank; only one leader can exist per faction. */
     LEADER(4),
 
-    /** Co-lider con amplios permisos administrativos, incluyendo retirar fondos y cambiar roles. */
+    /** Co-leader with broad administrative permissions, including withdrawing funds and changing roles. */
     CO_LEADER(3),
 
-    /** Capitán con permisos para invitar, expulsar miembros y establecer el hogar de la facción. */
+    /** Captain with permissions to invite, kick members, and set the faction home. */
     CAPTAIN(2),
 
-    /** Miembro base sin permisos administrativos. */
+    /** Base member with no administrative permissions. */
     MEMBER(1);
 
     private final int priority;
@@ -31,25 +31,24 @@ public enum FactionRole {
     }
 
     /**
-     * Devuelve el valor numérico de prioridad del rol.
+     * Returns the numeric priority value of this role.
      *
-     * <p>Un número mayor indica mayor autoridad dentro de la jerarquía.
+     * <p>A higher number indicates greater authority within the hierarchy.
      *
-     * @return prioridad del rol (1-4)
+     * @return role priority (1–4)
      */
     public int getPriority() {
         return priority;
     }
 
     /**
-     * Comprueba si este rol tiene al menos la misma autoridad que el rol dado.
+     * Checks whether this role has at least the same authority as the given role.
      *
-     * <p>Se utiliza ampliamente en las comprobaciones de permisos del servicio
-     * de facciones para verificar que el actor tiene el rango mínimo requerido
-     * antes de ejecutar una operación privilegiada.
+     * <p>Used extensively in faction service permission checks to verify that the
+     * acting member meets the minimum required rank before executing a privileged operation.
      *
-     * @param role el rol mínimo requerido para la operación
-     * @return {@code true} si la prioridad de este rol es mayor o igual a la del rol dado
+     * @param role the minimum role required for the operation
+     * @return {@code true} if this role's priority is greater than or equal to that of the given role
      */
     public boolean isAtLeast(FactionRole role) {
         return this.priority >= role.priority;

@@ -7,71 +7,71 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Puerto de persistencia para la entidad {@link dev.alexissdev.kronos.claims.domain.Claim}.
+ * Persistence port for the {@link dev.alexissdev.kronos.claims.domain.Claim} entity.
  *
- * <p>Define el contrato que deben cumplir todas las implementaciones de almacenamiento
- * de territories (claims). Actualmente la implementación concreta es
- * {@link dev.alexissdev.kronos.claims.persistence.MongoClaimRepository}, que usa MongoDB.
- * Todas las operaciones son asíncronas y retornan {@link CompletableFuture} para no
- * bloquear el hilo principal del servidor Bukkit.</p>
+ * <p>Defines the contract that all storage implementations of territories (claims) must
+ * fulfil. The current concrete implementation is
+ * {@link dev.alexissdev.kronos.claims.persistence.MongoClaimRepository}, backed by
+ * MongoDB. All operations are asynchronous and return a {@link CompletableFuture} to
+ * avoid blocking the main Bukkit server thread.</p>
  */
 public interface ClaimRepository {
 
     /**
-     * Busca el claim que contiene el chunk especificado dentro de un mundo dado.
+     * Finds the claim that contains the specified chunk within a given world.
      *
-     * <p>La búsqueda evalúa si las coordenadas del chunk caen dentro del rectángulo
-     * {@code [minChunkX, maxChunkX] × [minChunkZ, maxChunkZ]} almacenado en el claim.</p>
+     * <p>The lookup checks whether the chunk coordinates fall inside the rectangle
+     * {@code [minChunkX, maxChunkX] × [minChunkZ, maxChunkZ]} stored in the claim.</p>
      *
-     * @param world  nombre del mundo de Minecraft donde se busca
-     * @param chunkX coordenada X del chunk
-     * @param chunkZ coordenada Z del chunk
-     * @return futuro con el claim encontrado, o {@link java.util.Optional#empty()} si el
-     *         chunk está en tierra libre ({@code WILDERNESS})
+     * @param world  name of the Minecraft world to search in
+     * @param chunkX chunk X coordinate
+     * @param chunkZ chunk Z coordinate
+     * @return future with the matching claim, or {@link java.util.Optional#empty()} if the
+     *         chunk is unclaimed wilderness
      */
     CompletableFuture<Optional<Claim>> findByChunk(String world, int chunkX, int chunkZ);
 
     /**
-     * Recupera todos los claims que pertenecen a una facción concreta.
+     * Retrieves all claims belonging to a specific faction.
      *
-     * @param factionId identificador de la facción propietaria
-     * @return futuro con la lista de claims de la facción; lista vacía si no tiene territorio
+     * @param factionId identifier of the owning faction
+     * @return future with the list of the faction's claims; empty list if it has no territory
      */
     CompletableFuture<List<Claim>> findByFaction(String factionId);
 
     /**
-     * Recupera la totalidad de los claims almacenados en la base de datos.
+     * Retrieves every claim stored in the database.
      *
-     * <p>Se usa principalmente al arrancar el servidor para precargar el caché
-     * en memoria del {@link dev.alexissdev.kronos.claims.listener.ClaimListener}.</p>
+     * <p>Used primarily at server startup to preload the in-memory cache in
+     * {@link dev.alexissdev.kronos.claims.listener.ClaimListener}.</p>
      *
-     * @return futuro con la lista completa de todos los claims
+     * @return future with the complete list of all claims
      */
     CompletableFuture<List<Claim>> findAll();
 
     /**
-     * Persiste un claim nuevo o actualiza uno existente (upsert por {@code id}).
+     * Persists a new claim or updates an existing one (upsert by {@code id}).
      *
-     * @param claim entidad de dominio a guardar
-     * @return futuro con el mismo claim recibido, tras confirmar la escritura
+     * @param claim domain entity to save
+     * @return future with the same claim after the write is confirmed
      */
     CompletableFuture<Claim> save(Claim claim);
 
     /**
-     * Elimina todos los claims que pertenecen a una facción.
+     * Deletes all claims belonging to a faction.
      *
-     * <p>Se invoca cuando una facción es disuelta para limpiar todo su territorio.</p>
+     * <p>Called when a faction is disbanded to release all of its territory.</p>
      *
-     * @param factionId identificador de la facción cuyo territorio se libera
-     * @return futuro que se completa cuando todos los claims han sido eliminados
+     * @param factionId identifier of the faction whose territory is being freed
+     * @return future that completes when all claims have been deleted
      */
     CompletableFuture<Void> deleteByFaction(String factionId);
 
     /**
-     * Elimina el claim con el identificador especificado.
+     * Deletes the claim with the specified identifier.
      *
-     * @param id UUID en formato String del claim a eliminar
-     * @return futuro que se completa cuando el claim ha sido eliminado
+     * @param id UUID as a String of the claim to delete
+     * @return future that completes when the claim has been deleted
      */
     CompletableFuture<Void> delete(String id);
 }

@@ -35,22 +35,22 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
- * Listener de Bukkit que aplica las habilidades pasivas y activas de todas las clases HCF.
+ * Bukkit listener that applies the passive and active abilities of all HCF classes.
  *
- * <p>Gestiona el ciclo de vida completo de las clases durante la sesión de cada jugador:</p>
+ * <p>Manages the full class lifecycle throughout each player's session:</p>
  * <ul>
- *   <li>Detecta la clase activa al conectarse y la actualiza automáticamente cuando el
- *       jugador cambia de casco (el tipo de casco determina la clase).</li>
- *   <li>Aplica efectos pasivos en combate según la clase del atacante.</li>
- *   <li>Ejecuta la habilidad activa al hacer clic derecho con una {@code BLAZE_ROD},
- *       respetando el cooldown gestionado por {@link dev.alexissdev.kronos.timers.TimerApplicationService}.</li>
- *   <li>Ejecuta el aura periódica del Bardo para otorgar efectos a los aliados cercanos.</li>
+ *   <li>Detects the active class on login and automatically updates it when the
+ *       player changes their helmet (the helmet type determines the class).</li>
+ *   <li>Applies passive combat effects based on the attacker's class.</li>
+ *   <li>Executes the active ability on right-clicking a {@code BLAZE_ROD},
+ *       respecting the cooldown managed by {@link dev.alexissdev.kronos.timers.TimerApplicationService}.</li>
+ *   <li>Runs the Bard's periodic aura to grant effects to nearby allies.</li>
  * </ul>
  *
- * <p>Mantiene un caché en memoria ({@code playerKitCache}) para evitar consultas asíncronas
- * a la base de datos durante eventos de alta frecuencia como el combate.</p>
+ * <p>Maintains an in-memory cache ({@code playerKitCache}) to avoid asynchronous database
+ * queries during high-frequency events such as combat.</p>
  *
- * <p>Registrada como singleton por Guice a través de {@link dev.alexissdev.kronos.classes.ClassesModule}.</p>
+ * <p>Registered as a singleton by Guice through {@link dev.alexissdev.kronos.classes.ClassesModule}.</p>
  */
 @Singleton
 public class ClassListener implements Listener {
@@ -60,16 +60,16 @@ public class ClassListener implements Listener {
     private final FactionService factionService;
     private final Plugin plugin;
 
-    /** Caché que asocia el UUID de cada jugador conectado con su clase activa actual. */
+    /** Cache mapping each online player's UUID to their currently active class. */
     private final Map<UUID, KitType> playerKitCache = new ConcurrentHashMap<>();
 
     /**
-     * Construye el listener inyectando sus dependencias e inicia el aura periódica del Bardo.
+     * Constructs the listener by injecting its dependencies and starts the Bard's periodic aura.
      *
-     * @param kitService     servicio de clases para detectar y persistir el kit activo
-     * @param timerService   servicio de timers para gestionar cooldowns de habilidades activas
-     * @param factionService servicio de facciones para identificar aliados en el aura del Bardo
-     * @param plugin         instancia del plugin principal, necesaria para programar tareas Bukkit
+     * @param kitService     kit service used to detect and persist the active kit
+     * @param timerService   timer service used to manage active-ability cooldowns
+     * @param factionService faction service used to identify allies within the Bard aura
+     * @param plugin         main plugin instance, required for scheduling Bukkit tasks
      */
     @Inject
     public ClassListener(KitService kitService, TimerApplicationService timerService,
@@ -82,12 +82,11 @@ public class ClassListener implements Listener {
     }
 
     /**
-     * Programa la tarea periódica del aura del Bardo, que se ejecuta cada 2 segundos (40 ticks).
+     * Schedules the Bard's periodic aura task, which runs every 2 seconds (40 ticks).
      *
-     * <p>Para cada jugador conectado con clase {@link KitType#BARD} activa, otorga los efectos
-     * de Velocidad II y Regeneración I al propio Bardo y a todos los miembros de su facción
-     * dentro de un radio de 15 bloques. La tarea se ejecuta de forma asíncrona y sólo aplica
-     * los efectos en el hilo principal de Bukkit.</p>
+     * <p>For each online player whose active class is {@link KitType#BARD}, grants Speed II
+     * and Regeneration I to the Bard and to all members of their faction within a 15-block
+     * radius. The query runs asynchronously and effects are applied on the Bukkit main thread.</p>
      */
     private void scheduleBardAura() {
         new BukkitRunnable() {
@@ -129,12 +128,12 @@ public class ClassListener implements Listener {
     }
 
     /**
-     * Carga la clase activa del jugador en el caché local cuando se conecta al servidor.
+     * Loads the player's active class into the local cache when they connect to the server.
      *
-     * <p>La carga es asíncrona para no bloquear el hilo principal. Si el jugador no tiene
-     * un kit asignado en su perfil, el caché no se inicializa con ninguna entrada para él.</p>
+     * <p>The load is asynchronous to avoid blocking the main thread. If the player has no
+     * kit assigned in their profile, no entry is added to the cache for them.</p>
      *
-     * @param event evento de conexión del jugador
+     * @param event player join event
      */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent event) {
@@ -144,12 +143,12 @@ public class ClassListener implements Listener {
     }
 
     /**
-     * Elimina la clase del jugador del caché local cuando se desconecta.
+     * Removes the player's class from the local cache when they disconnect.
      *
-     * <p>Previene fugas de memoria asegurándose de que no permanezcan entradas obsoletas
-     * en el caché de sesión.</p>
+     * <p>Prevents memory leaks by ensuring that no stale entries remain in the
+     * session cache.</p>
      *
-     * @param event evento de desconexión del jugador
+     * @param event player quit event
      */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent event) {
@@ -157,13 +156,13 @@ public class ClassListener implements Listener {
     }
 
     /**
-     * Detecta cambios de clase cuando el jugador interactúa con su inventario relacionado con cascos.
+     * Detects class changes when the player interacts with helmet-related inventory slots.
      *
-     * <p>Escucha clics en el inventario que puedan afectar la ranura de casco (ranura de armadura
-     * o cualquier movimiento de un ítem de casco). Programa la actualización de clase en el
-     * siguiente tick del servidor para que el cambio de equipo ya esté reflejado en el inventario.</p>
+     * <p>Listens for inventory clicks that may affect the helmet slot (armour slot or any
+     * movement involving a helmet item). Schedules the class update for the next server
+     * tick so that the equipment change is already reflected in the inventory.</p>
      *
-     * @param event evento de clic en inventario de Bukkit
+     * @param event Bukkit inventory-click event
      */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onInventoryClick(InventoryClickEvent event) {
@@ -182,12 +181,12 @@ public class ClassListener implements Listener {
     }
 
     /**
-     * Aumenta la velocidad de las flechas disparadas por jugadores con clase {@link KitType#ARCHER}.
+     * Increases the velocity of arrows shot by players with the {@link KitType#ARCHER} class.
      *
-     * <p>Multiplica el vector de velocidad de la flecha por {@code 1.3}, incrementando su alcance
-     * y dificultando esquivarla. Solo afecta a flechas (no otros proyectiles de arco).</p>
+     * <p>Multiplies the arrow's velocity vector by {@code 1.3}, increasing its range and
+     * making it harder to dodge. Only affects arrows, not other bow projectiles.</p>
      *
-     * @param event evento de disparo con arco de Bukkit
+     * @param event Bukkit bow-shoot event
      */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onArrowShoot(EntityShootBowEvent event) {
@@ -202,12 +201,12 @@ public class ClassListener implements Listener {
     }
 
     /**
-     * Aplica los efectos pasivos de combate según la clase del jugador atacante.
+     * Applies passive combat effects based on the attacking player's class.
      *
-     * <p>Solo procesa eventos en los que tanto el atacante como la víctima son jugadores.
-     * Delega la aplicación concreta de efectos en {@link #applyPassiveEffect(Player, Player, KitType)}.</p>
+     * <p>Only processes events where both the attacker and the victim are players.
+     * Delegates the actual effect application to {@link #applyPassiveEffect(Player, Player, KitType)}.</p>
      *
-     * @param event evento de daño entre entidades de Bukkit
+     * @param event Bukkit entity-damage-by-entity event
      */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onEntityDamage(EntityDamageByEntityEvent event) {

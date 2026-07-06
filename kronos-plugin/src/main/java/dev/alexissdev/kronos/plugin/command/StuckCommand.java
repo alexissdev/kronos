@@ -10,11 +10,11 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 /**
- * Comando {@code /stuck} que permite a un jugador solicitar ser teletransportado
- * cuando queda atrapado en el terreno o en una construcción. Al ejecutarlo se
- * inicia un temporizador de {@value #STUCK_DURATION_MS} ms (30 segundos); si el
- * jugador permanece quieto y sin recibir daño, el sistema lo teletransporta a un
- * lugar seguro. Solo puede haber un temporizador de stuck activo por jugador a la vez.
+ * Command {@code /stuck} that lets a player request a rescue teleport when they
+ * become trapped inside terrain or a structure. Upon execution a timer of
+ * {@value #STUCK_DURATION_MS} ms (30 seconds) is started; if the player remains
+ * still and takes no damage during that period, the system teleports them to a
+ * safe location. Only one stuck timer may be active per player at a time.
  */
 @Singleton
 public class StuckCommand extends BaseCommand {
@@ -25,10 +25,10 @@ public class StuckCommand extends BaseCommand {
     private final MessagesConfig messages;
 
     /**
-     * Construye el comando inyectando las dependencias mediante Guice.
+     * Constructs the command by injecting its dependencies via Guice.
      *
-     * @param timerService servicio de temporizadores que gestiona el temporizador de stuck
-     * @param messages     configuración de mensajes localizados
+     * @param timerService timer service that manages the stuck timer
+     * @param messages     localised message configuration
      */
     @Inject
     public StuckCommand(TimerApplicationService timerService, MessagesConfig messages) {
@@ -38,11 +38,12 @@ public class StuckCommand extends BaseCommand {
     }
 
     /**
-     * Verifica que el ejecutor sea un jugador y que no tenga ya un temporizador de
-     * stuck activo. Si todo es correcto, inicia el temporizador y notifica al jugador.
+     * Verifies that the executor is a player and that they do not already have an
+     * active stuck timer. If both checks pass, a new stuck timer is started and the
+     * player is notified.
      *
-     * @param sender ejecutor del comando; debe ser un {@link org.bukkit.entity.Player}
-     * @param args   argumentos adicionales (no utilizados por este comando)
+     * @param sender command executor; must be a {@link org.bukkit.entity.Player}
+     * @param args   additional arguments (not used by this command)
      */
     @Override
     protected void execute(CommandSender sender, String[] args) {

@@ -23,15 +23,15 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Implementación principal del servicio de aplicación para territorios (claims) HCF.
+ * Primary application service implementation for HCF territory (claim) management.
  *
- * <p>Orquesta todas las reglas de negocio relacionadas con la reclamación, liberación y
- * conquista de territorios en el mundo de Minecraft. Opera como punto de entrada entre
- * los comandos de los jugadores y el modelo de dominio, coordinando los repositorios de
- * claims y facciones, y publicando eventos de dominio en el {@link EventBus} de Guava
- * para que otros módulos (como el listener de claims) reaccionen de forma desacoplada.</p>
+ * <p>Orchestrates all business rules related to claiming, releasing, and conquering
+ * territories in the Minecraft world. Serves as the entry point between player commands
+ * and the domain model, coordinating the claim and faction repositories and publishing
+ * domain events on the Guava {@link EventBus} so that other modules (such as the claim
+ * listener) can react in a decoupled manner.</p>
  *
- * <p>Registrada como singleton por Guice a través de {@link ClaimsModule}.</p>
+ * <p>Registered as a singleton by Guice through {@link ClaimsModule}.</p>
  */
 @Singleton
 public class ClaimApplicationService implements ClaimService {
@@ -41,11 +41,11 @@ public class ClaimApplicationService implements ClaimService {
     private final EventBus eventBus;
 
     /**
-     * Construye el servicio inyectando sus dependencias.
+     * Constructs the service by injecting its dependencies.
      *
-     * @param claimRepository   repositorio de persistencia de claims (MongoDB)
-     * @param factionRepository repositorio de facciones para validar permisos de los actores
-     * @param eventBus          bus de eventos de Guava para publicar eventos de dominio
+     * @param claimRepository   claim persistence repository (MongoDB)
+     * @param factionRepository faction repository used to validate actor permissions
+     * @param eventBus          Guava event bus for publishing domain events
      */
     @Inject
     public ClaimApplicationService(ClaimRepository claimRepository,
@@ -59,12 +59,12 @@ public class ClaimApplicationService implements ClaimService {
     /**
      * {@inheritDoc}
      *
-     * <p>El proceso es:
+     * <p>The process is:
      * <ol>
-     *   <li>Verifica que la facción exista y que el actor sea {@code CAPTAIN} o superior.</li>
-     *   <li>Comprueba en paralelo que ningún chunk del área esté reclamado.</li>
-     *   <li>Crea y persiste el {@link Claim} de tipo {@link ClaimType#FACTION}.</li>
-     *   <li>Publica un {@link dev.alexissdev.kronos.factions.event.FactionClaimedDomainEvent}.</li>
+     *   <li>Verifies that the faction exists and that the actor is a {@code CAPTAIN} or higher.</li>
+     *   <li>Checks in parallel that no chunk in the area is already claimed.</li>
+     *   <li>Creates and persists the {@link Claim} with type {@link ClaimType#FACTION}.</li>
+     *   <li>Publishes a {@link dev.alexissdev.kronos.factions.event.FactionClaimedDomainEvent}.</li>
      * </ol></p>
      */
     @Override
@@ -101,9 +101,9 @@ public class ClaimApplicationService implements ClaimService {
     /**
      * {@inheritDoc}
      *
-     * <p>Busca el claim en el chunk indicado y lo elimina solo si la facción solicitante
-     * es su propietaria. Lanza {@link dev.alexissdev.kronos.factions.exception.FactionPermissionException}
-     * si el chunk pertenece a otra facción.</p>
+     * <p>Finds the claim at the given chunk and deletes it only if the requesting faction
+     * is its owner. Throws {@link dev.alexissdev.kronos.factions.exception.FactionPermissionException}
+     * if the chunk belongs to a different faction.</p>
      */
     @Override
     public CompletableFuture<Void> unclaim(String factionId, UUID actorUuid, String world,
@@ -120,8 +120,8 @@ public class ClaimApplicationService implements ClaimService {
     /**
      * {@inheritDoc}
      *
-     * <p>Delega directamente en {@link ClaimRepository#deleteByFaction(String)} para
-     * eliminar todos los claims de la facción en una sola operación de base de datos.</p>
+     * <p>Delegates directly to {@link ClaimRepository#deleteByFaction(String)} to remove
+     * all of the faction's claims in a single database operation.</p>
      */
     @Override
     public CompletableFuture<Void> unclaimAll(String factionId) {
@@ -131,8 +131,8 @@ public class ClaimApplicationService implements ClaimService {
     /**
      * {@inheritDoc}
      *
-     * <p>Consulta directamente el repositorio sin lógica adicional; útil para obtener
-     * todos los metadatos del claim (propietario, tipo, límites) en un punto concreto.</p>
+     * <p>Queries the repository directly without additional logic; useful for retrieving
+     * all claim metadata (owner, type, bounds) at a specific location.</p>
      */
     @Override
     public CompletableFuture<Optional<Claim>> getClaimAt(String world, int chunkX, int chunkZ) {
@@ -142,8 +142,8 @@ public class ClaimApplicationService implements ClaimService {
     /**
      * {@inheritDoc}
      *
-     * <p>Si el chunk no tiene ningún claim registrado, retorna {@link ClaimType#WILDERNESS}
-     * como valor predeterminado para indicar tierra libre.</p>
+     * <p>If the chunk has no registered claim, returns {@link ClaimType#WILDERNESS}
+     * as the default to indicate unclaimed open land.</p>
      */
     @Override
     public CompletableFuture<ClaimType> getClaimTypeAt(String world, int chunkX, int chunkZ) {
@@ -154,8 +154,8 @@ public class ClaimApplicationService implements ClaimService {
     /**
      * {@inheritDoc}
      *
-     * <p>Devuelve todos los territorios actualmente registrados de la facción, útil
-     * para mostrar estadísticas o para calcular el poder necesario para mantenerlos.</p>
+     * <p>Returns all territories currently registered to the faction, useful for
+     * displaying statistics or calculating the power required to hold them.</p>
      */
     @Override
     public CompletableFuture<List<Claim>> getFactionClaims(String factionId) {
@@ -165,8 +165,8 @@ public class ClaimApplicationService implements ClaimService {
     /**
      * {@inheritDoc}
      *
-     * <p>Se usa principalmente durante el arranque del servidor para precargar el caché
-     * en memoria de {@link dev.alexissdev.kronos.claims.listener.ClaimListener}.</p>
+     * <p>Used primarily at server startup to preload the in-memory cache of
+     * {@link dev.alexissdev.kronos.claims.listener.ClaimListener}.</p>
      */
     @Override
     public CompletableFuture<List<Claim>> getAllClaims() {
@@ -176,12 +176,12 @@ public class ClaimApplicationService implements ClaimService {
     /**
      * {@inheritDoc}
      *
-     * <p>El flujo de conquista es:
+     * <p>The overclaim flow is:
      * <ol>
-     *   <li>Verifica que el actor sea {@code CAPTAIN} o superior en su facción.</li>
-     *   <li>Comprueba que exista un claim enemigo en el chunk objetivo.</li>
-     *   <li>Valida que la facción defensora sea enemiga del atacante o esté en estado raidable.</li>
-     *   <li>Delega en {@link #doOverclaim(String, Claim)} para reemplazar el claim.</li>
+     *   <li>Verifies that the actor is a {@code CAPTAIN} or higher in their faction.</li>
+     *   <li>Checks that an enemy claim exists at the target chunk.</li>
+     *   <li>Validates that the defending faction is an enemy of the attacker or is raidable.</li>
+     *   <li>Delegates to {@link #doOverclaim(String, Claim)} to replace the claim.</li>
      * </ol></p>
      */
     @Override
@@ -219,17 +219,17 @@ public class ClaimApplicationService implements ClaimService {
     }
 
     /**
-     * Ejecuta la sustitución efectiva de un claim existente por uno nuevo de la facción atacante.
+     * Performs the actual replacement of an existing claim with a new one owned by the attacking faction.
      *
-     * <p>Elimina el claim del defensor, crea un nuevo {@link Claim} de tipo
-     * {@link ClaimType#FACTION} con los mismos límites geográficos y lo asocia a
-     * {@code factionId}. Publica un
-     * {@link dev.alexissdev.kronos.factions.event.FactionClaimedDomainEvent} para
-     * actualizar el caché del listener de claims.</p>
+     * <p>Deletes the defender's claim, creates a new {@link Claim} of type
+     * {@link ClaimType#FACTION} with the same geographic bounds, and associates it with
+     * {@code factionId}. Publishes a
+     * {@link dev.alexissdev.kronos.factions.event.FactionClaimedDomainEvent} so that the
+     * claim listener's cache is updated accordingly.</p>
      *
-     * @param factionId identificador de la facción que conquista el territorio
-     * @param existing  claim existente que será reemplazado
-     * @return futuro que se completa cuando el nuevo claim ha sido persistido
+     * @param factionId identifier of the faction conquering the territory
+     * @param existing  existing claim that will be replaced
+     * @return future that completes when the new claim has been persisted
      */
     private CompletableFuture<Void> doOverclaim(String factionId, Claim existing) {
         return claimRepository.delete(existing.getId()).thenCompose(v -> {

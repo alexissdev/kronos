@@ -3,15 +3,14 @@ package dev.alexissdev.kronos.factions.event;
 import java.util.UUID;
 
 /**
- * Evento de dominio publicado en el {@code EventBus} cuando un jugador acepta
- * una invitación y se une a una facción como nuevo miembro.
+ * Domain event published on the {@code EventBus} when a player accepts an
+ * invitation and joins a faction as a new member.
  *
- * <p>Los listeners pueden usar este evento para, por ejemplo, enviar mensajes de
- * bienvenida al jugador, actualizar estadísticas o registrar el ingreso en un log
- * de auditoría.
+ * <p>Listeners can use this event to, for example, send welcome messages to the
+ * player, update statistics, or record the join action in an audit log.
  *
- * <p>Este evento no cubre el caso en que el jugador fue promovido al rango de líder
- * mediante transferencia; ese flujo ocurre internamente sin publicar este evento.
+ * <p>This event does not cover the case where the player was promoted to the leader
+ * rank via a leadership transfer; that flow occurs internally without publishing this event.
  */
 public final class PlayerJoinedFactionDomainEvent {
 
@@ -19,10 +18,10 @@ public final class PlayerJoinedFactionDomainEvent {
     private final String factionId;
 
     /**
-     * Crea el evento con los identificadores del jugador que se unió y la facción destino.
+     * Creates the event with the identifiers of the player who joined and the target faction.
      *
-     * @param playerUuid UUID del jugador que acaba de unirse a la facción
-     * @param factionId  ID de la facción a la que se unió el jugador
+     * @param playerUuid UUID of the player who just joined the faction
+     * @param factionId  ID of the faction the player joined
      */
     public PlayerJoinedFactionDomainEvent(UUID playerUuid, String factionId) {
         this.playerUuid = playerUuid;
@@ -30,16 +29,16 @@ public final class PlayerJoinedFactionDomainEvent {
     }
 
     /**
-     * Devuelve el UUID del jugador que se unió a la facción.
+     * Returns the UUID of the player who joined the faction.
      *
-     * @return UUID del jugador
+     * @return UUID of the player
      */
     public UUID getPlayerUuid() { return playerUuid; }
 
     /**
-     * Devuelve el ID de la facción a la que se unió el jugador.
+     * Returns the ID of the faction the player joined.
      *
-     * @return ID de la facción
+     * @return faction ID
      */
     public String getFactionId() { return factionId; }
 }

@@ -3,18 +3,18 @@ package dev.alexissdev.kronos.factions.event;
 import java.util.UUID;
 
 /**
- * Evento de dominio publicado en el {@code EventBus} cuando un jugador abandona
- * o es expulsado de una facción.
+ * Domain event published on the {@code EventBus} when a player leaves
+ * or is kicked from a faction.
  *
- * <p>El flag {@code wasKicked} diferencia entre las dos situaciones:
+ * <p>The {@code wasKicked} flag distinguishes between the two situations:
  * <ul>
- *   <li>{@code wasKicked = true}: el jugador fue expulsado por un miembro con
- *       rango suficiente (CAPTAIN o superior).</li>
- *   <li>{@code wasKicked = false}: el jugador abandonó voluntariamente la facción.</li>
+ *   <li>{@code wasKicked = true}: the player was kicked by a member with
+ *       sufficient rank (CAPTAIN or above).</li>
+ *   <li>{@code wasKicked = false}: the player voluntarily left the faction.</li>
  * </ul>
  *
- * <p>Tras este evento el sistema registra un cooldown de re-invitación para el jugador,
- * impidiendo que sea re-invitado inmediatamente a la misma facción.
+ * <p>After this event the system registers a re-invite cooldown for the player,
+ * preventing them from being immediately re-invited to the same faction.
  */
 public final class PlayerLeftFactionDomainEvent {
 
@@ -23,11 +23,11 @@ public final class PlayerLeftFactionDomainEvent {
     private final boolean wasKicked;
 
     /**
-     * Crea el evento con los datos del jugador que salió de la facción.
+     * Creates the event with the data of the player who left the faction.
      *
-     * @param playerUuid UUID del jugador que abandonó o fue expulsado
-     * @param factionId  ID de la facción que el jugador ha dejado
-     * @param wasKicked  {@code true} si el jugador fue expulsado; {@code false} si se fue voluntariamente
+     * @param playerUuid UUID of the player who left or was kicked
+     * @param factionId  ID of the faction the player has left
+     * @param wasKicked  {@code true} if the player was kicked; {@code false} if they left voluntarily
      */
     public PlayerLeftFactionDomainEvent(UUID playerUuid, String factionId, boolean wasKicked) {
         this.playerUuid = playerUuid;
@@ -36,23 +36,23 @@ public final class PlayerLeftFactionDomainEvent {
     }
 
     /**
-     * Devuelve el UUID del jugador que salió de la facción.
+     * Returns the UUID of the player who left the faction.
      *
-     * @return UUID del jugador
+     * @return UUID of the player
      */
     public UUID getPlayerUuid() { return playerUuid; }
 
     /**
-     * Devuelve el ID de la facción que el jugador ha abandonado o de la que fue expulsado.
+     * Returns the ID of the faction the player left or was kicked from.
      *
-     * @return ID de la facción
+     * @return faction ID
      */
     public String getFactionId() { return factionId; }
 
     /**
-     * Indica si el jugador fue expulsado por otro miembro o si salió voluntariamente.
+     * Returns whether the player was kicked by another member or left voluntarily.
      *
-     * @return {@code true} si fue expulsado; {@code false} si salió voluntariamente
+     * @return {@code true} if kicked; {@code false} if they left on their own
      */
     public boolean wasKicked() { return wasKicked; }
 }

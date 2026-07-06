@@ -18,18 +18,18 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 /**
- * Repositorio de respaldo en MongoDB para los timers activos de jugadores.
+ * MongoDB backup repository for active player timers.
  *
- * <p>Actúa como capa de durabilidad secundaria para garantizar que los timers no se
- * pierdan en caso de reinicio de Redis o fallo del servidor sin persistencia habilitada.
- * Las escrituras son de tipo "fire-and-forget" (sin esperar el resultado) para no añadir
- * latencia al flujo principal. Las lecturas solo ocurren durante el login del jugador,
- * cuando Redis no devuelve un timer activo y se consulta MongoDB como fallback.</p>
+ * <p>Acts as a secondary durability layer to ensure timers are not lost in the event
+ * of a Redis restart or a server crash with persistence disabled.
+ * Writes are fire-and-forget (the caller does not wait for the result) to avoid
+ * adding latency to the main game thread. Reads only occur during player login,
+ * when Redis returns no active timer and MongoDB is consulted as a fallback.</p>
  *
- * <p>Los timers se almacenan en la colección {@code player_timers} con un ID compuesto
- * {@code {uuid}:{timerType}} como clave primaria. A diferencia de Redis, MongoDB no
- * elimina automáticamente los documentos expirados, por lo que la comprobación de
- * expiración se realiza al leer comparando el campo {@code expiresAt} con el momento actual.</p>
+ * <p>Timers are stored in the {@code player_timers} collection using a composite ID
+ * of the form {@code {uuid}:{timerType}} as the primary key. Unlike Redis, MongoDB
+ * does not automatically remove expired documents, so expiration is checked at read
+ * time by comparing the {@code expiresAt} field against the current instant.</p>
  */
 @Singleton
 public class MongoTimerBackupRepository {
@@ -40,10 +40,10 @@ public class MongoTimerBackupRepository {
     private final Executor executor;
 
     /**
-     * Crea el repositorio de respaldo obteniendo la colección de MongoDB
-     * a través de la fábrica de conexiones.
+     * Creates the backup repository by obtaining the MongoDB collection
+     * through the connection factory.
      *
-     * @param factory fábrica que provee la conexión y la base de datos de MongoDB
+     * @param factory factory that provides the MongoDB connection and database
      */
     @Inject
     public MongoTimerBackupRepository(MongoConnectionFactory factory) {
@@ -52,14 +52,14 @@ public class MongoTimerBackupRepository {
     }
 
     /**
-     * Guarda o actualiza el timer en MongoDB como copia de respaldo (upsert).
+     * Saves or updates the timer in MongoDB as a backup copy (upsert).
      *
-     * <p>La operación se ejecuta de forma asíncrona y sin bloquear al llamador.
-     * El ID del documento se forma combinando el UUID del jugador con el nombre del tipo
-     * de timer, garantizando unicidad por jugador y tipo.</p>
+     * <p>The operation runs asynchronously without blocking the caller.
+     * The document ID is formed by combining the player UUID with the timer type name,
+     * guaranteeing uniqueness per player and type combination.</p>
      *
-     * @param timer entidad {@link Timer} a persistir como respaldo en MongoDB
-     * @return future que se resuelve cuando el documento ha sido guardado en MongoDB
+     * @param timer {@link Timer} entity to persist as a backup in MongoDB
+     * @return future that resolves once the document has been saved in MongoDB
      */
     public CompletableFuture<Void> save(Timer timer) {
         return CompletableFuture.runAsync(() -> {
@@ -75,17 +75,17 @@ public class MongoTimerBackupRepository {
     }
 
     /**
-     * Busca el timer de respaldo de un jugador en MongoDB.
-     * Se usa como fallback durante el login cuando Redis no contiene el timer activo
-     * (por ejemplo, tras un reinicio de Redis sin persistencia habilitada).
+     * Looks up a player's backup timer in MongoDB.
+     * Used as a fallback during login when Redis does not contain the active timer
+     * (for example, after a Redis restart with persistence disabled).
      *
-     * <p>Si el timer existe pero su instante de expiración ya pasó, se devuelve un
-     * {@link Optional} vacío para evitar restaurar timers ya expirados.</p>
+     * <p>If the document exists but its expiration instant has already passed, an empty
+     * {@link Optional} is returned to prevent restoring already-expired timers.</p>
      *
-     * @param playerUuid UUID del jugador cuyo timer se busca en el respaldo
-     * @param type       tipo del timer a buscar
-     * @return future que se resuelve con un {@link Optional} que contiene el timer
-     *         si existe en MongoDB y no ha expirado, o vacío si no existe o ya expiró
+     * @param playerUuid UUID of the player whose backup timer is being searched
+     * @param type       type of the timer to look up
+     * @return future that resolves with an {@link Optional} containing the timer
+     *         if it exists in MongoDB and has not expired, or empty if absent or expired
      */
     public CompletableFuture<Optional<Timer>> find(UUID playerUuid, TimerType type) {
         return CompletableFuture.supplyAsync(() -> {
@@ -98,12 +98,12 @@ public class MongoTimerBackupRepository {
     }
 
     /**
-     * Elimina el documento de respaldo de un timer de MongoDB.
-     * Se llama al cancelar un timer para mantener consistencia entre Redis y MongoDB.
+     * Deletes the backup document for a player's timer from MongoDB.
+     * Called when a timer is cancelled to keep Redis and MongoDB in sync.
      *
-     * @param playerUuid UUID del jugador cuyo timer de respaldo se quiere eliminar
-     * @param type       tipo del timer a eliminar del respaldo
-     * @return future que se resuelve cuando el documento ha sido eliminado de MongoDB
+     * @param playerUuid UUID of the player whose backup timer should be removed
+     * @param type       type of the timer to delete from the backup
+     * @return future that resolves once the document has been deleted from MongoDB
      */
     public CompletableFuture<Void> delete(UUID playerUuid, TimerType type) {
         return CompletableFuture.runAsync(
@@ -111,12 +111,12 @@ public class MongoTimerBackupRepository {
     }
 
     /**
-     * Construye el ID compuesto del documento MongoDB para el timer de un jugador.
-     * El formato es {@code {uuid}:{timerType}}, garantizando unicidad por jugador y tipo.
+     * Builds the composite MongoDB document ID for a player's timer.
+     * The format is {@code {uuid}:{timerType}}, guaranteeing uniqueness per player and type.
      *
-     * @param uuid UUID del jugador propietario del timer
-     * @param type tipo del timer
-     * @return ID del documento en formato {@code uuid:timerType}
+     * @param uuid UUID of the player who owns the timer
+     * @param type type of the timer
+     * @return document ID in the format {@code uuid:timerType}
      */
     private static String docId(UUID uuid, TimerType type) {
         return uuid.toString() + ":" + type.name();

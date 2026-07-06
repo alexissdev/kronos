@@ -1,16 +1,15 @@
 package dev.alexissdev.kronos.factions.event;
 
 /**
- * Evento de dominio publicado en el {@code EventBus} cada vez que el contador
- * DTK (Deaths To Kick) de una facción disminuye como consecuencia de la muerte
- * de uno de sus miembros.
+ * Domain event published on the {@code EventBus} each time a faction's
+ * DTK (Deaths To Kick) counter decreases as a result of one of its members dying.
  *
- * <p>Este evento se genera <strong>siempre</strong> que un miembro muere y aún
- * quedan DTK por consumir, por lo que puede usarse para enviar alertas progresivas
- * a los miembros de la facción (p.ej. "¡Cuidado! Solo quedan 5 DTK").
+ * <p>This event is generated <strong>every</strong> time a member dies and there are
+ * still DTK remaining to consume, so it can be used to send progressive alerts
+ * to faction members (e.g. "Warning! Only 5 DTK left").
  *
- * <p>Si tras el decremento el DTK llega a 0, el sistema también publicará
- * {@link FactionRaidableDomainEvent} en la misma transacción.
+ * <p>If after the decrement the DTK reaches 0, the system will also publish
+ * {@link FactionRaidableDomainEvent} within the same transaction.
  */
 public class FactionDtkDecrementedDomainEvent {
 
@@ -20,12 +19,12 @@ public class FactionDtkDecrementedDomainEvent {
     private final int maxDtk;
 
     /**
-     * Crea el evento con el estado actualizado del DTK de la facción.
+     * Creates the event with the updated DTK state of the faction.
      *
-     * @param factionId   ID de la facción cuyo DTK fue decrementado
-     * @param factionName nombre de la facción
-     * @param newDtk      valor de DTK restante tras el decremento
-     * @param maxDtk      valor máximo de DTK configurado para la facción
+     * @param factionId   ID of the faction whose DTK was decremented
+     * @param factionName name of the faction
+     * @param newDtk      remaining DTK value after the decrement
+     * @param maxDtk      maximum DTK value configured for the faction
      */
     public FactionDtkDecrementedDomainEvent(String factionId, String factionName, int newDtk, int maxDtk) {
         this.factionId   = factionId;
@@ -35,34 +34,34 @@ public class FactionDtkDecrementedDomainEvent {
     }
 
     /**
-     * Devuelve el ID de la facción afectada.
+     * Returns the ID of the affected faction.
      *
-     * @return ID de la facción
+     * @return faction ID
      */
     public String getFactionId()   { return factionId; }
 
     /**
-     * Devuelve el nombre de la facción afectada.
+     * Returns the name of the affected faction.
      *
-     * @return nombre de la facción
+     * @return faction name
      */
     public String getFactionName() { return factionName; }
 
     /**
-     * Devuelve el nuevo valor de DTK restante tras el decremento.
+     * Returns the new remaining DTK value after the decrement.
      *
-     * <p>Un valor de 0 indica que la facción ha quedado en estado raideable.
+     * <p>A value of 0 indicates that the faction has entered the raidable state.
      *
-     * @return DTK restantes actualizados
+     * @return updated remaining DTK
      */
     public int    getNewDtk()      { return newDtk; }
 
     /**
-     * Devuelve el número máximo de DTK configurado para esta facción.
+     * Returns the maximum DTK configured for this faction.
      *
-     * <p>Útil para calcular el porcentaje de DTK restante y mostrar barras de progreso.
+     * <p>Useful for calculating the remaining DTK percentage and displaying progress bars.
      *
-     * @return DTK máximo
+     * @return maximum DTK
      */
     public int    getMaxDtk()      { return maxDtk; }
 }

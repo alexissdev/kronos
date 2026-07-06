@@ -3,12 +3,11 @@ package dev.alexissdev.kronos.koth.event;
 import java.util.UUID;
 
 /**
- * Evento de dominio publicado vía Guava {@code EventBus} cuando un jugador captura exitosamente
- * un evento KOTH al permanecer el tiempo requerido en la zona de captura.
+ * Domain event published via Guava {@code EventBus} when a player successfully captures
+ * a KOTH event by remaining in the capture zone for the required amount of time.
  *
- * <p>Los suscriptores de este evento (p.ej. el sistema de recompensas) pueden leer el UUID
- * del captor para entregar el cofre correspondiente al tipo de recompensa configurado en
- * la {@code KothZone}.</p>
+ * <p>Subscribers of this event (e.g. the reward system) can read the captor's UUID
+ * to deliver the crate matching the reward type configured in the {@code KothZone}.</p>
  */
 public final class KothCapturedDomainEvent {
 
@@ -16,10 +15,10 @@ public final class KothCapturedDomainEvent {
     private final UUID captorUuid;
 
     /**
-     * Construye el evento con los datos del KOTH capturado y el captor.
+     * Constructs the event with the data of the captured KOTH and the captor player.
      *
-     * @param kothName    nombre único del KOTH que fue capturado
-     * @param captorUuid  UUID del jugador que realizó la captura
+     * @param kothName    unique name of the KOTH that was captured
+     * @param captorUuid  UUID of the player who performed the capture
      */
     public KothCapturedDomainEvent(String kothName, UUID captorUuid) {
         this.kothName = kothName;
@@ -27,12 +26,12 @@ public final class KothCapturedDomainEvent {
     }
 
     /**
-     * @return nombre único del KOTH que fue capturado
+     * @return unique name of the KOTH that was captured
      */
     public String getKothName() { return kothName; }
 
     /**
-     * @return UUID del jugador que capturó el KOTH y debe recibir la recompensa
+     * @return UUID of the player who captured the KOTH and should receive the reward
      */
     public UUID getCaptorUuid() { return captorUuid; }
 }

@@ -11,29 +11,29 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Componente responsable de construir la lista de líneas que se mostrarán en el
- * marcador lateral (sidebar) de cada jugador durante un tick del servidor.
+ * Component responsible for building the list of lines displayed on the sidebar
+ * scoreboard of each player during a server tick.
  * <p>
- * Recibe un {@link PlayerBoardData} con el snapshot actual del jugador y la colección
- * de {@link KothEntry} activos, y produce una lista de cadenas de texto formateadas
- * con colores de Minecraft. El resultado es consumido por {@link PlayerBoard#render(java.util.List)}
- * para actualizar el marcador sin parpadeo.
+ * Receives a {@link PlayerBoardData} holding the player's current snapshot and the
+ * collection of active {@link KothEntry} instances, and produces a list of
+ * Minecraft-colour-formatted strings. The result is consumed by
+ * {@link PlayerBoard#render(java.util.List)} to update the scoreboard without flicker.
  * </p>
  * <p>
- * El contenido del marcador se construye en este orden:
+ * The scoreboard content is assembled in the following order:
  * </p>
  * <ol>
- *   <li>Separador superior</li>
- *   <li>Facción y DTK (o mensaje de "sin facción")</li>
- *   <li>Kills, deaths y balance económico</li>
- *   <li>Información de KOTHs activos (nombre, coordenadas, tiempo de captura)</li>
- *   <li>Timers individuales activos del jugador (combate, PvP, enderpearl, etc.)</li>
- *   <li>Contadores globales SOTW/EOTW si están activos</li>
- *   <li>Separador y pie de página</li>
+ *   <li>Top separator</li>
+ *   <li>Faction name and DTK (or a "no faction" message)</li>
+ *   <li>Kills, deaths, and economic balance</li>
+ *   <li>Active KOTH information (name, coordinates, capture time)</li>
+ *   <li>Active per-player timers (combat tag, PvP, enderpearl, etc.)</li>
+ *   <li>Global SOTW/EOTW countdowns, if active</li>
+ *   <li>Bottom separator and footer</li>
  * </ol>
  * <p>
- * Todas las plantillas de texto se obtienen de {@link dev.alexissdev.kronos.common.config.MessagesConfig},
- * lo que permite personalizar el formato del scoreboard sin modificar el código fuente.
+ * All text templates are sourced from {@link dev.alexissdev.kronos.common.config.MessagesConfig},
+ * allowing the scoreboard format to be customised without modifying the source code.
  * </p>
  */
 @Singleton
@@ -42,10 +42,10 @@ final class ScoreboardRenderer {
     private final MessagesConfig messages;
 
     /**
-     * Construye el renderer inyectando la configuración de mensajes del plugin.
+     * Constructs the renderer by injecting the plugin's message configuration.
      *
-     * @param messages configuración de mensajes y plantillas de texto usadas para
-     *                 formatear las líneas del marcador lateral
+     * @param messages message configuration and text templates used to format
+     *                 the lines of the sidebar scoreboard
      */
     @Inject
     ScoreboardRenderer(MessagesConfig messages) {
@@ -53,19 +53,20 @@ final class ScoreboardRenderer {
     }
 
     /**
-     * Genera la lista de líneas del marcador lateral para el jugador en su estado actual.
+     * Generates the list of sidebar lines for the player in their current state.
      * <p>
-     * Las líneas se construyen de forma dinámica: las secciones de KOTH y timers solo
-     * aparecen si hay datos relevantes, evitando mostrar separadores vacíos. Cada cadena
-     * puede contener códigos de color de Minecraft ({@code §}).
+     * Lines are built dynamically: KOTH and timer sections only appear when there
+     * is relevant data, avoiding empty separators. Each string may contain
+     * Minecraft colour codes ({@code §}).
      * </p>
      *
-     * @param player jugador propietario del marcador (no se utiliza actualmente, pero
-     *               se pasa por extensibilidad futura para permisos o contexto específico)
-     * @param data   snapshot mutable con las estadísticas y timers del jugador para este tick
-     * @param koths  colección de KOTHs activos en el servidor en el momento del renderizado
-     * @return lista de cadenas de texto formateadas, en orden descendente de visualización;
-     *         el primer elemento aparece en la parte superior del marcador lateral
+     * @param player the player who owns the scoreboard (not currently used directly,
+     *               but included for future extensibility such as permission checks
+     *               or player-specific context)
+     * @param data   mutable snapshot containing the player's statistics and timers for this tick
+     * @param koths  collection of KOTHs currently active on the server at render time
+     * @return list of formatted strings in descending display order;
+     *         the first element appears at the top of the sidebar scoreboard
      */
     List<String> render(Player player, PlayerBoardData data, Collection<KothEntry> koths) {
         List<String> lines = new ArrayList<>();

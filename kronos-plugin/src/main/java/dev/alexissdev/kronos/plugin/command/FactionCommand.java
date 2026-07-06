@@ -11,12 +11,11 @@ import org.bukkit.command.CommandSender;
 import java.util.Set;
 
 /**
- * Comando principal {@code /f} ({@code /faction}) que agrupa todos los
- * sub-comandos del sistema de facciones HCF. Actúa como punto de entrada
- * central y delega cada operación al sub-comando correspondiente (create,
- * disband, invite, accept, leave, kick, info, top, ally, enemy, deposit,
- * withdraw, claim, unclaim, overclaim, map, sethome, home, rename, neutral,
- * entre otros).
+ * Root command {@code /f} ({@code /faction}) that groups all sub-commands of
+ * the HCF faction system. It acts as the central entry point and dispatches each
+ * operation to the corresponding sub-command (create, disband, invite, accept,
+ * leave, kick, info, top, ally, enemy, deposit, withdraw, claim, unclaim,
+ * overclaim, map, sethome, home, rename, neutral, among others).
  */
 @Singleton
 public class FactionCommand extends DispatchCommand {
@@ -24,11 +23,10 @@ public class FactionCommand extends DispatchCommand {
     private final MessagesConfig messages;
 
     /**
-     * Construye el comando registrando todos los sub-comandos de facción
-     * inyectados por Guice.
+     * Constructs the command by registering all faction sub-commands injected by Guice.
      *
-     * @param subs     conjunto de sub-comandos del grupo {@code faction} anotado con {@code @Named("faction")}
-     * @param messages configuración de mensajes localizados
+     * @param subs     set of sub-commands for the {@code faction} group, annotated with {@code @Named("faction")}
+     * @param messages localised message configuration
      */
     @Inject
     public FactionCommand(@Named("faction") Set<SubCommand> subs, MessagesConfig messages) {
@@ -38,10 +36,10 @@ public class FactionCommand extends DispatchCommand {
     }
 
     /**
-     * Envía al ejecutor el menú de ayuda completo del comando {@code /f} con
-     * la lista de todos los sub-comandos disponibles y su sintaxis.
+     * Sends the full {@code /f} help menu to the executor, listing every available
+     * sub-command and its usage syntax.
      *
-     * @param sender ejecutor del comando que recibirá los mensajes de ayuda
+     * @param sender command executor who will receive the help messages
      */
     @Override
     protected void sendUsage(CommandSender sender) {

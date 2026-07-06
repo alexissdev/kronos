@@ -8,30 +8,30 @@ import dev.alexissdev.kronos.claims.repository.ClaimRepository;
 import dev.alexissdev.kronos.claims.service.ClaimService;
 
 /**
- * Módulo Guice que configura las dependencias del subsistema de territorios (claims).
+ * Guice module that configures the dependency bindings for the territory (claims) subsystem.
  *
- * <p>Registra las siguientes vinculaciones en el contenedor de inyección de dependencias:</p>
+ * <p>Registers the following bindings in the dependency-injection container:</p>
  * <ul>
- *   <li>{@link ClaimService} → {@link ClaimApplicationService} (singleton): servicio de
- *       aplicación que orquesta la lógica de reclamación, desreclamación y conquista
- *       de territorios.</li>
+ *   <li>{@link ClaimService} → {@link ClaimApplicationService} (singleton): application
+ *       service that orchestrates the logic for claiming, unclaiming, and overclaiming
+ *       territories.</li>
  *   <li>{@link dev.alexissdev.kronos.claims.repository.ClaimRepository} →
  *       {@link dev.alexissdev.kronos.claims.persistence.MongoClaimRepository} (singleton):
- *       implementación MongoDB del repositorio de claims.</li>
- *   <li>{@link ClaimListener} (singleton): listener de Bukkit y Guava EventBus que
- *       protege los territorios y notifica a los jugadores al cruzar sus límites.</li>
+ *       MongoDB-backed implementation of the claim repository.</li>
+ *   <li>{@link ClaimListener} (singleton): Bukkit and Guava EventBus listener that
+ *       protects territories and notifies players when they cross claim boundaries.</li>
  * </ul>
  *
- * <p>Este módulo debe instalarse en el injector principal del plugin durante la
- * inicialización de Kronos.</p>
+ * <p>This module must be installed in the plugin's main injector during Kronos
+ * initialisation.</p>
  */
 public class ClaimsModule extends AbstractModule {
 
     /**
-     * Declara todas las vinculaciones de tipos del módulo de claims.
+     * Declares all type bindings for the claims module.
      *
-     * <p>Guice llamará a este método automáticamente al construir el injector. No debe
-     * invocarse directamente desde código de aplicación.</p>
+     * <p>Guice will call this method automatically when building the injector. It should
+     * never be invoked directly from application code.</p>
      */
     @Override
     protected void configure() {

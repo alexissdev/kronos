@@ -1,13 +1,13 @@
 package dev.alexissdev.kronos.koth.event;
 
 /**
- * Evento de dominio publicado vía Guava {@code EventBus} cuando un evento KOTH activo
- * finaliza sin haber sido capturado por ningún jugador.
+ * Domain event published via Guava {@code EventBus} when an active KOTH event
+ * ends without having been captured by any player.
  *
- * <p>Este evento se distingue de {@code KothCapturedDomainEvent} en que ningún jugador
- * logró permanecer el tiempo necesario en la zona de captura. Los suscriptores típicos
- * son el sistema de scoreboard y el de temporizadores, para detener sus contadores y
- * mostrar el resultado al servidor.</p>
+ * <p>This event is distinct from {@code KothCapturedDomainEvent} in that no player
+ * managed to hold the capture zone for the required time. Typical subscribers are
+ * the scoreboard and timer systems, which should stop their counters and display
+ * the final result to the server.</p>
  */
 public final class KothEndedDomainEvent {
 

@@ -21,17 +21,16 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 /**
- * Implementación MongoDB de {@link ClaimRepository}.
+ * MongoDB implementation of {@link ClaimRepository}.
  *
- * <p>Persiste y recupera entidades {@link Claim} desde la colección {@code "claims"} de
- * MongoDB. Todas las operaciones se ejecutan en un pool de hilos independiente
- * ({@link Executors#newCachedThreadPool()}) para evitar bloquear el hilo principal
- * del servidor Bukkit.</p>
+ * <p>Persists and retrieves {@link Claim} entities from the {@code "claims"} MongoDB
+ * collection. All operations run on an independent thread pool
+ * ({@link Executors#newCachedThreadPool()}) to avoid blocking the main Bukkit server
+ * thread.</p>
  *
- * <p>La búsqueda por chunk utiliza filtros de rango sobre los campos
- * {@code minChunkX/maxChunkX} y {@code minChunkZ/maxChunkZ}, por lo que se recomienda
- * crear índices compuestos en esos campos en producción para garantizar un rendimiento
- * adecuado.</p>
+ * <p>Chunk lookups use range filters on the {@code minChunkX/maxChunkX} and
+ * {@code minChunkZ/maxChunkZ} fields, so compound indexes on those fields are
+ * recommended in production to ensure adequate query performance.</p>
  */
 @Singleton
 public class MongoClaimRepository implements ClaimRepository {
@@ -42,10 +41,10 @@ public class MongoClaimRepository implements ClaimRepository {
     private final Executor executor;
 
     /**
-     * Construye el repositorio obteniendo la colección de claims de la base de datos.
+     * Constructs the repository by obtaining the claims collection from the database.
      *
-     * @param factory fábrica de conexiones MongoDB inyectada por Guice, que proporciona
-     *                acceso a la base de datos configurada para el plugin
+     * @param factory MongoDB connection factory injected by Guice, providing access
+     *                to the database configured for the plugin
      */
     @Inject
     public MongoClaimRepository(MongoConnectionFactory factory) {
@@ -56,8 +55,8 @@ public class MongoClaimRepository implements ClaimRepository {
     /**
      * {@inheritDoc}
      *
-     * <p>Ejecuta una consulta de rango en MongoDB para encontrar el claim cuyo rectángulo
-     * de chunks contiene las coordenadas dadas.</p>
+     * <p>Executes a range query in MongoDB to find the claim whose chunk rectangle
+     * contains the given coordinates.</p>
      */
     @Override
     public CompletableFuture<Optional<Claim>> findByChunk(String world, int chunkX, int chunkZ) {
@@ -77,8 +76,7 @@ public class MongoClaimRepository implements ClaimRepository {
     /**
      * {@inheritDoc}
      *
-     * <p>Recupera todos los documentos cuyo campo {@code factionId} coincide con el
-     * identificador recibido.</p>
+     * <p>Retrieves all documents whose {@code factionId} field matches the given identifier.</p>
      */
     @Override
     public CompletableFuture<List<Claim>> findByFaction(String factionId) {
@@ -93,8 +91,9 @@ public class MongoClaimRepository implements ClaimRepository {
     /**
      * {@inheritDoc}
      *
-     * <p>Itera sobre todos los documentos de la colección {@code claims} y los convierte
-     * a entidades de dominio. Está pensado para la carga inicial del caché en memoria.</p>
+     * <p>Iterates over every document in the {@code claims} collection and maps them to
+     * domain entities. Intended for the initial population of the in-memory cache at
+     * server startup.</p>
      */
     @Override
     public CompletableFuture<List<Claim>> findAll() {
@@ -108,8 +107,8 @@ public class MongoClaimRepository implements ClaimRepository {
     /**
      * {@inheritDoc}
      *
-     * <p>Realiza un upsert usando el campo {@code _id} del claim como clave primaria.
-     * Si el documento no existe, lo inserta; si ya existe, lo reemplaza completamente.</p>
+     * <p>Performs an upsert keyed on the claim's {@code _id} field. If the document does
+     * not exist it is inserted; if it already exists it is fully replaced.</p>
      */
     @Override
     public CompletableFuture<Claim> save(Claim claim) {
@@ -126,8 +125,8 @@ public class MongoClaimRepository implements ClaimRepository {
     /**
      * {@inheritDoc}
      *
-     * <p>Elimina en bloque todos los documentos cuyo campo {@code factionId} coincide.
-     * Se invoca al disolver una facción para liberar todo su territorio.</p>
+     * <p>Bulk-deletes all documents whose {@code factionId} field matches. Called when a
+     * faction is disbanded to release all of its territory at once.</p>
      */
     @Override
     public CompletableFuture<Void> deleteByFaction(String factionId) {
@@ -138,7 +137,7 @@ public class MongoClaimRepository implements ClaimRepository {
     /**
      * {@inheritDoc}
      *
-     * <p>Elimina el documento cuyo campo {@code _id} coincide con el identificador dado.</p>
+     * <p>Deletes the document whose {@code _id} field matches the given identifier.</p>
      */
     @Override
     public CompletableFuture<Void> delete(String id) {
@@ -147,14 +146,14 @@ public class MongoClaimRepository implements ClaimRepository {
     }
 
     /**
-     * Convierte un documento BSON de MongoDB en una entidad de dominio {@link Claim}.
+     * Converts a MongoDB BSON document into a {@link Claim} domain entity.
      *
-     * <p>Si el campo {@code type} contiene un valor desconocido o nulo, se asume
-     * {@link ClaimType#FACTION} para garantizar compatibilidad con datos heredados.
-     * Las coordenadas de chunk nulas se normalizan a {@code 0}.</p>
+     * <p>If the {@code type} field contains an unknown or null value, {@link ClaimType#FACTION}
+     * is assumed to maintain backward compatibility with legacy data. Null chunk coordinates
+     * are normalised to {@code 0}.</p>
      *
-     * @param doc documento MongoDB a convertir
-     * @return entidad {@link Claim} construida a partir del documento
+     * @param doc MongoDB document to convert
+     * @return {@link Claim} entity built from the document
      */
     private Claim toClaim(Document doc) {
         String typeStr = doc.getString("type");
@@ -181,10 +180,10 @@ public class MongoClaimRepository implements ClaimRepository {
     }
 
     /**
-     * Convierte una entidad de dominio {@link Claim} en un documento BSON para MongoDB.
+     * Converts a {@link Claim} domain entity into a BSON document for MongoDB.
      *
-     * @param c entidad de dominio a serializar
-     * @return documento MongoDB listo para persistir
+     * @param c domain entity to serialize
+     * @return MongoDB document ready for persistence
      */
     private Document toDocument(Claim c) {
         return new Document()

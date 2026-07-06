@@ -1,53 +1,54 @@
 package dev.alexissdev.kronos.classes.domain;
 
 /**
- * Enumeración de las clases (kits) disponibles para los jugadores en el sistema HCF.
+ * Enumeration of the classes (kits) available to players in the HCF system.
  *
- * <p>Cada valor representa un rol de combate o utilidad con habilidades pasivas y activas
- * únicas. La clase activa de un jugador se determina por el tipo de casco que lleva puesto
- * y se almacena en su perfil de {@code KronosPlayer}. La clase {@link #DIAMOND} actúa como
- * clase por defecto para jugadores sin un kit específico (casco de diamante o sin casco).</p>
+ * <p>Each value represents a combat or utility role with unique passive and active
+ * abilities. A player's active class is determined by the type of helmet they are
+ * wearing and is stored in their {@code KronosPlayer} profile. The {@link #DIAMOND}
+ * class acts as the default for players without a specific kit assigned (diamond helmet
+ * or no helmet).</p>
  *
- * <p>Las habilidades de cada clase son aplicadas por
+ * <p>The abilities of each class are applied by
  * {@link dev.alexissdev.kronos.classes.listener.ClassListener}.</p>
  */
 public enum KitType {
 
     /**
-     * Clase Arquero: dispara flechas a mayor velocidad y aplica lentitud al golpear en combate cuerpo a cuerpo.
-     * Se activa con casco de cuero. Su habilidad activa otorga un breve aumento de daño.
+     * Archer class: fires arrows at greater velocity and applies slowness on melee hits.
+     * Activated by wearing a leather helmet. Its active ability grants a brief damage boost.
      */
     ARCHER,
 
     /**
-     * Clase Bardo: aura de soporte que otorga velocidad y regeneración periódica a todos los compañeros
-     * de facción cercanos (radio de 15 bloques). Se activa con casco de oro.
-     * Su habilidad activa amplifica la velocidad de los aliados en el área.
+     * Bard class: support aura that grants Speed and Regeneration to all nearby faction
+     * members within a 15-block radius. Activated by wearing a gold helmet.
+     * Its active ability amplifies the movement speed of allies in the area.
      */
     BARD,
 
     /**
-     * Clase Pícaro: gana velocidad al golpear a un enemigo en combate cuerpo a cuerpo.
-     * Se activa con casco de cota de malla. Su habilidad activa lo vuelve invisible brevemente.
+     * Rogue class: gains Speed on landing a melee hit against an enemy.
+     * Activated by wearing a chainmail helmet. Its active ability briefly turns the player invisible.
      */
     ROGUE,
 
     /**
-     * Clase Minero: obtiene el efecto de prisa al romper bloques de forma pasiva.
-     * Se activa con casco de hierro. Su habilidad activa incrementa la velocidad de minería.
+     * Miner class: passively gains Haste while breaking blocks.
+     * Activated by wearing an iron helmet. Its active ability further increases mining speed.
      */
     MINER,
 
     /**
-     * Clase Caballero: obtiene resistencia al daño al golpear a un enemigo y puede repeler
-     * jugadores cercanos con su habilidad activa. Se activa con casco de diamante puro
-     * (distinguido del kit por defecto por el contexto del inventario).
+     * Knight class: gains Resistance on landing a melee hit against an enemy and can repel
+     * nearby players with its active ability. Activated by wearing a diamond helmet
+     * (distinguished from the default kit by inventory context).
      */
     KNIGHT,
 
     /**
-     * Kit por defecto para jugadores sin una clase asignada explícitamente.
-     * No tiene habilidades especiales asociadas.
+     * Default kit for players without an explicitly assigned class.
+     * No special abilities are associated with this kit.
      */
     DIAMOND
 }

@@ -3,16 +3,16 @@ package dev.alexissdev.kronos.factions.event;
 import java.util.UUID;
 
 /**
- * Evento de dominio publicado en el {@code EventBus} cuando una facción es disuelta.
+ * Domain event published on the {@code EventBus} when a faction is disbanded.
  *
- * <p>La disolución puede ocurrir de dos formas:
+ * <p>Disbanding can occur in two ways:
  * <ul>
- *   <li>El líder ejecuta voluntariamente el comando de disolver la facción.</li>
- *   <li>La facción acumula el número máximo de strikes administrativos.</li>
+ *   <li>The leader voluntarily executes the disband command.</li>
+ *   <li>The faction accumulates the maximum number of administrative strikes.</li>
  * </ul>
  *
- * <p>Los listeners de este evento deben encargarse de limpiar recursos dependientes
- * de la facción, como liberar sus claims, devolver fondos o notificar a los miembros.
+ * <p>Listeners of this event should clean up resources that depend on the faction,
+ * such as releasing its claims, returning funds, or notifying members.
  */
 public final class FactionDisbandedDomainEvent {
 
@@ -21,12 +21,12 @@ public final class FactionDisbandedDomainEvent {
     private final UUID actorUuid;
 
     /**
-     * Crea el evento con los datos de la facción disuelta y el actor responsable.
+     * Creates the event with the data of the disbanded faction and the responsible actor.
      *
-     * @param factionId   ID de la facción que fue disuelta
-     * @param factionName nombre de la facción en el momento de su disolución
-     * @param actorUuid   UUID del jugador o entidad que desencadenó la disolución
-     *                    (puede ser el líder o un administrador en el caso de strikes)
+     * @param factionId   ID of the faction that was disbanded
+     * @param factionName name of the faction at the time of disbanding
+     * @param actorUuid   UUID of the player or entity that triggered the disbanding
+     *                    (may be the leader or an administrator in the case of strikes)
      */
     public FactionDisbandedDomainEvent(String factionId, String factionName, UUID actorUuid) {
         this.factionId = factionId;
@@ -35,23 +35,23 @@ public final class FactionDisbandedDomainEvent {
     }
 
     /**
-     * Devuelve el ID de la facción que fue disuelta.
+     * Returns the ID of the faction that was disbanded.
      *
-     * @return ID de la facción
+     * @return faction ID
      */
     public String getFactionId() { return factionId; }
 
     /**
-     * Devuelve el nombre que tenía la facción antes de ser disuelta.
+     * Returns the name the faction had before being disbanded.
      *
-     * @return nombre de la facción
+     * @return faction name
      */
     public String getFactionName() { return factionName; }
 
     /**
-     * Devuelve el UUID del jugador o entidad que provocó la disolución.
+     * Returns the UUID of the player or entity that caused the disbanding.
      *
-     * @return UUID del actor responsable
+     * @return UUID of the responsible actor
      */
     public UUID getActorUuid() { return actorUuid; }
 }

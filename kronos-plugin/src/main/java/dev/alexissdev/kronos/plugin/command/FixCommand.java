@@ -9,10 +9,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 /**
- * Comando {@code /fix} que repara completamente el desgaste de todos los
- * ítems del inventario y la armadura del jugador que lo ejecuta.
- * Requiere el permiso {@code hcf.admin} y está pensado para uso administrativo
- * o como beneficio de donador en servidores HCF.
+ * Command {@code /fix} that fully restores the durability of every item in the
+ * executing player's inventory and armor slots. Requires the {@code hcf.admin}
+ * permission and is intended for administrative use or as a donor perk on HCF
+ * servers.
  */
 @Singleton
 public class FixCommand extends BaseCommand {
@@ -20,9 +20,9 @@ public class FixCommand extends BaseCommand {
     private final MessagesConfig messages;
 
     /**
-     * Construye el comando inyectando las dependencias mediante Guice.
+     * Constructs the command by injecting its dependencies via Guice.
      *
-     * @param messages configuración de mensajes localizados
+     * @param messages localised message configuration
      */
     @Inject
     public FixCommand(MessagesConfig messages) {
@@ -31,11 +31,11 @@ public class FixCommand extends BaseCommand {
     }
 
     /**
-     * Verifica que el ejecutor sea un jugador y, de serlo, repara todos los
-     * ítems de su inventario y armadura, notificándole con un mensaje de confirmación.
+     * Verifies that the executor is a player and, if so, repairs all items in their
+     * inventory and armour slots, then notifies them with a confirmation message.
      *
-     * @param sender ejecutor del comando; debe ser un {@link Player}
-     * @param args   argumentos adicionales (no utilizados por este comando)
+     * @param sender command executor; must be a {@link Player}
+     * @param args   additional arguments (not used by this command)
      */
     @Override
     protected void execute(CommandSender sender, String[] args) {
@@ -47,10 +47,10 @@ public class FixCommand extends BaseCommand {
     }
 
     /**
-     * Itera sobre el inventario principal y la armadura del jugador,
-     * reparando cada ítem con durabilidad y actualizando la vista del inventario.
+     * Iterates over the player's main inventory and armour contents, repairing
+     * every durable item and then refreshing the inventory view for the client.
      *
-     * @param player jugador cuyo inventario será reparado
+     * @param player player whose inventory will be repaired
      */
     private void repairInventory(Player player) {
         for (ItemStack item : player.getInventory().getContents()) {
@@ -63,10 +63,10 @@ public class FixCommand extends BaseCommand {
     }
 
     /**
-     * Restablece la durabilidad de un ítem a cero (estado sin desgaste) si el ítem
-     * no es nulo y su tipo posee durabilidad máxima mayor que cero.
+     * Resets the durability of an item to zero (no wear) if the item is non-null
+     * and its material type has a max durability greater than zero.
      *
-     * @param item ítem a reparar; si es {@code null} o no tiene durabilidad, la operación es ignorada
+     * @param item item to repair; if {@code null} or not damageable, the operation is silently skipped
      */
     private void repair(ItemStack item) {
         if (item != null && item.getType().getMaxDurability() > 0) {

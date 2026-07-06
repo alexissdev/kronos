@@ -1,56 +1,56 @@
 package dev.alexissdev.kronos.players.domain;
 
 /**
- * Enumeración de los tipos de kit disponibles en el servidor HCF.
+ * Enumeration of the kit types available on the HCF server.
  *
- * <p>Cada kit representa una clase de combate con equipamiento y habilidades
- * específicas. El kit activo del jugador se guarda en su perfil {@link HCFPlayer}
- * y se puede aplicar a su inventario a través de {@code KitService}.</p>
+ * <p>Each kit represents a combat class with a specific loadout and role.
+ * The player's active kit is stored in their {@link HCFPlayer} profile
+ * and can be applied to their inventory through {@code KitService}.</p>
  *
  * <ul>
- *   <li>{@link #ARCHER} — clase de distancia con arco encantado y armadura ligera.</li>
- *   <li>{@link #BARD} — clase de soporte que usa varillas de blaze para buff de equipo.</li>
- *   <li>{@link #ROGUE} — clase sigilosa con espada de diamante y armadura de malla.</li>
- *   <li>{@link #MINER} — clase orientada a la recolección con pico de diamante Eficiencia V.</li>
- *   <li>{@link #KNIGHT} — clase de combate cuerpo a cuerpo con armadura y espada de diamante.</li>
- *   <li>{@link #DIAMOND} — kit estándar de diamante, valor por defecto al crear un jugador.</li>
+ *   <li>{@link #ARCHER} — ranged class with an enchanted bow and light armour.</li>
+ *   <li>{@link #BARD} — support class that uses a blaze rod to buff teammates.</li>
+ *   <li>{@link #ROGUE} — stealthy class with a diamond sword and chainmail armour.</li>
+ *   <li>{@link #MINER} — resource-gathering class with an Efficiency V diamond pickaxe.</li>
+ *   <li>{@link #KNIGHT} — frontline melee class with full diamond armour and sword.</li>
+ *   <li>{@link #DIAMOND} — standard diamond kit; the default assigned to new players.</li>
  * </ul>
  */
 public enum KitType {
 
     /**
-     * Clase arquera: armadura ligera de cuero/malla y arco con Poder III y Flecha Infinita.
-     * Ideal para combate a distancia y hostigamiento.
+     * Archer class: light leather/chainmail armour and a bow enchanted with Power III and Infinity.
+     * Ideal for ranged combat and harassing enemies from a distance.
      */
     ARCHER,
 
     /**
-     * Clase bardo: armadura mixta de oro/hierro y varilla de blaze.
-     * Clase de soporte que otorga efectos positivos a sus aliados durante el combate.
+     * Bard class: mixed gold/iron armour and a blaze rod.
+     * A support role that grants positive potion effects to allies during combat.
      */
     BARD,
 
     /**
-     * Clase pícaro: armadura de malla y espada de diamante con Filo III y Durabilidad III.
-     * Orientada al combate rápido y al sigilo.
+     * Rogue class: full chainmail armour and a diamond sword with Sharpness III and Unbreaking III.
+     * Geared toward fast, agile combat and hit-and-run tactics.
      */
     ROGUE,
 
     /**
-     * Clase minero: armadura de hierro y pico de diamante con Eficiencia V y Durabilidad III.
-     * Pensada para la recolección eficiente de recursos.
+     * Miner class: full iron armour and a diamond pickaxe with Efficiency V and Unbreaking III.
+     * Designed for fast and efficient resource gathering.
      */
     MINER,
 
     /**
-     * Clase caballero: armadura completa de diamante con Protección II y espada con Filo IV.
-     * Clase de tanque orientada al combate frontal sostenido.
+     * Knight class: full diamond armour with Protection II on every piece and a sword with Sharpness IV.
+     * A tanky frontliner designed for sustained face-to-face combat.
      */
     KNIGHT,
 
     /**
-     * Kit estándar de diamante, equivalente a {@link #KNIGHT}.
-     * Es el valor por defecto asignado a los nuevos jugadores al registrarse.
+     * Standard diamond kit, functionally equivalent to {@link #KNIGHT}.
+     * This is the default kit assigned to newly registered players.
      */
     DIAMOND
 }

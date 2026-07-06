@@ -12,9 +12,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
 /**
- * Sub-comando {@code /crate list} que muestra al ejecutor la lista de todos
- * los cofres de recompensas (crates) registrados en el servidor, incluyendo
- * su tipo, mundo y coordenadas. La consulta se realiza de forma asíncrona.
+ * Sub-command {@code /crate list} that displays to the executor the full list of
+ * registered reward crates on the server, including their type, world, and
+ * coordinates. The query is performed asynchronously.
  */
 @Singleton
 public class ListCrateSub extends SubCommand {
@@ -24,11 +24,11 @@ public class ListCrateSub extends SubCommand {
     private final Plugin         plugin;
 
     /**
-     * Construye el sub-comando inyectando sus dependencias mediante Guice.
+     * Constructs the sub-command by injecting its dependencies via Guice.
      *
-     * @param crateService servicio para consultar los cofres registrados
-     * @param messages     configuración de mensajes localizados
-     * @param plugin       instancia del plugin, usada para programar tareas en el hilo principal
+     * @param crateService service used to query all registered crates
+     * @param messages     localised message configuration
+     * @param plugin       plugin instance used to schedule tasks on the main thread
      */
     @Inject
     public ListCrateSub(CrateService crateService, MessagesConfig messages, Plugin plugin) {
@@ -37,16 +37,16 @@ public class ListCrateSub extends SubCommand {
         this.plugin       = plugin;
     }
 
-    /** @return el nombre del sub-comando: {@code "list"} */
+    /** @return the sub-command name: {@code "list"} */
     @Override public String name() { return "list"; }
 
     /**
-     * Obtiene de forma asíncrona todos los cofres registrados y los imprime
-     * al ejecutor en el hilo principal. Si no hay cofres registrados, envía
-     * el mensaje correspondiente.
+     * Asynchronously fetches all registered crates and prints them to the executor
+     * on the main thread. If no crates are registered, the corresponding empty-list
+     * message is sent instead.
      *
-     * @param sender ejecutor del comando; debe ser un {@link org.bukkit.entity.Player}
-     * @param args   argumentos adicionales (no utilizados por este sub-comando)
+     * @param sender command executor; must be a {@link org.bukkit.entity.Player}
+     * @param args   additional arguments (not used by this sub-command)
      */
     @Override
     public void execute(CommandSender sender, String[] args) {
